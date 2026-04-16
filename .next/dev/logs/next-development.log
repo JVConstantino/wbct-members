@@ -1,0 +1,398 @@
+[00:00:04.618] Server  WARN    ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:05.336] Server  LOG     ✓ Ready in 4.7s
+[00:01:15.991] Server  LOG     ○ Compiling / ...
+[00:01:29.962] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:29.963] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:30.511] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:30.511] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:34.836] Server  LOG     ○ Compiling /login ...
+[00:01:35.995] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:35.996] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:01:39.065] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:39.576] Browser ERROR   A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/login" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.js">
+                      <SegmentTrieNode>
+                      <link>
+                      <RootLayout>
+                        <html lang="en" suppressHydrationWarning={true}>
+                          <body
+                            className="__className_f367f3"
+-                           cz-shortcut-listen="true"
+                          >
+                  ...
+
+[00:01:42.403] Server  LOG     ○ Compiling /api/auth/[...nextauth] ...
+[00:03:08.687] Server  LOG     ○ Compiling /api/auth/verify ...
+[00:03:10.420] Server  LOG     🔌 Conectando ao Banco: 162.241.60.102
+[00:03:10.426] Server  LOG     👤 Usuário: wbctso41_membros_wbct
+[00:03:10.427] Server  LOG     🔐 Configuração via: ENV (DATABASE_URL)
+[00:03:10.428] Server  LOG     🔑 Senha decodificada (Sample): N4...*@
+[00:03:11.457] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:11.459] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:11.752] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)
+[00:03:11.774] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:03:11.778] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:03:43.600] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:43.600] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:43.841] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)
+[00:03:43.853] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:03:43.854] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:03:50.024] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:50.025] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)"
+[00:03:50.178] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.137' (using password: YES)
+[00:03:50.196] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:03:50.197] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:09:29.564] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:09:29.565] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:48:07.160] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:48:07.161] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:48:09.438] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:48:09.968] Browser ERROR   A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/login" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.js">
+                      <SegmentTrieNode>
+                      <link>
+                      <RootLayout>
+                        <html lang="en" suppressHydrationWarning={true}>
+                          <body
+                            className="__className_f367f3"
+-                           cz-shortcut-listen="true"
+                          >
+                  ...
+
+[00:50:15.218] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:50:15.220] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:50:15.682] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)
+[00:50:15.719] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:50:15.723] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:52:19.337] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:19.338] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:19.632] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)
+[00:52:19.659] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:52:19.675] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:52:39.381] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:39.382] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:39.658] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)
+[00:52:39.668] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:52:39.683] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:52:45.815] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:45.817] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:46.009] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)
+[00:52:46.064] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:52:46.066] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:52:49.278] Server  ERROR   ❌ Erro na query SQL: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:49.279] Server  ERROR   ⚠️ Detalhes do erro de acesso: "Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)"
+[00:52:49.565] Server  ERROR   Verify error: Error: Access denied for user 'wbctso41_membros_wbct'@'146.70.98.164' (using password: YES)
+[00:52:49.579] Server  ERROR   [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[00:52:49.583] Server  ERROR       at Module.callback (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/actions/callback/index.js:246:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:70:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:37866)
+    at async AppRouteRouteModule.handle (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45156)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:230:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:187638)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:293:32)
+    at async Module.handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.js&appDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CConstantino%5CDocuments%5CPROGRAMACAO%20SSD%5CPROGRAMACAO%5CANTIGRAVITY%5CCRIATIVA%20DIGITAL%5CWBCT%5CPROJETO-TESTE-02&isDev=true&tsconfigPath=&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:347:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1524:32)
+    at async DevServer.pipeImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:1018:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\next-server.js:395:17)
+    at async DevServer.handleRequestImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\base-server.js:909:17)
+    at async C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:387:20
+    at async Span.traceAsyncFn (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\dev\next-dev-server.js:383:24)
+    at async invokeRender (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:248:21)
+    at async handleRequest (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:447:24)
+    at async requestHandlerImpl (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\router-server.js:496:13)
+    at async Server.requestListener (C:\Users\Constantino\Documents\PROGRAMACAO SSD\PROGRAMACAO\ANTIGRAVITY\CRIATIVA DIGITAL\WBCT\PROJETO-TESTE-02\node_modules\next\dist\server\lib\start-server.js:226:13)
+[00:53:51.306] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:53:51.306] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:53:51.460] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[00:53:51.461] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /login. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:02.378] Server  LOG     ○ Compiling /admin ...
+[01:03:30.457] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:30.458] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:32.818] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:32.819] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:37.989] Server  LOG     ○ Compiling /api/admin/stats ...
+[01:03:38.685] Server  LOG     🔌 Conectando ao Banco: 162.241.60.102
+[01:03:38.690] Server  LOG     👤 Usuário: wbctso41_membros_wbct
+[01:03:38.691] Server  LOG     🔐 Configuração via: ENV (DATABASE_URL)
+[01:03:38.691] Server  LOG     🔑 Senha decodificada (Sample): N4...*@
+[01:03:39.385] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:39.386] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:03:46.748] Server  ERROR   ❌ Erro na query SQL: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:03:46.750] Server  LOG     Engagement tables may not exist: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:48.595] Browser WARN    The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[01:03:51.645] Server  ERROR   ❌ Erro na query SQL: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:03:51.647] Server  LOG     Engagement tables may not exist: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:04:05.328] Server  LOG     ○ Compiling /admin/chat ...
+[01:04:11.431] Server  LOG     🔌 Conectando ao Banco: 162.241.60.102
+[01:04:11.432] Server  LOG     👤 Usuário: wbctso41_membros_wbct
+[01:04:11.433] Server  LOG     🔐 Configuração via: ENV (DATABASE_URL)
+[01:04:11.434] Server  LOG     🔑 Senha decodificada (Sample): N4...*@
+[01:04:11.595] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:11.596] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:11.854] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:11.855] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:15.071] Server  LOG     ○ Compiling /api/admin/chat/contacts ...
+[01:04:15.624] Server  LOG     🔌 Conectando ao Banco: 162.241.60.102
+[01:04:15.625] Server  LOG     👤 Usuário: wbctso41_membros_wbct
+[01:04:15.626] Server  LOG     🔐 Configuração via: ENV (DATABASE_URL)
+[01:04:15.627] Server  LOG     🔑 Senha decodificada (Sample): N4...*@
+[01:04:16.215] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:16.215] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:04:21.934] Server  ERROR   ❌ Erro na query SQL: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:04:21.935] Server  LOG     Engagement tables may not exist: "Table 'wbctso41_membros.Like' doesn't exist"
+[01:19:43.035] Server  WARN    ⚠ Unsupported metadata themeColor is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+[01:19:43.035] Server  WARN    ⚠ Unsupported metadata viewport is configured in metadata export in /admin/chat. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport

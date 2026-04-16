@@ -1,0 +1,17 @@
+{
+    "name": "WBCT - Plataforma Educacional",
+    "short_name": "WBCT",
+    "description": "Plataforma de educação tecnológica e hub de conhecimento.",
+    "start_url": "/membro",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#10b981",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

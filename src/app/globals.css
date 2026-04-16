@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Colors - Brand (Blue) */
+  --color-brand-primary: #2563eb;
+  --color-brand-primary-hover: #1d4ed8;
+  --color-brand-primary-active: #1e40af;
+
+  --color-brand-strong: #0f172a;
+  --color-brand-strong-hover: #1e293b;
+
+  /* Redefine primary scale to Blue */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Colors - Text */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-dark: #ffffff;
+  --color-text-on-brand: #ffffff;
+
+  /* Colors - Surfaces */
+  --color-surface-page: var(--surface-page);
+  --color-surface-section: var(--surface-section);
+  --color-surface-card: var(--surface-card);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-elevated: var(--surface-elevated);
+
+  /* Colors - Borders */
+  --color-border-default: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-focus: #2563eb;
+
+  /* Colors - Status */
+  --color-status-success: #10b981;
+  /* Mantém verde para sucesso */
+  --color-status-warning: #f59e0b;
+  --color-status-error: #ef4444;
+
+  /* Box Shadows */
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-button-primary: 0 4px 6px -1px rgb(37 99 235 / 0.3), 0 2px 4px -2px rgb(37 99 235 / 0.3);
+
+  /* Fonts */
+  --font-display: "Outfit", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+:root {
+  /* Light Mode Variables */
+  --text-primary: #1a1a1a;
+  --text-secondary: #525252;
+  --text-muted: #a3a3a3;
+
+  --surface-page: #ffffff;
+  --surface-section: #f8fafc;
+  /* Slate-50 */
+  --surface-card: #ffffff;
+  --surface-subtle: #f1f5f9;
+  /* Slate-100 */
+  --surface-elevated: #ffffff;
+
+  --border-default: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+}
+
+[data-theme="dark"],
+.dark {
+  /* Dark Mode Variables */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  --surface-page: #0f172a;
+  --surface-section: #1e293b;
+  --surface-card: #1e293b;
+  --surface-subtle: #334155;
+  --surface-elevated: #1e293b;
+
+  --border-default: #334155;
+  --border-subtle: #1e293b;
+
+  --background: #020617;
+  --foreground: #f8fafc;
+}
+
+body {
+  @apply bg-surface-page text-text-primary;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Base Typography - Ultra Compact */
+h1 {
+  @apply text-2xl font-bold text-text-primary;
+}
+
+h2 {
+  @apply text-xl font-bold text-text-primary;
+}
+
+h3 {
+  @apply text-lg font-semibold text-text-primary;
+}
+
+h4 {
+  @apply text-base font-semibold text-text-primary;
+}
+
+p {
+  @apply text-sm font-normal text-text-secondary;
+}
+
+.btn-primary {
+  @apply bg-brand-primary text-white px-3 py-1.5 rounded-md font-semibold text-sm transition-all shadow-button-primary active:scale-95 hover:bg-brand-primary-hover hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.card {
+  @apply bg-surface-card border border-border-subtle rounded-lg p-3 shadow-card transition-all hover:shadow-card-hover focus:ring focus:ring-brand-primary;
+}
+
+.input {
+  @apply w-full pl-3 pr-3 py-1.5 rounded-md border border-border-default bg-surface-card text-text-primary text-sm outline-none transition-all placeholder:text-text-muted focus:border-brand-primary focus:ring-1 focus:ring-brand-primary disabled:bg-surface-subtle disabled:opacity-60;
+}
