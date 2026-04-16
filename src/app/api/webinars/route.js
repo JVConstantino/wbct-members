@@ -1,7 +1,8 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
-// GET - Listar webinars
+// GET - Listar webinars (público)
 export async function GET(request) {
     try {
         const webinars = await query('SELECT * FROM Webinar ORDER BY `order` ASC, createdAt DESC');
@@ -15,14 +16,19 @@ export async function GET(request) {
     }
 }
 
-// POST - Criar webinar
+// POST - Criar webinar (apenas ADMIN)
 export async function POST(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { title, description, videoUrl, order } = await request.json();
         const id = 'webinar_' + Date.now().toString(36);
 
         await query(`
-            INSERT INTO Webinar (id, title, description, videoUrl, \`order\`, createdAt, updatedAt) 
+            INSERT INTO Webinar (id, title, description, videoUrl, \`order\`, createdAt, updatedAt)
             VALUES (?, ?, ?, ?, ?, NOW(), NOW())
         `, [id, title, description, videoUrl, order || 0]);
 
@@ -33,13 +39,18 @@ export async function POST(request) {
     }
 }
 
-// PATCH - Atualizar webinar
+// PATCH - Atualizar webinar (apenas ADMIN)
 export async function PATCH(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { id, title, description, videoUrl, order } = await request.json();
 
         await query(`
-            UPDATE Webinar 
+            UPDATE Webinar
             SET title = ?, description = ?, videoUrl = ?, \`order\` = ?, updatedAt = NOW()
             WHERE id = ?
         `, [title, description, videoUrl, order || 0, id]);
@@ -51,9 +62,14 @@ export async function PATCH(request) {
     }
 }
 
-// DELETE - Remover webinar
+// DELETE - Remover webinar (apenas ADMIN)
 export async function DELETE(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 

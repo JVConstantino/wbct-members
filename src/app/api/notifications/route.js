@@ -28,10 +28,14 @@ export async function GET(request) {
 export async function PUT(request) {
     try {
         const session = await auth();
+        if (!session?.user) {
+            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+        }
+
         // Marcar todas como lidas (ao abrir dropdown)
         await query(`
-            UPDATE Notification 
-            SET isRead = TRUE 
+            UPDATE Notification
+            SET isRead = TRUE
             WHERE userId = ? AND isRead = FALSE
         `, [session.user.id]);
 

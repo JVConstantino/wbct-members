@@ -1,9 +1,15 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
-// GET - Listar todos os membros
+// GET - Listar todos os membros (apenas ADMIN)
 export async function GET(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search') || '';
 
@@ -40,9 +46,14 @@ export async function GET(request) {
     }
 }
 
-// PUT - Atualizar status/role/dados do membro
+// PUT - Atualizar status/role/dados do membro (apenas ADMIN)
 export async function PUT(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const body = await request.json();
         const { id, password, ...otherFields } = body;
 
@@ -83,9 +94,14 @@ export async function PUT(request) {
     }
 }
 
-// POST - Criar novo membro
+// POST - Criar novo membro (apenas ADMIN)
 export async function POST(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { name, email, password, role } = await request.json();
         const bcrypt = await import('bcryptjs');
 
@@ -93,7 +109,7 @@ export async function POST(request) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await query(`
-            INSERT INTO User (id, name, email, password, role) 
+            INSERT INTO User (id, name, email, password, role)
             VALUES (?, ?, ?, ?, ?)
         `, [id, name, email, hashedPassword, role || 'MEMBER']);
 
@@ -104,9 +120,14 @@ export async function POST(request) {
     }
 }
 
-// DELETE - Remover membro
+// DELETE - Remover membro (apenas ADMIN)
 export async function DELETE(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 

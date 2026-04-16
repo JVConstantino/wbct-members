@@ -1,19 +1,33 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 
 @variant dark (&:where(.dark, .dark *));
 
+/* ─────────────────────────────────────────────
+   DESIGN SYSTEM — WBCT  (Clinical Blue)
+   Paleta: Blue profundo + Slate + Cyan acento
+   Geometria: Sharp (2–6px) — clínico e preciso
+───────────────────────────────────────────── */
 @theme {
-  /* Colors - Brand (Blue) */
-  --color-brand-primary: #2563eb;
-  --color-brand-primary-hover: #1d4ed8;
-  --color-brand-primary-active: #1e40af;
 
-  --color-brand-strong: #0f172a;
+  /* ── Brand: Blue (autoridade médica) ── */
+  --color-brand-primary:        #2563eb;
+  --color-brand-primary-hover:  #1d4ed8;
+  --color-brand-primary-active: #1e40af;
+  --color-brand-primary-light:  #dbeafe;
+  --color-brand-primary-ring:   rgb(37 99 235 / 0.25);
+
+  --color-brand-strong:       #0f172a;
   --color-brand-strong-hover: #1e293b;
 
-  /* Redefine primary scale to Blue */
-  --color-primary-50: #eff6ff;
+  /* Acento — Cyan elétrico para destaques */
+  --color-accent:       #0284c7;
+  --color-accent-hover: #0369a1;
+  --color-accent-light: #e0f2fe;
+
+  /* ── Escala primary (Blue) ── */
+  --color-primary-50:  #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;
   --color-primary-300: #93c5fd;
@@ -25,117 +39,277 @@
   --color-primary-900: #1e3a8a;
   --color-primary-950: #172554;
 
-  /* Colors - Text */
-  --color-text-primary: var(--text-primary);
+  /* ── Texto ── */
+  --color-text-primary:   var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-on-dark: #ffffff;
-  --color-text-on-brand: #ffffff;
+  --color-text-muted:     var(--text-muted);
+  --color-text-on-brand:  #ffffff;
+  --color-text-on-accent: #ffffff;
+  --color-text-on-dark:   #f8fafc;
 
-  /* Colors - Surfaces */
-  --color-surface-page: var(--surface-page);
-  --color-surface-section: var(--surface-section);
-  --color-surface-card: var(--surface-card);
-  --color-surface-subtle: var(--surface-subtle);
+  /* ── Superfícies ── */
+  --color-surface-page:     var(--surface-page);
+  --color-surface-section:  var(--surface-section);
+  --color-surface-card:     var(--surface-card);
+  --color-surface-subtle:   var(--surface-subtle);
   --color-surface-elevated: var(--surface-elevated);
+  --color-surface-sidebar:  var(--surface-sidebar);
+  --color-surface-header:   var(--surface-header);
 
-  /* Colors - Borders */
+  /* ── Bordas ── */
   --color-border-default: var(--border-default);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-focus: #2563eb;
+  --color-border-subtle:  var(--border-subtle);
+  --color-border-strong:  var(--border-strong);
+  --color-border-focus:   #2563eb;
 
-  /* Colors - Status */
-  --color-status-success: #10b981;
-  /* Mantém verde para sucesso */
-  --color-status-warning: #f59e0b;
-  --color-status-error: #ef4444;
+  /* ── Status ── */
+  --color-status-success:    #059669;
+  --color-status-success-bg: #ecfdf5;
+  --color-status-warning:    #d97706;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-error:      #dc2626;
+  --color-status-error-bg:   #fef2f2;
+  --color-status-info:       #2563eb;
+  --color-status-info-bg:    #eff6ff;
+  --color-status-pending:    #9333ea;
+  --color-status-pending-bg: #faf5ff;
 
-  /* Box Shadows */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
-  --shadow-button-primary: 0 4px 6px -1px rgb(37 99 235 / 0.3), 0 2px 4px -2px rgb(37 99 235 / 0.3);
+  /* ── Sombras ── */
+  --shadow-xs:          0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:          0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-card:        0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-card-hover:  0 10px 20px -4px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-button-primary: 0 3px 8px -1px rgb(37 99 235 / 0.35);
+  --shadow-button-accent:  0 3px 8px -1px rgb(2 132 199 / 0.35);
+  --shadow-modal:       0 20px 60px -10px rgb(0 0 0 / 0.25);
+  --shadow-sidebar:     2px 0 12px 0 rgb(0 0 0 / 0.06);
 
-  /* Fonts */
+  /* ── Transições ── */
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:   200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Tipografia ── */
   --font-display: "Outfit", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-body:    "Inter", system-ui, -apple-system, sans-serif;
+
+  /* ── Border-radius (Sharp — clínico) ── */
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:   12px;
+  --radius-full: 9999px;
 }
 
+/* ─── Light Mode ─── */
 :root {
-  /* Light Mode Variables */
-  --text-primary: #1a1a1a;
-  --text-secondary: #525252;
-  --text-muted: #a3a3a3;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
 
-  --surface-page: #ffffff;
-  --surface-section: #f8fafc;
-  /* Slate-50 */
-  --surface-card: #ffffff;
-  --surface-subtle: #f1f5f9;
-  /* Slate-100 */
+  --surface-page:     #f8fafc;
+  --surface-section:  #f1f5f9;
+  --surface-card:     #ffffff;
+  --surface-subtle:   #f1f5f9;
   --surface-elevated: #ffffff;
+  --surface-sidebar:  #ffffff;
+  --surface-header:   #ffffffdd;
 
   --border-default: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  --border-subtle:  #f1f5f9;
+  --border-strong:  #cbd5e1;
 
-  --background: #ffffff;
-  --foreground: #1a1a1a;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
+/* ─── Dark Mode ─── */
 [data-theme="dark"],
 .dark {
-  /* Dark Mode Variables */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
 
-  --surface-page: #0f172a;
-  --surface-section: #1e293b;
-  --surface-card: #1e293b;
-  --surface-subtle: #334155;
+  --surface-page:     #0a0f1e;
+  --surface-section:  #0f172a;
+  --surface-card:     #0f172a;
+  --surface-subtle:   #1e293b;
   --surface-elevated: #1e293b;
+  --surface-sidebar:  #080d1a;
+  --surface-header:   #0a0f1edd;
 
-  --border-default: #334155;
-  --border-subtle: #1e293b;
+  --border-default: #1e293b;
+  --border-subtle:  #0f172a;
+  --border-strong:  #334155;
 
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #080d1a;
+  --foreground: #f1f5f9;
+
+  --shadow-card:       0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-card-hover: 0 10px 20px -4px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-sidebar:    2px 0 12px 0 rgb(0 0 0 / 0.3);
 }
+
+/* ─────────────────────────────────────────────
+   BASE STYLES
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   @apply bg-surface-page text-text-primary;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-body);
+  transition: background-color var(--transition-slow), color var(--transition-slow);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base Typography - Ultra Compact */
-h1 {
-  @apply text-2xl font-bold text-text-primary;
+/* ─────────────────────────────────────────────
+   TIPOGRAFIA BASE
+───────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  @apply text-text-primary;
+  line-height: 1.25;
 }
+h1 { @apply text-2xl font-bold; }
+h2 { @apply text-xl  font-bold; }
+h3 { @apply text-lg  font-semibold; }
+h4 { @apply text-base font-semibold; }
+p  { @apply text-sm font-normal text-text-secondary; }
 
-h2 {
-  @apply text-xl font-bold text-text-primary;
-}
+a { @apply text-brand-primary transition-colors; text-decoration: none; }
+a:hover { @apply text-brand-primary-hover; }
 
-h3 {
-  @apply text-lg font-semibold text-text-primary;
-}
-
-h4 {
-  @apply text-base font-semibold text-text-primary;
-}
-
-p {
-  @apply text-sm font-normal text-text-secondary;
-}
+/* ─────────────────────────────────────────────
+   COMPONENTES GLOBAIS
+───────────────────────────────────────────── */
 
 .btn-primary {
-  @apply bg-brand-primary text-white px-3 py-1.5 rounded-md font-semibold text-sm transition-all shadow-button-primary active:scale-95 hover:bg-brand-primary-hover hover:shadow-md focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center gap-2 justify-center
+         bg-brand-primary text-white
+         px-4 py-2 rounded-md text-sm font-semibold
+         transition-all duration-150 shadow-button-primary
+         hover:bg-brand-primary-hover hover:shadow-md
+         active:scale-95 active:bg-brand-primary-active
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100;
+}
+
+.btn-accent {
+  @apply inline-flex items-center gap-2 justify-center
+         bg-accent text-white
+         px-4 py-2 rounded-md text-sm font-semibold
+         transition-all duration-150 shadow-button-accent
+         hover:bg-accent-hover hover:shadow-md
+         active:scale-95
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 justify-center
+         bg-surface-subtle text-text-primary border border-border-default
+         px-4 py-2 rounded-md text-sm font-semibold
+         transition-all duration-150
+         hover:bg-surface-section hover:border-border-strong
+         active:scale-95
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center gap-2 justify-center
+         bg-transparent text-text-secondary
+         px-3 py-2 rounded-md text-sm font-medium
+         transition-all duration-150
+         hover:bg-surface-subtle hover:text-text-primary
+         active:scale-95
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-danger {
+  @apply inline-flex items-center gap-2 justify-center
+         bg-status-error text-white
+         px-4 py-2 rounded-md text-sm font-semibold
+         transition-all duration-150
+         hover:bg-red-700 hover:shadow-md
+         active:scale-95
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-error focus-visible:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .card {
-  @apply bg-surface-card border border-border-subtle rounded-lg p-3 shadow-card transition-all hover:shadow-card-hover focus:ring focus:ring-brand-primary;
+  @apply bg-surface-card border border-border-default rounded-lg p-4
+         shadow-card transition-all duration-200 hover:shadow-card-hover;
+}
+
+.card-subtle {
+  @apply bg-surface-subtle border border-border-subtle rounded-lg p-4;
 }
 
 .input {
-  @apply w-full pl-3 pr-3 py-1.5 rounded-md border border-border-default bg-surface-card text-text-primary text-sm outline-none transition-all placeholder:text-text-muted focus:border-brand-primary focus:ring-1 focus:ring-brand-primary disabled:bg-surface-subtle disabled:opacity-60;
+  @apply w-full px-3 py-2 rounded-md border border-border-default
+         bg-surface-card text-text-primary text-sm
+         outline-none transition-all duration-150
+         placeholder:text-text-muted
+         focus:border-brand-primary focus:ring-2 focus:ring-brand-primary-ring
+         disabled:bg-surface-subtle disabled:opacity-60 disabled:cursor-not-allowed;
 }
+
+.badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-border-default rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-border-strong; }
+
+/* ── Seleção ── */
+::selection {
+  background: var(--color-brand-primary-light);
+  color: var(--color-brand-primary-active);
+}
+
+/* ── Focus global ── */
+:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
+/* ── Animações ── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in  { animation: fade-in      var(--transition-base) ease both; }
+.animate-slide-in { animation: slide-in-left var(--transition-base) ease both; }
+.animate-scale-in { animation: scale-in      var(--transition-base) ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── ProseMirror (TipTap) ── */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-text-muted float-left h-0 pointer-events-none;
+}
+.ProseMirror:focus { outline: none; }

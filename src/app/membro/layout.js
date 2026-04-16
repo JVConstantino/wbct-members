@@ -1,210 +1,215 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
-    Home,
-    BookOpen,
-    PlusSquare,
-    Calendar,
-    PlayCircle,
-    User,
-    LogOut,
-    Menu,
-    X,
-    FileText,
-    ChevronRight,
-    Search,
-    Cpu,
-    MessageSquare
+    Home, BookOpen, PlusSquare, Calendar,
+    PlayCircle, User, LogOut, Menu, X,
+    FileText, ChevronRight, Search, MessageSquare,
+    Stethoscope, Sun, Moon, Bell
 } from "lucide-react";
-import { useUser } from "@/contexts/UserContext";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { Avatar } from "@/components/ui/Avatar";
 
 const menuItems = [
-    { icon: Home, label: "Main Feed", href: "/membro" },
-    { icon: BookOpen, label: "Articles HUB", href: "/membro/blog" },
-    { icon: User, label: "Medical Directory", href: "/membro/diretorio" },
-    { icon: MessageSquare, label: "Messages", href: "/membro/chat" },
-    { icon: Calendar, label: "Schedule", href: "/membro/eventos" },
-    { icon: PlayCircle, label: "Courses & Classes", href: "/membro/webinars" },
-    { icon: FileText, label: "My Posts", href: "/membro/minhas-postagens" },
-    { icon: PlusSquare, label: "New Content", href: "/membro/criar" },
+    { icon: Home,        label: "Feed Principal",    href: "/membro" },
+    { icon: BookOpen,    label: "Articles HUB",      href: "/membro/blog" },
+    { icon: User,        label: "Diretório Médico",   href: "/membro/diretorio" },
+    { icon: MessageSquare, label: "Mensagens",        href: "/membro/chat" },
+    { icon: Calendar,    label: "Agenda",             href: "/membro/eventos" },
+    { icon: PlayCircle,  label: "WBCT Academy",       href: "/membro/webinars" },
+    { icon: FileText,    label: "Minhas Postagens",   href: "/membro/minhas-postagens" },
+    { icon: PlusSquare,  label: "Novo Conteúdo",      href: "/membro/criar" },
 ];
 
-export default function MemberLayoutContent({ children }) {
+function applyTheme(t) {
+    document.documentElement.classList.toggle("dark", t === "dark");
+    document.documentElement.setAttribute("data-theme", t);
+}
+
+export default function MemberLayout({ children }) {
     const pathname = usePathname();
-    const { user } = useUser();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { data: session } = useSession();
     const [theme, setTheme] = useState("light");
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => { setMobileOpen(false); }, [pathname]);
 
     useEffect(() => {
-        setIsMobileMenuOpen(false);
-    }, [pathname]);
-
-    // Load saved theme
-    useEffect(() => {
-        const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-        setTheme(savedTheme);
-        applyTheme(savedTheme);
+        const saved = localStorage.getItem("theme")
+            || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        setTheme(saved);
+        applyTheme(saved);
     }, []);
 
-    const applyTheme = (currentTheme) => {
-        const root = document.documentElement;
-        if (currentTheme === "dark") {
-            root.classList.add("dark");
-            root.setAttribute("data-theme", "dark");
-        } else {
-            root.classList.remove("dark");
-            root.setAttribute("data-theme", "light");
-        }
-    };
-
-    const toggleTheme = () => {
-        const newTheme = theme === "light" ? "dark" : "light";
-        setTheme(newTheme);
-        localStorage.setItem("theme", newTheme);
-        applyTheme(newTheme);
-    };
-
-    // Activity ping for online user tracking
+    // Activity ping para rastrear usuários online
     useEffect(() => {
-        const pingActivity = async () => {
-            try {
-                await fetch('/api/activity', { method: 'POST' });
-            } catch (e) {
-                // Silent ping errors
-            }
+        const ping = async () => {
+            try { await fetch("/api/activity", { method: "POST" }); } catch {}
         };
-
-        // Initial ping
-        pingActivity();
-
-        // Ping every 2 minutes
-        const interval = setInterval(pingActivity, 120000);
+        ping();
+        const interval = setInterval(ping, 120000);
         return () => clearInterval(interval);
     }, []);
 
+    const toggleTheme = () => {
+        const next = theme === "light" ? "dark" : "light";
+        setTheme(next);
+        localStorage.setItem("theme", next);
+        applyTheme(next);
+    };
+
+    const userName  = session?.user?.name  || "Membro";
+    const userImage = session?.user?.image || "";
+    const userEmail = session?.user?.email || "";
+
     return (
-        <div className="flex min-h-screen bg-surface-page font-sans transition-colors duration-300">
-            {/* Sidebar - Desktop & Mobile Drawer */}
-            <aside className={`fixed inset-y-0 left-0 z-[60] w-72 bg-slate-900 text-white flex flex-col shadow-2xl transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:flex lg:translate-x-0'}`}>
-                {/* Mobile Close Button */}
+        <div className="flex min-h-screen bg-surface-page transition-colors duration-300">
+
+            {/* Overlay mobile */}
+            {mobileOpen && (
+                <div
+                    className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm z-[55] lg:hidden"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
+            {/* ── Sidebar ── */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-[60] w-64
+                bg-surface-sidebar border-r border-border-default shadow-sidebar
+                flex flex-col transition-transform duration-300
+                lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+            `}>
+                {/* Botão fechar mobile */}
                 <button
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="absolute top-6 right-6 lg:hidden p-2 text-slate-400 hover:text-white bg-white/5 rounded-xl border border-white/10"
+                    onClick={() => setMobileOpen(false)}
+                    className="absolute top-4 right-4 lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-subtle rounded-md transition-colors"
+                    aria-label="Fechar menu"
                 >
-                    <X size={20} />
+                    <X size={18} />
                 </button>
 
-                {/* Logo Section */}
-                <div className="p-8">
+                {/* Logo */}
+                <div className="px-5 py-5 border-b border-border-default">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/30">
-                            <Cpu className="text-white" size={24} />
+                        <div className="w-9 h-9 bg-brand-primary rounded-lg flex items-center justify-center shadow-button-primary shrink-0">
+                            <Stethoscope size={18} className="text-white" />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-xl font-black tracking-tighter leading-none">WBCT</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Student Area</span>
+                        <div>
+                            <p className="font-display text-base font-bold text-text-primary leading-none">WBCT</p>
+                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mt-0.5">Área do Médico</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-                    <p className="px-4 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Doctor Panel</p>
+                {/* Nav */}
+                <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+                    <p className="px-3 mb-3 text-[10px] font-bold text-text-muted uppercase tracking-widest">Menu principal</p>
                     {menuItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const active = pathname === item.href;
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ${isActive
-                                    ? "bg-primary-600 text-white shadow-lg shadow-primary-600/20"
-                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                                    }`}
+                                className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 group ${
+                                    active
+                                        ? "bg-brand-primary text-white shadow-sm"
+                                        : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                                }`}
                             >
-                                <div className="flex items-center gap-3">
-                                    <item.icon size={20} className={isActive ? "text-white" : "group-hover:text-brand-primary transition-colors"} />
-                                    <span className="font-bold text-sm tracking-tight">{item.label}</span>
+                                <div className="flex items-center gap-2.5">
+                                    <item.icon
+                                        size={16}
+                                        className={active ? "text-white" : "text-text-muted group-hover:text-brand-primary transition-colors"}
+                                    />
+                                    {item.label}
                                 </div>
-                                {isActive && <ChevronRight size={14} className="text-primary-200" />}
+                                {active && <ChevronRight size={13} className="text-white/70" />}
                             </Link>
                         );
                     })}
                 </nav>
 
-                {/* User Section at Bottom */}
-                <div className="p-6 border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-xl">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-primary-600 flex items-center justify-center font-black text-lg border-2 border-slate-800 shadow-lg overflow-hidden">
-                                {user?.image ? (
-                                    <img src={user.image} className="w-full h-full object-cover" />
-                                ) : (
-                                    user?.name?.charAt(0) || "M"
-                                )}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary-500 border-4 border-slate-900 rounded-full"></div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-sm font-black text-white leading-none truncate max-w-[140px]">{user?.name || "Member"}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{user?.stack || "Doctor"}</span>
+                {/* Usuário */}
+                <div className="px-3 py-4 border-t border-border-default space-y-3">
+                    <div className="flex items-center gap-2.5 px-2">
+                        <Avatar src={userImage} name={userName} size="sm" online />
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-text-primary truncate leading-tight">{userName}</p>
+                            <p className="text-[10px] text-text-muted truncate">{userEmail}</p>
                         </div>
                     </div>
-
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-slate-800 hover:bg-red-500/10 hover:text-red-500 text-slate-400 rounded-xl font-bold text-xs transition-all border border-slate-700 hover:border-red-500/20"
+                        className="btn-ghost w-full justify-start px-2 py-2 text-xs text-status-error hover:bg-status-error-bg hover:text-status-error gap-2"
                     >
-                        <LogOut size={16} />
-                        Logout
+                        <LogOut size={14} />
+                        Sair da conta
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content Area */}
-            <main className="flex-1 lg:ml-72 min-h-screen">
-                {/* Header - Fixed */}
-                <header className="h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-40">
-                    <div className="flex items-center gap-4 lg:hidden">
+            {/* ── Main ── */}
+            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+
+                {/* Header */}
+                <header className="h-14 sticky top-0 z-40 bg-surface-header backdrop-blur-md border-b border-border-default flex items-center justify-between px-4 md:px-6">
+                    {/* Mobile: menu + logo */}
+                    <div className="flex items-center gap-3 lg:hidden">
                         <button
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            className="p-2 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
+                            onClick={() => setMobileOpen(true)}
+                            className="p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
+                            aria-label="Abrir menu"
                         >
-                            <Menu size={20} />
+                            <Menu size={18} />
                         </button>
-                        <div className="w-10 h-10 bg-brand-primary rounded-lg flex items-center justify-center text-white">
-                            <Cpu size={24} />
+                        <div className="w-7 h-7 bg-brand-primary rounded-md flex items-center justify-center">
+                            <Stethoscope size={15} className="text-white" />
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-900 px-4 py-2.5 rounded-2xl w-96 group focus-within:ring-2 ring-primary-500/20 transition-all border border-transparent focus-within:border-primary-500/30">
-                        <Search size={18} className="text-slate-400" />
+                    {/* Busca */}
+                    <div className="hidden md:flex items-center gap-2 bg-surface-subtle px-3 py-2 rounded-md border border-border-default w-72 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary-ring transition-all">
+                        <Search size={14} className="text-text-muted shrink-0" />
                         <input
                             type="text"
-                            placeholder="Search in hub..."
-                            className="bg-transparent border-none outline-none px-3 text-sm font-medium w-full placeholder:text-slate-500"
+                            placeholder="Buscar no hub..."
+                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-text-muted text-text-primary"
                         />
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    {/* Ações direita */}
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={toggleTheme}
-                            className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-brand-primary transition-colors"
+                            className="p-2 text-text-secondary hover:bg-surface-subtle hover:text-brand-primary rounded-md transition-colors border border-border-default"
+                            aria-label={theme === "light" ? "Modo escuro" : "Modo claro"}
                         >
-                            {/* Theme Icon logic could be added here if icon imported */}
+                            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
                         </button>
+
+                        <NotificationDropdown />
+
+                        <div className="hidden sm:block w-px h-6 bg-border-default mx-1" />
+
+                        <Link
+                            href="/membro/perfil"
+                            className="hidden sm:flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-subtle border border-transparent hover:border-border-default transition-all"
+                        >
+                            <Avatar src={userImage} name={userName} size="xs" />
+                            <span className="text-sm font-medium text-text-primary">{userName.split(" ")[0]}</span>
+                        </Link>
                     </div>
                 </header>
 
-                {/* Internal Page Padding */}
-                <div className="p-4 lg:p-6 pb-20 lg:pb-6 max-w-[1600px] mx-auto">
+                {/* Conteúdo */}
+                <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
                     {children}
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     );
 }

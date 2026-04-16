@@ -1,5 +1,9 @@
 import mysql from 'mysql2/promise';
 
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL não definida. Configure a variável de ambiente antes de iniciar o servidor.');
+}
+
 // Função para extrair dados da DATABASE_URL
 const parseDbUrl = (url) => {
     try {
@@ -20,15 +24,11 @@ const parseDbUrl = (url) => {
     return null;
 };
 
-const envConfig = process.env.DATABASE_URL ? parseDbUrl(process.env.DATABASE_URL) : null;
+const dbConfig = parseDbUrl(process.env.DATABASE_URL);
 
-const dbConfig = envConfig || {
-    host: '162.241.60.102',
-    user: 'wbctso41_membros_wbct',
-    password: 'N4#vUS+dzl*@',
-    database: 'wbctso41_membros',
-    port: 3306,
-};
+if (!dbConfig) {
+    throw new Error('DATABASE_URL inválida. Formato esperado: mysql://usuario:senha@host:porta/banco');
+}
 
 // Adiciona opções de pool
 const poolConfig = {
@@ -39,14 +39,6 @@ const poolConfig = {
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000
 };
-
-console.log(`🔌 Conectando ao Banco: ${dbConfig.host}`);
-console.log(`👤 Usuário: ${dbConfig.user}`);
-console.log(`🔐 Configuração via: ${envConfig ? 'ENV (DATABASE_URL)' : 'Hardcoded Fallback'}`);
-if (envConfig) {
-    const hiddenPass = dbConfig.password ? `${dbConfig.password.substring(0, 2)}...${dbConfig.password.substring(dbConfig.password.length - 2)}` : 'N/A';
-    console.log(`🔑 Senha decodificada (Sample): ${hiddenPass}`);
-}
 
 const pool = mysql.createPool(poolConfig);
 

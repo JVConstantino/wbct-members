@@ -72,9 +72,14 @@ export async function POST(request) {
     }
 }
 
-// DELETE - Remover evento
+// DELETE - Remover evento (apenas ADMIN)
 export async function DELETE(request) {
     try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
 
