@@ -95,3 +95,27 @@ export async function DELETE(request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+export async function PATCH(request) {
+    try {
+        const session = await auth();
+        if (session?.user?.role !== 'ADMIN') {
+            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        }
+
+        const { id, title, description, date, color, link } = await request.json();
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'ID é obrigatório' }, { status: 400 });
+        }
+
+        await query(
+            'UPDATE Event SET title = ?, description = ?, date = ?, color = ?, link = ?, updatedAt = NOW() WHERE id = ?',
+            [title, description, date, color || '#3b82f6', link || null, id]
+        );
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error updating event:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

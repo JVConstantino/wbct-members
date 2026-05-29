@@ -1,5 +1,6 @@
 'use client';
 import { forwardRef } from 'react';
+import Link from 'next/link';
 
 const variantClass = {
   primary:   'btn-primary',
@@ -26,6 +27,8 @@ export const Button = forwardRef(function Button(
     fullWidth = false,
     className = '',
     disabled,
+    as,
+    href,
     ...props
   },
   ref
@@ -33,11 +36,15 @@ export const Button = forwardRef(function Button(
   const base = variantClass[variant] ?? variantClass.primary;
   const sz   = sizeClass[size] ?? sizeClass.md;
 
+  const Tag = as === Link || href ? Link : 'button';
+
   return (
-    <button
-      ref={ref}
+    <Tag
+      ref={Tag === 'button' ? ref : undefined}
       className={`${base} ${sz} ${fullWidth ? 'w-full' : ''} ${className}`}
-      disabled={disabled || loading}
+      disabled={Tag === 'button' ? (disabled || loading) : undefined}
+      {...(Tag === 'button' ? {} : { ref })}
+      {...(href ? { href } : {})}
       {...props}
     >
       {loading ? (
@@ -50,7 +57,7 @@ export const Button = forwardRef(function Button(
       ) : null}
       {children}
       {iconRight && !loading && <span className="shrink-0">{iconRight}</span>}
-    </button>
+    </Tag>
   );
 });
 

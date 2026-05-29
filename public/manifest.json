@@ -1,15 +1,22 @@
 {
-    "name": "WBCT - Plataforma Educacional",
+    "name": "WBCT - Comunidade Medica",
     "short_name": "WBCT",
     "description": "Plataforma de educação tecnológica e hub de conhecimento.",
     "start_url": "/membro",
     "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#10b981",
+    "background_color": "#ffffff",
+    "theme_color": "#0ea5e9",
+    "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "/icon.png",
-            "sizes": "1024x1024",
+            "src": "/pwa-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/pwa-512x512.png",
+            "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         }

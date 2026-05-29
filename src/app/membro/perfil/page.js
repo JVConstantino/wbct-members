@@ -9,13 +9,27 @@ import {
     Briefcase,
     Heart,
     Save,
-    Loader2,
     Camera,
-    Settings,
     Bell,
     FileText
 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { Avatar } from "@/components/ui/Avatar";
+import { Spinner } from "@/components/ui/Skeleton";
+import { Badge } from "@/components/ui/Badge";
+
+const TABS = [
+    { id: "dados", icon: User, label: "Dados Pessoais" },
+    { id: "seguranca", icon: Lock, label: "Segurança & Senha" },
+    { id: "notificacoes", icon: Bell, label: "Notificações" },
+    { id: "especialidades", icon: Stethoscope, label: "Especialidades" },
+];
+
+const ESPECIALIDADES = [
+    "Cardiologia", "Pediatria", "Dermatologia", "Ortopedia",
+    "Ginecologia", "Neurologia", "Oftalmologia", "Psiquiatria",
+    "Oncologia", "Endocrinologia", "Geriatria", "Urologia"
+];
 
 export default function MemberProfile() {
     const { updateUser } = useUser();
@@ -24,410 +38,444 @@ export default function MemberProfile() {
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState("dados");
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        stack: "",
-        specialty: "",
-        bio: "",
-        image: ""
-    });
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
-    });
-    const [notifications, setNotifications] = useState({
-        emailPosts: true,
-        emailEvents: true,
-        emailNewsletter: false,
-        pushMessages: true
-    });
+    const [formData, setFormData] = useState({ name: "", email: "", specialty: "", crm: "", bio: "", image: "", allowMessagesFrom: "followers" });
+    const [imageFailed, setImageFailed] = useState(false);
+    const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [notifications, setNotifications] = useState({ emailPosts: true, emailEvents: true, emailNewsletter: false, pushMessages: true });
+    const [connectionRequests, setConnectionRequests] = useState([]);
+    const [connections, setConnections] = useState([]);
+    const [deletePassword, setDeletePassword] = useState("");
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await fetch("/api/auth/session");
                 const session = await res.json();
-
                 if (session?.user?.id) {
                     const userRes = await fetch(`/api/users/profile/${session.user.id}`);
                     const userData = await userRes.json();
-
                     if (userData.success) {
                         setUser(userData.user);
                         setFormData({
                             name: userData.user.name || "",
                             email: userData.user.email || "",
-                            stack: userData.user.stack || "",
                             specialty: userData.user.specialty || "",
+                            crm: userData.user.crm || "",
                             bio: userData.user.bio || "",
-                            image: userData.user.image || ""
+                            image: userData.user.image || "",
+                            allowMessagesFrom: userData.user.allowMessagesFrom || "followers"
                         });
+                        setImageFailed(false);
                     }
                 }
+
+                const [reqRes, connRes] = await Promise.all([
+                    fetch("/api/users/connect/requests").catch(() => null),
+                    fetch("/api/users/connections").catch(() => null),
+                ]);
+                if (reqRes) {
+                    const reqData = await reqRes.json();
+                    if (reqData.success) setConnectionRequests(reqData.requests || []);
+                }
+                if (connRes) {
+                    const connData = await connRes.json();
+                    if (connData.success) setConnections(connData.connections || []);
+                }
             } catch (err) {
-                console.error("Error loading profile:", err);
+                console.error("Erro ao carregar perfil:", err);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchProfile();
     }, []);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         setUploading(true);
         const uploadData = new FormData();
         uploadData.append("file", file);
-
         try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: uploadData
-            });
+            const res = await fetch("/api/upload", { method: "POST", body: uploadData });
             const data = await res.json();
             if (data.success) {
                 setFormData(prev => ({ ...prev, image: data.url }));
+                setImageFailed(false);
             }
         } catch (error) {
-            console.error("Upload failed:", error);
+            console.error("Upload falhou:", error);
         } finally {
             setUploading(false);
         }
     };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
+            const payload = { ...formData };
+
             const res = await fetch("/api/users/profile", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data.success) {
-                // Atualiza imediatamente a sidebar
-                updateUser(formData);
+                updateUser(payload);
                 alert("Perfil atualizado com sucesso!");
             }
         } catch (err) {
-            console.error("Error saving:", err);
+            console.error("Erro ao salvar:", err);
         } finally {
             setSaving(false);
         }
     };
 
+    const respondRequest = async (requesterId, action) => {
+        await fetch("/api/users/connect/respond", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requesterId, action }),
+        });
+        setConnectionRequests((prev) => prev.filter((r) => r.requesterId !== requesterId));
+        const connRes = await fetch("/api/users/connections");
+        const connData = await connRes.json();
+        if (connData.success) setConnections(connData.connections || []);
+    };
+
+    const handleExportData = async () => {
+        const res = await fetch("/api/users/profile/export");
+        const data = await res.json();
+        if (!data.success) return alert(data.error || "Falha ao exportar dados");
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `wbct-dados-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) return alert("Informe sua senha para excluir a conta.");
+        if (!confirm("Esta ação é irreversível. Deseja realmente excluir sua conta permanentemente?")) return;
+        const res = await fetch("/api/users/profile", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: deletePassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("Conta excluída com sucesso.");
+            window.location.href = "/login";
+        } else {
+            alert(data.error || "Não foi possível excluir a conta.");
+        }
+    };
+
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 min-h-[60vh]">
-                <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-                <p className="text-slate-500 font-bold text-xl">Sincronizando seus dados...</p>
+            <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
+                <Spinner size="lg" />
+                <p className="text-text-muted text-sm">Sincronizando seus dados...</p>
             </div>
         );
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12">
-            {/* Header / Cover Area */}
-            <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 to-primary-900 overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-
-                {/* Settings Button */}
-                <div className="absolute top-6 right-6">
-                    <button className="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white hover:bg-white/20 transition-all border border-white/10">
-                        <Settings size={20} />
-                    </button>
-                </div>
-
-                {/* Profile Info */}
-                <div className="relative pt-16 pb-8 px-8 md:px-12 flex flex-col md:flex-row items-center md:items-end gap-6">
-                    {/* Avatar */}
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
+            {/* Header / Capa */}
+            <div className="relative rounded-lg bg-brand-strong overflow-hidden shadow-card-hover">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,#2563eb33,transparent_60%)]" />
+                <div className="relative pt-8 sm:pt-10 pb-5 sm:pb-6 px-4 sm:px-6 md:px-8 flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-5">
+                    {/* Avatar com upload */}
                     <div className="relative group flex-shrink-0">
-                        <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl bg-white p-1.5 shadow-2xl overflow-hidden">
-                            {formData.image ? (
-                                <img src={formData.image} alt={formData.name} className="w-full h-full object-cover rounded-xl" />
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-surface-card p-1 shadow-modal overflow-hidden">
+                            {uploading ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <Spinner size="md" />
+                                </div>
+                            ) : formData.image && !imageFailed ? (
+                                <img
+                                    src={formData.image}
+                                    alt={formData.name}
+                                    className="w-full h-full object-cover rounded-md"
+                                    onError={() => setImageFailed(true)}
+                                />
                             ) : (
-                                <div className="w-full h-full rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-4xl font-black">
+                                    <div className="w-full h-full rounded-md bg-brand-primary flex items-center justify-center text-white text-2xl sm:text-3xl font-bold">
                                     {formData.name.charAt(0)}
                                 </div>
                             )}
-
-                            {uploading && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl transition-opacity">
-                                    <Loader2 className="animate-spin text-white" size={32} />
-                                </div>
-                            )}
                         </div>
-                        <label className="absolute bottom-1 right-1 p-2.5 bg-primary-600 text-white rounded-xl shadow-lg hover:scale-110 transition-transform cursor-pointer">
-                            <Camera size={18} />
+                        <label className="absolute -bottom-1 -right-1 p-2 bg-brand-primary text-white rounded-md shadow-sm hover:scale-105 transition-transform cursor-pointer">
+                            <Camera size={14} />
                             <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                         </label>
                     </div>
 
-                    {/* Name and Info */}
-                    <div className="flex-1 text-center md:text-left pb-2">
-                        <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-2" style={{ color: '#ffffff' }}>{formData.name || "Seu Nome"}</h1>
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                            <span className="flex items-center gap-1.5 bg-primary-500/20 text-primary-300 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider">
-                                <Stethoscope size={14} /> Médico
+                    {/* Nome e Info */}
+                    <div className="flex-1 text-center sm:text-left pb-1">
+                        <h1 className="text-xl sm:text-2xl font-display font-bold !text-white break-words">{formData.name || "Seu Nome"}</h1>
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1">
+                            <span className="flex items-center gap-1 bg-brand-primary/20 text-white px-2.5 py-1 rounded text-xs font-bold uppercase">
+                                <Stethoscope size={11} /> Médico
                             </span>
                             {formData.specialty && (
-                                <span className="text-white/60 text-sm font-medium">{formData.specialty}</span>
+                                <span className="!text-white text-xs">{formData.specialty}</span>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* Navigation Sidebar */}
-                <div className="space-y-4">
-                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                        {[
-                            { id: "dados", icon: User, label: "Dados Pessoais" },
-                            { id: "seguranca", icon: Lock, label: "Segurança & Senha" },
-                            { id: "notificacoes", icon: Bell, label: "Notificações" },
-                            { id: "especialidades", icon: Stethoscope, label: "Especialidades" },
-                        ].map((item) => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+                {/* Sidebar de Navegação */}
+                <div className="space-y-3">
+                    <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-2 space-y-1 overflow-x-auto lg:overflow-visible">
+                        {TABS.map(item => (
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl font-bold text-sm transition-all ${activeTab === item.id
-                                    ? "bg-primary-600 text-white shadow-lg shadow-primary-600/30"
-                                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                                    }`}
+                                className={`w-full min-w-[220px] lg:min-w-0 flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md font-semibold text-sm transition-all ${activeTab === item.id
+                                    ? "bg-brand-primary text-white shadow-button-primary"
+                                    : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"}`}
                             >
-                                <item.icon size={20} />
+                                <item.icon size={16} />
                                 {item.label}
                             </button>
                         ))}
                     </div>
-                    <div className="p-8 bg-slate-900 rounded-xl text-white">
-                        <p className="text-xs font-black uppercase tracking-widest text-primary-400 mb-2">Sua Contribuição</p>
-                        <h4 className="text-2xl font-black leading-tight mb-4">Mantenha seu perfil completo.</h4>
-                        <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                            Um perfil detalhado aumenta sua visibilidade dentro da comunidade médica e facilita o networking.
+                    <div className="p-5 bg-brand-strong rounded-lg !text-white">
+                        <p className="text-[10px] font-bold uppercase tracking-widest !text-white mb-1.5">Sua Contribuição</p>
+                        <h4 className="text-sm font-bold leading-tight mb-2 !text-white">Mantenha seu perfil completo.</h4>
+                        <p className="text-xs !text-white leading-relaxed">
+                            Um perfil detalhado aumenta sua visibilidade na comunidade e facilita o networking.
                         </p>
                     </div>
                 </div>
 
-                {/* Content Area */}
+                {/* Área de Conteúdo */}
                 <div className="lg:col-span-2">
                     {/* Tab: Dados Pessoais */}
                     {activeTab === "dados" && (
-                        <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 p-8 lg:p-12 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 space-y-8">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                                <div className="w-1 h-8 bg-primary-600 rounded-full"></div>
+                        <form onSubmit={handleSave} className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
                                 Informações Profissionais
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Nome de Exibição</label>
-                                    <div className="relative group">
-                                        <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            name="name"
-                                            className="input pl-14"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                        />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Nome de Exibição</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+                                        <input name="name" className="input !pl-10" value={formData.name} onChange={handleChange} />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">E-mail de Contato</label>
-                                    <div className="relative group">
-                                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-                                        <input
-                                            name="email"
-                                            className="input pl-14 opacity-60 cursor-not-allowed"
-                                            value={formData.email}
-                                            readOnly
-                                        />
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">E-mail de Contato</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+                                        <input name="email" className="input !pl-10 opacity-60 cursor-not-allowed" value={formData.email} readOnly />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Especialidade Médica</label>
-                                    <div className="relative group">
-                                        <Heart className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            name="stack"
-                                            className="input pl-14"
-                                            placeholder="Ex: Cardiologia, Pediatria..."
-                                            value={formData.stack}
-                                            onChange={handleChange}
-                                        />
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Especialidade Médica</label>
+                                    <div className="relative">
+                                        <Heart className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+                                        <input name="specialty" className="input !pl-10" placeholder="Ex: Cardiologia, Pediatria..." value={formData.specialty} onChange={handleChange} />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">CRM / Registro</label>
-                                    <div className="relative group">
-                                        <Briefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            name="specialty"
-                                            className="input pl-14"
-                                            placeholder="Ex: CRM/SP 123456"
-                                            value={formData.specialty}
-                                            onChange={handleChange}
-                                        />
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">CRM / Registro</label>
+                                    <div className="relative">
+                                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+                                        <input name="crm" className="input !pl-10" placeholder="Ex: CRM/SP 123456" value={formData.crm} onChange={handleChange} />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Minha Biografia</label>
-                                <div className="relative group">
-                                    <FileText className="absolute left-5 top-5 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                    <textarea
-                                        name="bio"
-                                        className="input pl-14 min-h-[140px] py-4 leading-relaxed"
-                                        value={formData.bio}
-                                        onChange={handleChange}
-                                        placeholder="Conte sobre sua formação e experiência..."
-                                    />
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Minha Biografia</label>
+                                <div className="relative">
+                                    <FileText className="absolute left-3 top-3 text-text-muted" size={15} />
+                                    <textarea name="bio" className="input !pl-10 min-h-[100px] resize-none" value={formData.bio} onChange={handleChange} placeholder="Conte sobre sua formação e experiência..." />
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="btn-primary px-10 py-4 rounded-xl flex items-center gap-3 font-bold disabled:opacity-50"
-                            >
-                                {saving ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> Salvar Alterações</>}
+                            <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2 disabled:opacity-50">
+                                {saving ? <Spinner size="sm" /> : <><Save size={15} /> Salvar Alterações</>}
                             </button>
                         </form>
                     )}
 
                     {/* Tab: Segurança */}
                     {activeTab === "seguranca" && (
-                        <div className="bg-white dark:bg-slate-900 p-8 lg:p-12 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 space-y-8">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                                <div className="w-1 h-8 bg-primary-600 rounded-full"></div>
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
                                 Segurança & Senha
                             </h3>
 
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Senha Atual</label>
-                                    <div className="relative group">
-                                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            type="password"
-                                            className="input pl-14"
-                                            placeholder="Digite sua senha atual"
-                                            value={passwordData.currentPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                        />
+                            <div className="space-y-4">
+                                {[
+                                    { key: "currentPassword", label: "Senha Atual", placeholder: "Digite sua senha atual" },
+                                    { key: "newPassword", label: "Nova Senha", placeholder: "Digite uma nova senha" },
+                                    { key: "confirmPassword", label: "Confirmar Nova Senha", placeholder: "Confirme a nova senha" },
+                                ].map(field => (
+                                    <div key={field.key} className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{field.label}</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
+                                            <input
+                                                type="password"
+                                                className="input !pl-10"
+                                                placeholder={field.placeholder}
+                                                value={passwordData[field.key]}
+                                                onChange={e => setPasswordData({ ...passwordData, [field.key]: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Nova Senha</label>
-                                    <div className="relative group">
-                                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            type="password"
-                                            className="input pl-14"
-                                            placeholder="Digite uma nova senha"
-                                            value={passwordData.newPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Confirmar Nova Senha</label>
-                                    <div className="relative group">
-                                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-600 transition-colors" size={20} />
-                                        <input
-                                            type="password"
-                                            className="input pl-14"
-                                            placeholder="Confirme a nova senha"
-                                            value={passwordData.confirmPassword}
-                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
+                                ))}
                             </div>
 
-                            <button className="btn-primary px-10 py-4 rounded-xl flex items-center gap-3 font-bold">
-                                <Save size={20} /> Alterar Senha
+                            <button className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2">
+                                <Save size={15} /> Alterar Senha
                             </button>
                         </div>
                     )}
 
                     {/* Tab: Notificações */}
                     {activeTab === "notificacoes" && (
-                        <div className="bg-white dark:bg-slate-900 p-8 lg:p-12 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 space-y-8">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                                <div className="w-1 h-8 bg-primary-600 rounded-full"></div>
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
                                 Preferências de Notificação
                             </h3>
 
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {[
                                     { key: "emailPosts", label: "Novas Postagens", desc: "Receba e-mail quando houver novas publicações" },
                                     { key: "emailEvents", label: "Eventos & Webinars", desc: "Notificações sobre eventos e aulas ao vivo" },
                                     { key: "emailNewsletter", label: "Newsletter Semanal", desc: "Resumo semanal das melhores publicações" },
                                     { key: "pushMessages", label: "Mensagens Diretas", desc: "Alertas quando alguém enviar uma mensagem" },
-                                ].map((item) => (
-                                    <div key={item.key} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                ].map(item => (
+                                    <div key={item.key} className="flex items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-surface-subtle rounded-md border border-border-subtle">
                                         <div>
-                                            <p className="font-bold text-slate-900 dark:text-white">{item.label}</p>
-                                            <p className="text-sm text-slate-500">{item.desc}</p>
+                                            <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                                            <p className="text-xs text-text-secondary mt-0.5">{item.desc}</p>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key] })}
-                                            className={`relative w-14 h-8 rounded-full transition-colors ${notifications[item.key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                            className={`relative w-11 h-6 rounded-full transition-colors ${notifications[item.key] ? "bg-brand-primary" : "bg-border-default"}`}
                                         >
-                                            <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${notifications[item.key] ? 'left-7' : 'left-1'}`} />
+                                            <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${notifications[item.key] ? "left-6" : "left-1"}`} />
                                         </button>
                                     </div>
                                 ))}
                             </div>
 
-                            <button className="btn-primary px-10 py-4 rounded-xl flex items-center gap-3 font-bold">
-                                <Save size={20} /> Salvar Preferências
+                            <div className="space-y-1.5 pt-2 border-t border-border-subtle">
+                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Quem pode me enviar mensagens</label>
+                                <select
+                                    className="input"
+                                    value={formData.allowMessagesFrom}
+                                    onChange={(e) => setFormData((p) => ({ ...p, allowMessagesFrom: e.target.value }))}
+                                >
+                                    <option value="everyone">Todos</option>
+                                    <option value="followers">Apenas seguidores</option>
+                                    <option value="connections">Apenas conexões</option>
+                                    <option value="nobody">Ninguém</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-border-subtle">
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Solicitações de conexão</p>
+                                {connectionRequests.length === 0 ? (
+                                    <p className="text-xs text-text-muted">Nenhuma solicitação pendente.</p>
+                                ) : connectionRequests.map((req) => (
+                                    <div key={req.requesterId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-surface-subtle rounded-md border border-border-subtle">
+                                        <div>
+                                            <p className="text-sm font-semibold text-text-primary">{req.name}</p>
+                                            <p className="text-xs text-text-muted">{req.email}</p>
+                                        </div>
+                                        <div className="flex w-full sm:w-auto gap-2">
+                                            <button type="button" onClick={() => respondRequest(req.requesterId, "reject")} className="btn-secondary text-xs flex-1 sm:flex-none">Recusar</button>
+                                            <button type="button" onClick={() => respondRequest(req.requesterId, "accept")} className="btn-primary text-xs flex-1 sm:flex-none">Aceitar</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-border-subtle">
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Minhas conexões</p>
+                                {connections.length === 0 ? (
+                                    <p className="text-xs text-text-muted">Você ainda não possui conexões.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {connections.map((conn) => (
+                                            <div key={conn.id} className="p-2.5 rounded-md bg-surface-subtle border border-border-subtle">
+                                                <p className="text-sm font-semibold text-text-primary">{conn.name}</p>
+                                                <p className="text-xs text-text-muted">{conn.email}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={handleSave} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2" type="button">
+                                <Save size={15} /> Salvar Preferências
                             </button>
+
+                            <div className="pt-3 border-t border-border-subtle space-y-3">
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">LGPD / GDPR</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button type="button" onClick={handleExportData} className="btn-secondary text-xs">Baixar meus dados (JSON)</button>
+                                </div>
+                                <div className="space-y-2 w-full sm:max-w-sm">
+                                    <input
+                                        type="password"
+                                        className="input"
+                                        placeholder="Digite sua senha para excluir conta"
+                                        value={deletePassword}
+                                        onChange={(e) => setDeletePassword(e.target.value)}
+                                    />
+                                    <button type="button" onClick={handleDeleteAccount} className="btn-danger text-xs">Excluir minha conta (Hard Delete)</button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {/* Tab: Especialidades */}
                     {activeTab === "especialidades" && (
-                        <div className="bg-white dark:bg-slate-900 p-8 lg:p-12 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 space-y-8">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                                <div className="w-1 h-8 bg-primary-600 rounded-full"></div>
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
                                 Minhas Especialidades
                             </h3>
 
-                            <p className="text-slate-500">Selecione as áreas de especialização que você atua ou tem interesse:</p>
+                            <p className="text-xs text-text-secondary">Selecione as áreas de especialização que você atua ou tem interesse:</p>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {[
-                                    "Cardiologia", "Pediatria", "Dermatologia", "Ortopedia",
-                                    "Ginecologia", "Neurologia", "Oftalmologia", "Psiquiatria",
-                                    "Oncologia", "Endocrinologia", "Geriatria", "Urologia"
-                                ].map((spec) => (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                {ESPECIALIDADES.map(spec => (
                                     <button
                                         key={spec}
                                         type="button"
-                                        className="px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
+                                        className="px-3 py-2.5 rounded-md border border-border-default text-xs font-semibold text-text-secondary hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary-light transition-all"
                                     >
                                         {spec}
                                     </button>
                                 ))}
                             </div>
 
-                            <button className="btn-primary px-10 py-4 rounded-xl flex items-center gap-3 font-bold">
-                                <Save size={20} /> Salvar Especialidades
+                            <button className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2">
+                                <Save size={15} /> Salvar Especialidades
                             </button>
                         </div>
                     )}

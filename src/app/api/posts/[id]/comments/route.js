@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 export async function POST(request, { params }) {
     try {
         const { id } = await params;
-        const { content } = await request.json();
+        const { content, parentId } = await request.json();
 
         const session = await auth();
         if (!session?.user) {
@@ -20,10 +20,19 @@ export async function POST(request, { params }) {
 
         const commentId = 'comment_' + Date.now().toString(36);
 
-        await query(`
-            INSERT INTO Comment (id, content, postId, authorId, createdAt) 
-            VALUES (?, ?, ?, ?, NOW())
-        `, [commentId, content, id, authorId]);
+        await query('ALTER TABLE Comment ADD COLUMN parentId VARCHAR(191) NULL').catch(() => {});
+
+        try {
+            await query(`
+                INSERT INTO Comment (id, content, postId, authorId, parentId, createdAt) 
+                VALUES (?, ?, ?, ?, ?, NOW())
+            `, [commentId, content, id, authorId, parentId || null]);
+        } catch {
+            await query(`
+                INSERT INTO Comment (id, content, postId, authorId, createdAt) 
+                VALUES (?, ?, ?, ?, NOW())
+            `, [commentId, content, id, authorId]);
+        }
 
         return NextResponse.json({ success: true, id: commentId });
     } catch (error) {

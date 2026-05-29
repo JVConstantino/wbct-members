@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { createLoginActivity, getUserByEmail, updateLastActiveAt } from "@/lib/user-store";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     session: { strategy: "jwt" },
@@ -7,37 +9,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         Credentials({
             name: "Credentials",
             credentials: {
-                email: { label: "Email", type: "email" },
+                email:    { label: "Email",    type: "email"    },
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
 
                 try {
-                    // Chamada para API route que faz a verificação
-                    const res = await fetch(`${process.env.AUTH_URL || 'http://localhost:3000'}/api/auth/verify`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: credentials.email,
-                            password: credentials.password
-                        })
-                    });
+                    const user = await getUserByEmail(credentials.email);
+                    if (!user || !user.password) return null;
 
-                    if (!res.ok) return null;
+                    if (user.status === "PENDING") {
+                        throw new Error("PENDING");
+                    }
+                    if (user.status === "REJECTED") {
+                        throw new Error("REJECTED");
+                    }
 
-                    const user = await res.json();
+                    const isValid = await bcrypt.compare(
+                        String(credentials.password),
+                        user.password
+                    );
+                    if (!isValid) return null;
 
-                    if (!user || !user.id) return null;
+                    // Registrar atividade de login (não bloqueia o auth se falhar)
+                    try {
+                        await createLoginActivity(user.id);
+                        await updateLastActiveAt(user.id);
+                    } catch { /* não bloqueia o login */ }
 
                     return {
-                        id: user.id,
-                        name: user.name,
+                        id:    String(user.id),
+                        name:  user.name,
                         email: user.email,
-                        role: user.role,
+                        image: user.image,
+                        role:  user.role,
                     };
-                } catch (error) {
-                    console.error('Auth error:', error);
+                } catch (err) {
+                    // Propagar erros de status para o client via NextAuth
+                    if (err.message === "PENDING" || err.message === "REJECTED") {
+                        throw err;
+                    }
+                    console.error("Auth authorize error:", err);
                     return null;
                 }
             },
@@ -47,20 +60,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.role = user.role;
+                token.id   = user.id;
+                token.image = user.image;
             }
             return token;
         },
         async session({ session, token }) {
-            if (token?.role) {
-                session.user.role = token.role;
-            }
-            if (token?.sub) {
-                session.user.id = token.sub;
-            }
+            if (token?.role) session.user.role = token.role;
+            if (token?.sub)  session.user.id   = token.sub;
+            if (token?.image) session.user.image = token.image;
             return session;
         },
     },
     pages: {
         signIn: "/login",
+        error:  "/login",
     },
 });

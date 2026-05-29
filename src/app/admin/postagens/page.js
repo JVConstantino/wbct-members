@@ -1,238 +1,314 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-    FileText,
-    CheckCircle,
-    XCircle,
-    Trash2,
-    Eye,
-    Clock,
-    Search,
-    Loader2,
-    MoreHorizontal,
-    ChevronDown
-} from "lucide-react";
+import { FileText, CheckCircle, XCircle, Trash2, Eye, Clock, Search } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import Modal from "@/components/ui/Modal";
 
-export default function PostsManagement() {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [error, setError] = useState("");
+const FILTERS = [
+    { id: "all",      label: "Todas"     },
+    { id: "pending",  label: "Pendentes" },
+    { id: "approved", label: "Aprovadas" },
+    { id: "rejected", label: "Rejeitadas"},
+];
+
+function PostStatusBadge({ status }) {
+    if (status === "APPROVED") return <Badge variant="success">Aprovado</Badge>;
+    if (status === "REJECTED") return <Badge variant="error">Rejeitado</Badge>;
+    return <Badge variant="warning">Pendente</Badge>;
+}
+
+function fmtDate(date) {
+    return new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+export default function PostagensPage() {
+    const [posts, setPosts]         = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [filter, setFilter]       = useState("all");
+    const [search, setSearch]       = useState("");
+    const [error, setError]         = useState("");
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewPost, setPreviewPost] = useState(null);
+    const [selectedIds, setSelectedIds] = useState([]);
 
     const fetchPosts = async () => {
         try {
             setLoading(true);
-            const statusParam = filter !== "all" ? `?status=${filter.toUpperCase()}` : "";
-            const res = await fetch(`/api/posts${statusParam}`);
+            const q   = filter !== "all" ? `?status=${filter.toUpperCase()}` : "";
+            const res = await fetch(`/api/posts${q}`);
             const data = await res.json();
-
-            if (data.success) {
-                setPosts(data.posts);
-            } else {
-                setError(data.error || "Error loading posts");
-            }
-        } catch (err) {
-            setError("Connection error");
+            if (data.success) setPosts(data.posts);
+            else setError(data.error || "Erro ao carregar postagens");
+        } catch {
+            setError("Erro de conexão");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchPosts();
-    }, [filter]);
+    useEffect(() => { fetchPosts(); }, [filter]);
+    useEffect(() => { setSelectedIds([]); }, [filter, search]);
 
-    const handleUpdateStatus = async (id, newStatus) => {
-        try {
-            const res = await fetch("/api/posts", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status: newStatus })
-            });
-            const data = await res.json();
-            if (data.success) {
-                fetchPosts();
-            } else {
-                alert("Error updating status: " + data.error);
-            }
-        } catch (err) {
-            alert("Connection error");
+    const updateStatus = async (id, status) => {
+        const res = await fetch("/api/posts", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status }),
+        });
+        const data = await res.json();
+        if (data.success) fetchPosts();
+    };
+
+    const updateStatusBulk = async (status) => {
+        if (!selectedIds.length) return;
+        const res = await fetch("/api/posts", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: selectedIds, status }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            setSelectedIds([]);
+            fetchPosts();
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Do you really want to delete this post?")) return;
+        if (!confirm("Excluir esta postagem permanentemente?")) return;
+        const res = await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) fetchPosts();
+    };
 
-        try {
-            const res = await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
-            const data = await res.json();
-            if (data.success) {
-                fetchPosts();
-            } else {
-                alert("Error deleting: " + data.error);
-            }
-        } catch (err) {
-            alert("Connection error");
+    const handleBulkDelete = async () => {
+        if (!selectedIds.length) return;
+        if (!confirm(`Excluir ${selectedIds.length} postagem(ns) permanentemente?`)) return;
+        const res = await fetch(`/api/posts?ids=${selectedIds.join(",")}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) {
+            setSelectedIds([]);
+            fetchPosts();
         }
     };
 
-    const filteredPosts = posts.filter(post =>
-        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.author.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const handlePreview = async (id) => {
+        try {
+            setPreviewOpen(true);
+            setPreviewLoading(true);
+            const res = await fetch(`/api/posts/${id}`);
+            const data = await res.json();
+            if (data.success) setPreviewPost(data.post);
+            else setError(data.error || "Erro ao carregar preview");
+        } catch {
+            setError("Erro ao carregar preview");
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        if (!confirm("Excluir este comentário?")) return;
+        const res = await fetch(`/api/comments/${commentId}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success && previewPost) {
+            const refreshed = await fetch(`/api/posts/${previewPost.id}`);
+            const postData = await refreshed.json();
+            if (postData.success) setPreviewPost(postData.post);
+        }
+    };
+
+    const filtered = posts.filter(p =>
+        p.title.toLowerCase().includes(search.toLowerCase()) ||
+        p.author?.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString("en-US", {
-            day: "2-digit",
-            month: "short"
-        });
+    const allSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
+    const toggleSelectAll = () => {
+        if (allSelected) return setSelectedIds([]);
+        setSelectedIds(filtered.map((p) => p.id));
     };
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case "APPROVED":
-                return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Approved</span>;
-            case "REJECTED":
-                return <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold">Rejected</span>;
-            default:
-                return <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold">Pending</span>;
-        }
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
     };
 
     return (
-        <div className="space-y-4">
-            {/* Header Compacto */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-lg md:text-xl font-black text-text-primary">Posts</h2>
-                    <p className="text-slate-500 text-xs">Moderate and manage posts</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">{filteredPosts.length} posts</span>
-                </div>
-            </div>
+        <div className="space-y-5">
+            <PageHeader
+                title="Postagens"
+                subtitle={`${filtered.length} postagem${filtered.length !== 1 ? "s" : ""}`}
+            />
 
-            {/* Filtros e Busca - Compactos */}
+            {/* Toolbar */}
             <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
-                <div className="flex bg-surface-card p-0.5 rounded-lg border border-border-subtle text-xs">
-                    {["all", "pending", "approved", "rejected"].map((f) => (
+                {/* Filtro de status */}
+                <div className="flex bg-surface-card border border-border-default rounded-md p-0.5 text-xs">
+                    {FILTERS.map(f => (
                         <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-3 py-1.5 rounded-md font-bold transition-all ${filter === f ? "bg-brand-primary text-white" : "text-text-muted hover:bg-surface-subtle"}`}
+                            key={f.id}
+                            onClick={() => setFilter(f.id)}
+                            className={`px-3 py-1.5 rounded-sm font-semibold transition-all ${
+                                filter === f.id
+                                    ? "bg-brand-primary text-white shadow-sm"
+                                    : "text-text-muted hover:text-text-primary hover:bg-surface-subtle"
+                            }`}
                         >
-                            {f === "all" ? "All" : f === "pending" ? "Pending" : f === "approved" ? "Approved" : "Rejected"}
+                            {f.label}
                         </button>
                     ))}
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                {/* Busca */}
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={13} />
                     <input
                         type="text"
-                        placeholder="Buscar..."
-                        className="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs bg-surface-card border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por título ou autor..."
+                        className="input !pl-10 text-xs w-full"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
                     />
                 </div>
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+                <div className="bg-status-error-bg border border-status-error/20 text-status-error px-3 py-2 rounded-md text-xs">
                     {error}
                 </div>
             )}
 
-            {/* Tabela Responsiva */}
-            <div className="bg-surface-card rounded-xl border border-border-subtle overflow-hidden">
+            {selectedIds.length > 0 && (
+                <div className="bg-brand-primary-light border border-brand-primary/20 text-brand-primary px-3 py-2 rounded-md flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold mr-1">{selectedIds.length} selecionada(s)</span>
+                    <button onClick={() => updateStatusBulk("APPROVED")} className="btn-primary text-xs py-1.5 px-3">Aprovar</button>
+                    <button onClick={() => updateStatusBulk("REJECTED")} className="btn-danger text-xs py-1.5 px-3">Rejeitar</button>
+                    <button onClick={handleBulkDelete} className="btn-secondary text-xs py-1.5 px-3">Excluir</button>
+                </div>
+            )}
+
+            {/* Tabela */}
+            <div className="card p-0 overflow-hidden">
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="animate-spin text-primary-600" size={24} />
+                    <div className="p-6 space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <Skeleton variant="text" className="w-8 h-8 rounded-md" />
+                                <div className="flex-1 space-y-1.5">
+                                    <Skeleton variant="text" className="w-64 h-3" />
+                                    <Skeleton variant="text" className="w-32 h-3" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ) : filteredPosts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                        <FileText className="text-slate-300 mb-2" size={32} />
-                        <p className="text-slate-500 text-sm">No posts found</p>
+                ) : filtered.length === 0 ? (
+                    <div className="p-8">
+                        <EmptyState
+                            icon={FileText}
+                            title="Nenhuma postagem encontrada"
+                            description={search ? "Tente outro termo de busca." : "Não há postagens neste filtro."}
+                        />
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[600px]">
-                            <thead className="bg-surface-subtle border-b border-border-subtle">
+                            <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-3 py-2">Title</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-3 py-2">Author</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-3 py-2 hidden md:table-cell">Date</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-3 py-2">Status</th>
-                                    <th className="text-right text-[10px] font-black text-text-muted uppercase px-3 py-2">Actions</th>
+                                    {["select", "Título", "Autor", "Data", "Status", ""].map((h, i) => (
+                                        <th key={i} className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wider px-4 py-3">
+                                            {h === "select" ? (
+                                                <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                                            ) : h}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-subtle">
-                                {filteredPosts.map((post) => (
+                                {filtered.map((post) => (
                                     <tr key={post.id} className="hover:bg-surface-subtle transition-colors">
-                                        <td className="px-3 py-2.5">
-                                            <div className="flex items-center gap-2">
-                                                {post.image && (
-                                                    <img src={post.image} alt="" className="w-8 h-8 rounded object-cover hidden sm:block" />
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(post.id)}
+                                                onChange={() => toggleSelect(post.id)}
+                                            />
+                                        </td>
+                                        {/* Título */}
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2.5">
+                                                {post.image ? (
+                                                    <img
+                                                        src={post.image}
+                                                        alt=""
+                                                        className="w-9 h-9 rounded-md object-cover hidden sm:block shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-9 h-9 rounded-md bg-surface-subtle hidden sm:flex items-center justify-center shrink-0">
+                                                        <FileText size={14} className="text-text-muted" />
+                                                    </div>
                                                 )}
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-text-primary text-sm truncate max-w-[180px] md:max-w-[250px]">{post.title}</p>
-                                                    <p className="text-[10px] text-text-muted truncate max-w-[150px] md:hidden">{post.author.name}</p>
-                                                </div>
+                                                <p className="text-sm font-medium text-text-primary truncate max-w-[200px]">
+                                                    {post.title}
+                                                </p>
                                             </div>
                                         </td>
-                                        <td className="px-3 py-2.5 hidden md:table-cell">
+                                        {/* Autor */}
+                                        <td className="px-4 py-3 hidden md:table-cell">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-[10px]">
-                                                    {post.author.name.charAt(0)}
-                                                </div>
-                                                <span className="text-xs text-text-secondary truncate max-w-[120px]">{post.author.name}</span>
+                                                <Avatar src={post.author?.image} name={post.author?.name} size="xs" />
+                                                <span className="text-xs text-text-secondary truncate max-w-[130px]">
+                                                    {post.author?.name}
+                                                </span>
                                             </div>
                                         </td>
-                                        <td className="px-3 py-2.5 hidden md:table-cell">
+                                        {/* Data */}
+                                        <td className="px-4 py-3 hidden md:table-cell">
                                             <span className="text-xs text-text-muted flex items-center gap-1">
                                                 <Clock size={10} />
-                                                {formatDate(post.createdAt)}
+                                                {fmtDate(post.createdAt)}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-2.5">
-                                            {getStatusBadge(post.status)}
+                                        {/* Status */}
+                                        <td className="px-4 py-3">
+                                            <PostStatusBadge status={post.status} />
                                         </td>
-                                        <td className="px-3 py-2.5 text-right">
+                                        {/* Ações */}
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1">
                                                 {post.status === "PENDING" && (
                                                     <>
                                                         <button
-                                                            onClick={() => handleUpdateStatus(post.id, "APPROVED")}
-                                                            className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
-                                                            title="Approve"
+                                                            onClick={() => updateStatus(post.id, "APPROVED")}
+                                                            title="Aprovar"
+                                                            className="p-1.5 bg-status-success text-white rounded-md hover:opacity-90 transition-opacity"
                                                         >
                                                             <CheckCircle size={12} />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleUpdateStatus(post.id, "REJECTED")}
-                                                            className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                                                            title="Reject"
+                                                            onClick={() => updateStatus(post.id, "REJECTED")}
+                                                            title="Rejeitar"
+                                                            className="p-1.5 bg-status-error text-white rounded-md hover:opacity-90 transition-opacity"
                                                         >
                                                             <XCircle size={12} />
                                                         </button>
                                                     </>
                                                 )}
-                                                <Link
-                                                    href={`/membro/postagens/${post.id}`}
-                                                    target="_blank"
-                                                    className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"
-                                                    title="View"
+                                                <button
+                                                    onClick={() => handlePreview(post.id)}
+                                                    title="Visualizar"
+                                                    className="p-1.5 text-text-muted hover:text-brand-primary hover:bg-brand-primary-light rounded-md transition-colors"
                                                 >
                                                     <Eye size={12} />
-                                                </Link>
+                                                </button>
                                                 <button
                                                     onClick={() => handleDelete(post.id)}
-                                                    className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg"
-                                                    title="Delete"
+                                                    title="Excluir"
+                                                    className="p-1.5 text-text-muted hover:text-status-error hover:bg-status-error-bg rounded-md transition-colors"
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>
@@ -245,6 +321,72 @@ export default function PostsManagement() {
                     </div>
                 )}
             </div>
+
+            <Modal
+                isOpen={previewOpen}
+                onClose={() => {
+                    setPreviewOpen(false);
+                    setPreviewPost(null);
+                }}
+                title="Preview da postagem"
+                size="2xl"
+            >
+                {previewLoading ? (
+                    <div className="space-y-3">
+                        <Skeleton variant="text" className="h-5 w-3/4" />
+                        <Skeleton variant="text" className="h-4 w-1/3" />
+                        <Skeleton variant="text" className="h-40 w-full" />
+                    </div>
+                ) : !previewPost ? (
+                    <p className="text-sm text-text-muted">Nenhum conteudo para exibir.</p>
+                ) : (
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="font-display text-xl font-bold text-text-primary">{previewPost.title}</h3>
+                            <p className="text-xs text-text-muted mt-1">
+                                {previewPost.author?.name} - {fmtDate(previewPost.createdAt)}
+                            </p>
+                        </div>
+
+                        {previewPost.image && (
+                            <img src={previewPost.image} alt="" className="w-full max-h-64 object-cover rounded-lg border border-border-default" />
+                        )}
+
+                        <article
+                            className="prose prose-sm max-w-none text-text-primary"
+                            dangerouslySetInnerHTML={{ __html: previewPost.content || "" }}
+                        />
+
+                        <div className="flex items-center gap-2 text-xs text-text-muted border-t border-border-default pt-3">
+                            <PostStatusBadge status={previewPost.status} />
+                            <span>{previewPost.comments?.length || 0} comentarios</span>
+                        </div>
+
+                        <div className="space-y-2 border-t border-border-default pt-3">
+                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Moderação de comentários</p>
+                            {(previewPost.comments || []).length === 0 ? (
+                                <p className="text-xs text-text-muted">Sem comentários nesta postagem.</p>
+                            ) : (
+                                (previewPost.comments || []).map((c) => (
+                                    <div key={c.id} className="flex items-start justify-between gap-3 p-2 rounded border border-border-subtle bg-surface-subtle">
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-semibold text-text-primary">{c.authorName}</p>
+                                            <p className="text-xs text-text-secondary line-clamp-2">{c.content}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteComment(c.id)}
+                                            className="p-1.5 rounded text-status-error hover:bg-status-error-bg"
+                                            title="Excluir comentário"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

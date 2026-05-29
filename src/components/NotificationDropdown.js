@@ -15,13 +15,24 @@ export default function NotificationDropdown() {
     const fetchNotifications = async () => {
         try {
             const res = await fetch('/api/notifications');
+            if (!res.ok) {
+                if (res.status === 401) {
+                    setNotifications([]);
+                    setUnreadCount(0);
+                    return;
+                }
+                throw new Error(`HTTP ${res.status}`);
+            }
             const data = await res.json();
-            if (data.success) {
+            if (data?.success && Array.isArray(data.notifications)) {
                 setNotifications(data.notifications);
-                setUnreadCount(data.notifications.filter(n => !n.isRead).length);
+                setUnreadCount(data.notifications.filter((n) => !n.isRead).length);
+            } else {
+                setNotifications([]);
+                setUnreadCount(0);
             }
         } catch (error) {
-            console.error('Error fetching notifications');
+            console.error('Error fetching notifications', error);
         }
     };
 
@@ -46,11 +57,14 @@ export default function NotificationDropdown() {
     const markAllRead = async () => {
         if (unreadCount > 0) {
             try {
-                await fetch('/api/notifications', { method: 'PUT' });
+                const res = await fetch('/api/notifications', { method: 'PUT' });
+                if (!res.ok) {
+                    return;
+                }
                 setUnreadCount(0);
                 setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
             } catch (error) {
-                console.error('Error marking as read');
+                console.error('Error marking as read', error);
             }
         }
     };
