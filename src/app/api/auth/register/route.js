@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { createPendingUser, getUserByEmail } from '@/lib/user-store';
 
 export async function POST(request) {
     try {
@@ -12,20 +12,22 @@ export async function POST(request) {
         }
 
         // Verificar se usuário já existe
-        const existing = await query('SELECT id FROM User WHERE email = ?', [email]);
-        if (existing.length > 0) {
+        const existing = await getUserByEmail(email);
+        if (existing) {
             return NextResponse.json({ success: false, error: 'Este e-mail já está cadastrado.' }, { status: 400 });
         }
 
         // Hash da senha
         const hashedPassword = await bcrypt.hash(password, 10);
-        const id = 'user_' + Date.now().toString(36);
-
-        // Inserir usuário
-        await query(`
-            INSERT INTO User (id, name, email, password, bio, specialty, crm, image, role, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'MEMBER', 'PENDING', NOW(), NOW())
-        `, [id, name, email, hashedPassword, bio || '', specialty || '', crm || '', image || null]);
+        await createPendingUser({
+            name,
+            email,
+            password: hashedPassword,
+            bio,
+            specialty,
+            crm,
+            image,
+        });
 
         return NextResponse.json({ success: true, message: 'Médico cadastrado com sucesso!' });
     } catch (error) {

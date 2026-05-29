@@ -45,21 +45,21 @@ export default function MemberHome() {
     const firstName = session?.user?.name?.split(" ")[0] || "Médico";
 
     return (
-        <div className="space-y-6 pb-8">
+        <div className="space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
 
             {/* Banner de boas-vindas */}
-            <div className="relative overflow-hidden rounded-lg bg-surface-card border border-border-default shadow-card px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative overflow-hidden rounded-lg bg-surface-card border border-border-default shadow-card px-4 sm:px-6 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-brand-primary/5 rounded-full blur-3xl -mt-12 -mr-12 pointer-events-none" />
                 <div className="relative z-10">
-                    <h2 className="text-xl font-display font-bold text-text-primary">
+                    <h2 className="text-lg sm:text-xl font-display font-bold text-text-primary">
                         Olá, <span className="text-brand-primary">{firstName}</span>
                     </h2>
-                    <p className="text-sm text-text-secondary mt-0.5">
+                    <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
                         Explore os conteúdos da comunidade e compartilhe seu conhecimento.
                     </p>
                 </div>
                 <div className="relative z-10 shrink-0">
-                    <Link href="/membro/criar" className="btn-primary gap-2">
+                    <Link href="/membro/criar" className="btn-primary gap-2 w-full sm:w-auto justify-center">
                         <PlusSquare size={15} />
                         Nova Postagem
                     </Link>
@@ -67,19 +67,19 @@ export default function MemberHome() {
             </div>
 
             {/* Grid: Feed + Sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
                 {/* ── Feed principal ── */}
                 <div className="lg:col-span-2 space-y-4">
-                    <div className="flex items-center gap-2.5 px-1">
+                    <div className="flex items-center gap-2 px-1">
                         <div className="p-1.5 bg-brand-primary-light text-brand-primary rounded-md">
                             <TrendingUp size={15} />
                         </div>
-                        <h3 className="text-base font-display font-semibold text-text-primary">Feed da Comunidade</h3>
+                        <h3 className="text-sm sm:text-base font-display font-semibold text-text-primary">Feed da Comunidade</h3>
                     </div>
 
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             {[...Array(4)].map((_, i) => (
                                 <div key={i} className="bg-surface-card rounded-lg border border-border-default p-4 space-y-3">
                                     <Skeleton variant="text" className="w-full h-32 rounded-md" />
@@ -102,7 +102,7 @@ export default function MemberHome() {
                             }
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                             {posts.map((post) => (
                                 <Link
                                     key={post.id}
@@ -130,10 +130,10 @@ export default function MemberHome() {
                                     </div>
 
                                     {/* Conteúdo */}
-                                    <div className="p-4 flex-1 flex flex-col gap-3">
+                                    <div className="p-3 sm:p-4 flex-1 flex flex-col gap-3">
                                         {/* Autor + data */}
-                                        <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-between gap-2 min-w-0">
+                                            <div className="flex items-center gap-2 min-w-0">
                                                 <Avatar
                                                     src={post.author?.image}
                                                     name={post.author?.name}
@@ -143,7 +143,7 @@ export default function MemberHome() {
                                                     {post.author?.name}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-1 text-text-muted text-[10px] shrink-0">
+                                            <div className="hidden sm:flex items-center gap-1 text-text-muted text-[10px] shrink-0">
                                                 <Calendar size={10} />
                                                 {new Date(post.createdAt).toLocaleDateString("pt-BR")}
                                             </div>
@@ -181,7 +181,7 @@ export default function MemberHome() {
 
                     {/* Próximos eventos */}
                     {!loading && events.length > 0 && (
-                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-5">
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-5">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 bg-status-warning-bg text-status-warning rounded-md">
@@ -199,7 +199,7 @@ export default function MemberHome() {
                                         key={event.id}
                                         href={event.link || "#"}
                                         target={event.link ? "_blank" : "_self"}
-                                        className="flex items-center gap-3 p-2.5 rounded-md bg-surface-subtle hover:bg-surface-section transition-colors group"
+                                        className="flex items-center gap-2.5 sm:gap-3 p-2.5 rounded-md bg-surface-subtle hover:bg-surface-section transition-colors group"
                                     >
                                         <div
                                             className="w-10 h-10 rounded-md flex flex-col items-center justify-center text-white shrink-0 text-xs"
@@ -227,7 +227,7 @@ export default function MemberHome() {
                         </div>
                     )}
 
-                    {/* WBCT Academy */}
+                    {/* Webinars */}
                     <div className="bg-brand-strong rounded-lg p-5 text-white relative overflow-hidden shadow-card">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/30 rounded-full blur-2xl -mt-4 -mr-4 pointer-events-none" />
                         <div className="relative z-10 space-y-3">
@@ -235,8 +235,8 @@ export default function MemberHome() {
                                 <PlayCircle size={16} className="text-brand-primary-light" />
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Em destaque</span>
                             </div>
-                            <h4 className="text-sm font-display font-bold leading-snug">
-                                WBCT Academy — Cursos e Webinars Médicos
+                            <h4 className="text-sm sm:text-base font-display font-bold leading-snug">
+                                Webinars — Cursos e Webinars Médicos
                             </h4>
                             <div className="aspect-video bg-surface-subtle rounded-md overflow-hidden relative group cursor-pointer">
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -261,7 +261,7 @@ export default function MemberHome() {
                             <Users size={48} />
                         </div>
                         <div className="relative z-10 space-y-3">
-                            <h4 className="text-sm font-display font-bold">Convide um colega</h4>
+                            <h4 className="text-sm sm:text-base font-display font-bold">Convide um colega</h4>
                             <p className="text-xs text-blue-100 leading-relaxed">
                                 A força da comunidade médica está na colaboração. Convide outros médicos para a plataforma.
                             </p>

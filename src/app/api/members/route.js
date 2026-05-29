@@ -1,6 +1,7 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { COLLECTIONS, Query, deleteDocument, hasAppwriteConfig, listDocuments } from '@/lib/appwrite-db';
 
 // GET - Listar todos os membros (apenas ADMIN)
 export async function GET(request) {
@@ -55,10 +56,11 @@ export async function PUT(request) {
         }
 
         const body = await request.json();
-        const { id, password, ...otherFields } = body;
+        const { id, ids, password, ...otherFields } = body;
+        const targetIds = Array.isArray(ids) && ids.length ? ids : (id ? [id] : []);
 
-        if (!id) {
-            return NextResponse.json({ success: false, error: 'ID é obrigatório' }, { status: 400 });
+        if (!targetIds.length) {
+            return NextResponse.json({ success: false, error: 'ID(s) é obrigatório' }, { status: 400 });
         }
 
         const updates = [];
@@ -83,11 +85,11 @@ export async function PUT(request) {
         }
 
         if (updates.length > 0) {
-            values.push(id);
-            await query(`UPDATE User SET ${updates.join(', ')} WHERE id = ?`, values);
+            const placeholders = targetIds.map(() => '?').join(',');
+            await query(`UPDATE User SET ${updates.join(', ')} WHERE id IN (${placeholders})`, [...values, ...targetIds]);
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
         console.error('Error updating member:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -130,14 +132,42 @@ export async function DELETE(request) {
 
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
+        const idsParam = searchParams.get('ids');
+        const ids = idsParam ? idsParam.split(',').map(v => v.trim()).filter(Boolean) : [];
+        const targetIds = ids.length ? ids : (id ? [id] : []);
 
-        if (!id) {
-            return NextResponse.json({ success: false, error: 'ID é obrigatório' }, { status: 400 });
+        if (!targetIds.length) {
+            return NextResponse.json({ success: false, error: 'ID(s) é obrigatório' }, { status: 400 });
         }
 
-        await query('DELETE FROM User WHERE id = ?', [id]);
+        const membersToDelete = await query(
+            `SELECT id, email FROM User WHERE id IN (${targetIds.map(() => '?').join(',')})`,
+            targetIds
+        );
 
-        return NextResponse.json({ success: true });
+        const placeholders = targetIds.map(() => '?').join(',');
+        await query(`DELETE FROM User WHERE id IN (${placeholders})`, targetIds);
+
+        if (hasAppwriteConfig && membersToDelete.length > 0) {
+            try {
+                const usersCollection = await listDocuments(COLLECTIONS.users, [Query.limit(5000)]);
+                const idSet = new Set(membersToDelete.map((m) => m.id));
+                const emailSet = new Set(membersToDelete.map((m) => String(m.email || '').toLowerCase()));
+
+                const appwriteMatches = (usersCollection.documents || []).filter((doc) => {
+                    const docEmail = String(doc.email || '').toLowerCase();
+                    return idSet.has(doc.$id) || emailSet.has(docEmail);
+                });
+
+                for (const doc of appwriteMatches) {
+                    await deleteDocument(COLLECTIONS.users, doc.$id);
+                }
+            } catch (appwriteError) {
+                console.error('Error deleting member(s) from Appwrite:', appwriteError);
+            }
+        }
+
+        return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
         console.error('Error deleting member:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

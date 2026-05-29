@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { createLoginActivity, getUserByEmail, updateLastActiveAt } from '@/lib/user-store';
 
 export async function POST(request) {
     try {
@@ -10,12 +10,7 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Email e senha são obrigatórios' }, { status: 400 });
         }
 
-        const users = await query(
-            'SELECT id, name, email, password, role, status FROM User WHERE email = ?',
-            [email]
-        );
-
-        const user = users[0];
+        const user = await getUserByEmail(email);
 
         if (!user || !user.password) {
             return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 401 });
@@ -39,17 +34,8 @@ export async function POST(request) {
 
         // Registrar login na tabela UserActivity para analytics
         try {
-            const activityId = `login_${user.id.slice(0, 8)}_${Date.now().toString(36)}`;
-            await query(
-                'INSERT INTO UserActivity (id, userId, type, createdAt) VALUES (?, ?, ?, NOW())',
-                [activityId, user.id, 'LOGIN']
-            );
-
-            // Atualizar lastActiveAt para tracking de usuários online
-            await query(
-                'UPDATE User SET lastActiveAt = NOW() WHERE id = ?',
-                [user.id]
-            );
+            await createLoginActivity(user.id);
+            await updateLastActiveAt(user.id);
         } catch (activityError) {
             // Não bloquear login se falhar o registro de atividade
             console.error('Erro ao registrar atividade de login:', activityError);

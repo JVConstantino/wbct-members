@@ -2,12 +2,31 @@ import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from "@/lib/auth";
 
+async function ensureNotificationTable() {
+    await query(`
+        CREATE TABLE IF NOT EXISTS Notification (
+            id VARCHAR(191) PRIMARY KEY,
+            userId VARCHAR(191) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            content TEXT NOT NULL,
+            relatedId VARCHAR(191),
+            isRead BOOLEAN NOT NULL DEFAULT FALSE,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_notification_user_created (userId, createdAt),
+            INDEX idx_notification_user_read (userId, isRead)
+        )
+    `);
+}
+
 export async function GET(request) {
     try {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
         }
+
+        await ensureNotificationTable();
 
         // Buscar notificações do usuário
         const notifications = await query(`
@@ -31,6 +50,8 @@ export async function PUT(request) {
         if (!session?.user) {
             return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
         }
+
+        await ensureNotificationTable();
 
         // Marcar todas como lidas (ao abrir dropdown)
         await query(`

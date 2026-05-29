@@ -3,17 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-    Clock,
-    MessageSquare,
-    ArrowRight,
-    Loader2,
     Calendar,
     Search,
     BookOpen,
-    User,
     ChevronRight,
     Image as ImageIcon
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
 
 export default function BlogListPage() {
     const [posts, setPosts] = useState([]);
@@ -26,16 +25,13 @@ export default function BlogListPage() {
                 setLoading(true);
                 const res = await fetch("/api/posts?status=APPROVED");
                 const data = await res.json();
-                if (data.success) {
-                    setPosts(data.posts);
-                }
+                if (data.success) setPosts(data.posts);
             } catch (error) {
-                console.error("Error loading posts:", error);
+                console.error("Erro ao carregar posts:", error);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchPosts();
     }, []);
 
@@ -44,61 +40,72 @@ export default function BlogListPage() {
         post.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 min-h-[60vh]">
-                <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-                <p className="text-slate-500 font-bold text-xl">Loading Articles HUB...</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6 pb-12">
-            {/* Header com busca */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-lg">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
-                            <BookOpen size={18} />
+        <div className="space-y-5 pb-8">
+            {/* Banner */}
+            <div className="relative rounded-lg bg-surface-card border border-border-default shadow-card px-6 py-5 overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-brand-primary/5 rounded-full blur-3xl -mt-12 -mr-12 pointer-events-none" />
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="p-1.5 bg-brand-primary-light rounded-md">
+                                <BookOpen size={14} className="text-brand-primary" />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Hub de Conhecimento</span>
                         </div>
-                        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Knowledge Hub</span>
+                        <h2 className="text-xl font-display font-bold text-text-primary">Artigos da Comunidade</h2>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                            Acesse conteúdo exclusivo, artigos científicos e discussões de casos clínicos.
+                        </p>
                     </div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Articles <span className="text-primary-600">HUB</span></h1>
-                    <p className="text-slate-500 font-medium text-sm max-w-xl">
-                        Access exclusive content, scientific articles and clinical case discussions shared by our community.
-                    </p>
+                    <div className="shrink-0 text-sm font-semibold text-text-muted">
+                        <span className="text-brand-primary font-bold">{filteredPosts.length}</span> artigo{filteredPosts.length !== 1 ? "s" : ""} disponível{filteredPosts.length !== 1 ? "is" : ""}
+                    </div>
                 </div>
+            </div>
 
-                <div className="relative w-full md:w-80 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search articles..."
-                        className="input pl-12 py-3 bg-slate-50 dark:bg-slate-800 border-transparent focus:bg-white focus:ring-2 ring-primary-500/10 transition-all"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
+            {/* Busca */}
+            <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
+                <input
+                    type="text"
+                    placeholder="Buscar artigos..."
+                    className="input !pl-10"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                />
             </div>
 
             {/* Grid de Posts */}
-            {filteredPosts.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-                    <BookOpen className="mx-auto text-slate-200 mb-4" size={48} />
-                    <h3 className="text-2xl font-black text-slate-400">No articles found</h3>
-                    <p className="text-slate-300 font-medium mt-2">Try adjusting your search terms or come back later.</p>
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="bg-surface-card rounded-lg border border-border-default overflow-hidden">
+                            <Skeleton variant="text" className="w-full aspect-video rounded-none" />
+                            <div className="p-4 space-y-2">
+                                <Skeleton variant="text" className="w-3/4 h-4" />
+                                <Skeleton variant="text" className="w-full h-3" />
+                                <Skeleton variant="text" className="w-2/3 h-3" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
+            ) : filteredPosts.length === 0 ? (
+                <EmptyState
+                    icon={BookOpen}
+                    title="Nenhum artigo encontrado"
+                    description={searchTerm ? "Tente buscar com outros termos." : "Os artigos da comunidade aparecerão aqui em breve."}
+                />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredPosts.map((post) => (
+                    {filteredPosts.map(post => (
                         <Link
                             key={post.id}
                             href={`/membro/postagens/${post.id}`}
-                            className="group flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                            className="group flex flex-col bg-surface-card rounded-lg border border-border-default shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
                         >
-                            {/* Imagem de Capa */}
-                            <div className="aspect-video overflow-hidden relative bg-slate-100 dark:bg-slate-800">
+                            {/* Imagem de capa */}
+                            <div className="aspect-video overflow-hidden relative bg-surface-subtle">
                                 {post.image ? (
                                     <img
                                         src={post.image}
@@ -106,56 +113,47 @@ export default function BlogListPage() {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-                                        <ImageIcon size={48} strokeWidth={1} />
+                                    <div className="absolute inset-0 flex items-center justify-center text-text-muted">
+                                        <ImageIcon size={36} strokeWidth={1} />
                                     </div>
                                 )}
-                                <div className="absolute top-3 left-3">
-                                    <span className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-primary-600 shadow-md">
-                                        Article
+                                <div className="absolute top-2 left-2">
+                                    <span className="bg-surface-card/95 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest text-brand-primary shadow-sm">
+                                        Artigo
                                     </span>
                                 </div>
                             </div>
 
                             {/* Conteúdo */}
-                            <div className="p-4 flex-1 flex flex-col space-y-3">
+                            <div className="p-4 flex-1 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-7 h-7 rounded-lg bg-primary-100 text-primary-600 flex items-center justify-center font-black text-xs">
-                                            {post.author.name.charAt(0)}
-                                        </div>
-                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{post.author.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <Avatar src={post.author?.image} name={post.author?.name} size="xs" />
+                                        <span className="text-xs font-semibold text-text-primary">{post.author?.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-1 text-slate-400 font-bold text-[9px] uppercase tracking-wide">
-                                        <Calendar size={10} />
-                                        {new Date(post.createdAt).toLocaleDateString()}
+                                    <div className="flex items-center gap-1 text-text-muted text-[10px] font-semibold uppercase">
+                                        <Calendar size={9} />
+                                        {new Date(post.createdAt).toLocaleDateString("pt-BR")}
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-base font-black text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary-600 transition-colors">
-                                        {post.title}
-                                    </h3>
-                                    <p className="text-slate-500 dark:text-slate-400 line-clamp-2 text-xs leading-relaxed">
-                                        {post.content}
-                                    </p>
-                                </div>
+                                <h3 className="text-sm font-semibold text-text-primary leading-snug group-hover:text-brand-primary transition-colors line-clamp-2">
+                                    {post.title}
+                                </h3>
+                                <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed flex-1">
+                                    {post.content?.replace(/<[^>]+>/g, "")}
+                                </p>
 
-                                <div className="pt-3 mt-auto border-t border-slate-50 dark:border-slate-800 flex items-center justify-between group/btn">
-                                    <div className="flex items-center gap-1 text-primary-600 font-black text-[10px] uppercase tracking-wider">
-                                        Read Full <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                    </div>
-                                    <div className="flex items-center gap-2 text-slate-300">
-                                        <MessageSquare size={14} />
-                                        <span className="text-[10px] font-bold">Interact</span>
-                                    </div>
+                                <div className="flex items-center pt-3 border-t border-border-subtle">
+                                    <span className="flex items-center gap-1 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
+                                        Ler artigo <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                                    </span>
                                 </div>
                             </div>
                         </Link>
                     ))}
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 }

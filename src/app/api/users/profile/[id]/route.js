@@ -11,7 +11,13 @@ export async function GET(request, { params }) {
             return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
         }
 
-        const users = await query('SELECT id, name, email, image, bio, stack, crm, specialty, role FROM User WHERE id = ?', [id]);
+        let users = [];
+        try {
+            users = await query('SELECT id, name, email, image, bio, crm, specialty, role, allowMessagesFrom FROM User WHERE id = ?', [id]);
+        } catch {
+            users = await query('SELECT id, name, email, image, bio, crm, specialty, role FROM User WHERE id = ?', [id]);
+            users = users.map((u) => ({ ...u, allowMessagesFrom: 'followers' }));
+        }
 
         if (users.length === 0) {
             return NextResponse.json({ success: false, error: 'Usuário não encontrado' }, { status: 404 });

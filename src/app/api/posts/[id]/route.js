@@ -19,6 +19,8 @@ export async function GET(request, { params }) {
 
         const post = posts[0];
 
+        await query('ALTER TABLE Comment ADD COLUMN parentId VARCHAR(191) NULL').catch(() => {});
+
         // Se o post não estiver aprovado, apenas o autor ou admin pode ver o detalhe completo via esta rota
         // (Isso protege o acesso a posts pendentes)
         const session = await auth();
@@ -38,13 +40,25 @@ export async function GET(request, { params }) {
         }
 
         // Buscar comentários
-        const comments = await query(`
-            SELECT c.*, u.name as authorName, u.image as authorImage
-            FROM Comment c
-            JOIN User u ON c.authorId = u.id
-            WHERE c.postId = ?
-            ORDER BY c.createdAt DESC
-        `, [id]);
+        let comments = [];
+        try {
+            comments = await query(`
+                SELECT c.*, u.name as authorName, u.image as authorImage, c.parentId
+                FROM Comment c
+                JOIN User u ON c.authorId = u.id
+                WHERE c.postId = ?
+                ORDER BY c.createdAt DESC
+            `, [id]);
+        } catch {
+            comments = await query(`
+                SELECT c.*, u.name as authorName, u.image as authorImage
+                FROM Comment c
+                JOIN User u ON c.authorId = u.id
+                WHERE c.postId = ?
+                ORDER BY c.createdAt DESC
+            `, [id]);
+            comments = comments.map((c) => ({ ...c, parentId: null }));
+        }
 
         return NextResponse.json({
             success: true,

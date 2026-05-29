@@ -2,197 +2,154 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-    Search,
-    Users,
-    Loader2,
-    Stethoscope,
-    MapPin,
-    FileText,
-    ChevronRight,
-    Filter
-} from "lucide-react";
+import { Search, Users, Stethoscope, FileText, ChevronRight, Filter } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 
-export default function DirectoryPage() {
-    const [doctors, setDoctors] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterSpecialty, setFilterSpecialty] = useState("");
+export default function DiretorioPage() {
+    const [doctors, setDoctors]         = useState([]);
+    const [loading, setLoading]         = useState(true);
+    const [search, setSearch]           = useState("");
+    const [filterSpec, setFilterSpec]   = useState("");
 
     useEffect(() => {
-        const fetchDoctors = async () => {
+        const load = async () => {
             try {
-                setLoading(true);
-                const res = await fetch("/api/users/directory");
+                const res  = await fetch("/api/users/directory");
                 const data = await res.json();
-                if (data.success) {
-                    setDoctors(data.users);
-                }
-            } catch (error) {
-                console.error("Error loading directory:", error);
+                if (data.success) setDoctors(data.users);
+            } catch (err) {
+                console.error("Erro ao carregar diretório:", err);
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchDoctors();
+        load();
     }, []);
 
-    // Filtrar médicos
-    const filteredDoctors = doctors.filter(doctor => {
-        const matchesSearch =
-            doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doctor.stack?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doctor.specialty?.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesFilter = !filterSpecialty || doctor.stack?.toLowerCase().includes(filterSpecialty.toLowerCase());
-
-        return matchesSearch && matchesFilter;
-    });
-
-    // Especialidades únicas para o filtro
     const specialties = [...new Set(doctors.map(d => d.stack).filter(Boolean))];
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 min-h-[60vh]">
-                <Loader2 className="animate-spin text-primary-600 mb-4" size={48} />
-                <p className="text-slate-500 font-bold text-xl">Carregando Diretório Médico...</p>
-            </div>
-        );
-    }
+    const filtered = doctors.filter(d => {
+        const q = search.toLowerCase();
+        const matchSearch =
+            d.name?.toLowerCase().includes(q) ||
+            d.stack?.toLowerCase().includes(q) ||
+            d.specialty?.toLowerCase().includes(q);
+        const matchSpec = !filterSpec || d.stack?.toLowerCase().includes(filterSpec.toLowerCase());
+        return matchSearch && matchSpec;
+    });
 
     return (
-        <div className="space-y-10 pb-20">
-            {/* Header */}
-            <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-primary-50 text-primary-600 rounded-xl">
-                                <Users size={24} />
-                            </div>
-                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Networking</span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
-                            Diretório <span className="text-primary-600">Médico</span>
-                        </h1>
-                        <p className="text-slate-500 font-medium text-lg max-w-xl">
-                            Conecte-se com outros profissionais da saúde, conheça suas especialidades e acompanhe suas contribuições.
-                        </p>
-                    </div>
+        <div className="space-y-6 pb-8">
+            <PageHeader
+                title="Diretório Médico"
+                subtitle="Conecte-se com outros profissionais da comunidade WBCT"
+            />
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                        {/* Busca */}
-                        <div className="relative flex-1 lg:w-80 group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search by name or specialty..."
-                                className="input pl-14 py-4 bg-slate-50 dark:bg-slate-800 border-transparent focus:bg-white dark:focus:bg-slate-700"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-
-                        {/* Filtro de Especialidade */}
-                        {specialties.length > 0 && (
-                            <div className="relative">
-                                <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                                <select
-                                    className="input pl-14 py-4 pr-10 bg-slate-50 dark:bg-slate-800 border-transparent appearance-none cursor-pointer"
-                                    value={filterSpecialty}
-                                    onChange={(e) => setFilterSpecialty(e.target.value)}
-                                >
-                                    <option value="">Todas especialidades</option>
-                                    {specialties.map((spec) => (
-                                        <option key={spec} value={spec}>{spec}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </div>
+            {/* Busca + filtro */}
+            <div className="card p-3 flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nome, especialidade..."
+                        className="input !pl-10"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
                 </div>
+                {specialties.length > 0 && (
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={13} />
+                        <select
+                            className="input pl-8 pr-8 appearance-none cursor-pointer"
+                            value={filterSpec}
+                            onChange={e => setFilterSpec(e.target.value)}
+                        >
+                            <option value="">Todas especialidades</option>
+                            {specialties.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                )}
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <p className="text-3xl font-black text-primary-600">{doctors.length}</p>
-                    <p className="text-sm text-slate-500 font-medium">Médicos Cadastrados</p>
-                </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <p className="text-3xl font-black text-primary-600">{specialties.length}</p>
-                    <p className="text-sm text-slate-500 font-medium">Especialidades</p>
-                </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <p className="text-3xl font-black text-primary-600">{filteredDoctors.length}</p>
-                    <p className="text-sm text-slate-500 font-medium">Resultados</p>
-                </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <p className="text-3xl font-black text-emerald-500">Online</p>
-                    <p className="text-sm text-slate-500 font-medium">Comunidade Ativa</p>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                    { label: "Médicos Cadastrados", value: doctors.length },
+                    { label: "Especialidades",       value: specialties.length },
+                    { label: "Resultados",           value: filtered.length },
+                    { label: "Comunidade Ativa",     value: "Online", highlight: true },
+                ].map(({ label, value, highlight }) => (
+                    <div key={label} className="card text-center py-4">
+                        <p className={`text-2xl font-bold ${highlight ? "text-status-success" : "text-brand-primary"}`}>
+                            {value}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5">{label}</p>
+                    </div>
+                ))}
             </div>
 
-            {/* Grid de Médicos */}
-            {filteredDoctors.length === 0 ? (
-                <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-                    <Users className="mx-auto text-slate-200 mb-6" size={80} />
-                    <h3 className="text-2xl font-black text-slate-400">No doctor found</h3>
-                    <p className="text-slate-300 font-medium mt-2">Tente ajustar seus filtros de busca.</p>
+            {/* Grid de médicos */}
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="card space-y-3">
+                            <div className="flex items-start gap-4">
+                                <Skeleton variant="avatar" className="w-14 h-14 rounded-lg" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton variant="text" className="w-40 h-4" />
+                                    <Skeleton variant="text" className="w-28 h-3" />
+                                    <Skeleton variant="text" className="w-full h-3" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
+            ) : filtered.length === 0 ? (
+                <EmptyState
+                    icon={Users}
+                    title="Nenhum médico encontrado"
+                    description="Tente ajustar sua busca ou filtro de especialidade."
+                />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredDoctors.map((doctor) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {filtered.map(doctor => (
                         <Link
                             key={doctor.id}
                             href={`/membro/medico/${doctor.id}`}
-                            className="group bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                            className="group card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
                         >
-                            <div className="flex items-start gap-5">
-                                {/* Avatar */}
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-2xl font-black flex-shrink-0 overflow-hidden">
-                                    {doctor.image ? (
-                                        <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        doctor.name?.charAt(0) || "M"
-                                    )}
-                                </div>
-
-                                {/* Info */}
+                            <div className="flex items-start gap-4">
+                                <Avatar src={doctor.image} name={doctor.name} size="lg" online />
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white truncate group-hover:text-primary-600 transition-colors">
+                                    <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-brand-primary transition-colors">
                                         {doctor.name || "Médico"}
                                     </h3>
-
                                     {doctor.stack && (
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Stethoscope size={14} className="text-primary-500" />
-                                            <span className="text-sm font-medium text-primary-600">{doctor.stack}</span>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            <Stethoscope size={12} className="text-brand-primary shrink-0" />
+                                            <span className="text-xs font-medium text-brand-primary truncate">{doctor.stack}</span>
                                         </div>
                                     )}
-
                                     {doctor.specialty && (
-                                        <p className="text-sm text-slate-500 mt-1 truncate">{doctor.specialty}</p>
+                                        <p className="text-xs text-text-muted mt-0.5 truncate">{doctor.specialty}</p>
                                     )}
-
                                     {doctor.bio && (
-                                        <p className="text-sm text-slate-400 mt-2 line-clamp-2">{doctor.bio}</p>
+                                        <p className="text-xs text-text-secondary mt-1.5 line-clamp-2 leading-relaxed">{doctor.bio}</p>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Footer */}
-                            <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-50 dark:border-slate-800">
-                                <div className="flex items-center gap-4 text-slate-400">
-                                    <span className="flex items-center gap-1 text-xs font-medium">
-                                        <FileText size={14} />
-                                        {doctor._count?.posts || 0} posts
-                                    </span>
-                                </div>
-                                <span className="flex items-center gap-1 text-primary-600 text-xs font-bold uppercase tracking-wider group-hover:gap-2 transition-all">
-                                    Ver Perfil <ChevronRight size={14} />
+                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border-subtle">
+                                <span className="flex items-center gap-1 text-xs text-text-muted">
+                                    <FileText size={12} />
+                                    {doctor._count?.posts || 0} postagem{(doctor._count?.posts || 0) !== 1 ? "s" : ""}
+                                </span>
+                                <span className="flex items-center gap-1 text-xs font-semibold text-brand-primary uppercase tracking-wide group-hover:gap-1.5 transition-all">
+                                    Ver perfil <ChevronRight size={12} />
                                 </span>
                             </div>
                         </Link>

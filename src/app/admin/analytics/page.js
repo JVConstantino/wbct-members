@@ -6,27 +6,65 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import {
-    TrendingUp, TrendingDown, Users, FileText, Heart, MessageCircle,
-    UserPlus, Eye, Activity, Loader2, BarChart3, PieChart as PieIcon,
+    TrendingUp, Users, FileText, Heart,
+    UserPlus, Activity, BarChart3, PieChart as PieIcon,
     Calendar, RefreshCw, Wifi
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Spinner } from "@/components/ui/Skeleton";
+
+/* ── Paleta de cores para gráficos ── */
+const C_BLUE    = "#2563eb";
+const C_CYAN    = "#0284c7";
+const C_SUCCESS = "#059669";
+const C_WARNING = "#d97706";
+const C_ERROR   = "#dc2626";
+const C_PURPLE  = "#7c3aed";
+
+const TIME_RANGES = [
+    { key: "24h",  label: "24h" },
+    { key: "48h",  label: "48h" },
+    { key: "7d",   label: "7d" },
+    { key: "30d",  label: "30d" },
+    { key: "90d",  label: "90d" },
+];
+
+function fmtDate(dateStr) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+}
+
+/* ── KPI Card ── */
+function KpiCard({ icon: Icon, label, value, iconBg, iconColor, valueColor }) {
+    return (
+        <div className="bg-surface-card border border-border-default rounded-lg p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-2">
+                <div className={`p-2 rounded-md ${iconBg}`}>
+                    <Icon size={15} className={iconColor} />
+                </div>
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{label}</span>
+            </div>
+            <p className={`text-2xl font-bold ${valueColor || "text-text-primary"}`}>{value ?? 0}</p>
+        </div>
+    );
+}
 
 export default function AnalyticsPage() {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [activeChart, setActiveChart] = useState("logins");
+    const [data, setData]         = useState(null);
+    const [loading, setLoading]   = useState(true);
+    const [activeChart, setActive] = useState("logins");
     const [refreshing, setRefreshing] = useState(false);
+    const [timeRange, setTimeRange] = useState("7d");
 
-    const fetchData = async () => {
+    const fetchData = async (range) => {
         try {
             setRefreshing(true);
-            const res = await fetch("/api/admin/stats");
+            const r = range || timeRange;
+            const res    = await fetch(`/api/admin/stats?range=${r}`);
             const result = await res.json();
-            if (result.success) {
-                setData(result);
-            }
-        } catch (error) {
-            console.error("Erro ao buscar métricas:", error);
+            if (result.success) setData(result);
+        } catch (err) {
+            console.error("Erro ao buscar métricas:", err);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -35,264 +73,214 @@ export default function AnalyticsPage() {
 
     useEffect(() => {
         fetchData();
-        // Auto refresh a cada 60 segundos
-        const interval = setInterval(fetchData, 60000);
-        return () => clearInterval(interval);
+        const t = setInterval(fetchData, 60000);
+        return () => clearInterval(t);
     }, []);
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "";
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+    const handleRangeChange = (range) => {
+        setTimeRange(range);
+        setLoading(true);
+        fetchData(range);
     };
-
-    const COLORS = ["#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"];
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="animate-spin text-brand-primary" size={40} />
+                <Spinner size="lg" />
             </div>
         );
     }
 
-    const { stats, trends } = data || { stats: {}, trends: {} };
+    const { stats = {}, trends = {} } = data || {};
 
-    // Preparar dados para gráficos
-    const loginChartData = (trends.dailyLogins || []).map(d => ({
-        date: formatDate(d.date),
-        value: d.count
-    }));
+    const loginData      = (trends.dailyLogins     || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
+    const postsData      = (trends.dailyPosts       || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
+    const newMembersData = (trends.dailyNewMembers  || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
+    const monthlyData    = (trends.monthlyGrowth    || []).map(d => ({ mes: d.label || d.month, membros: d.count }));
+    const engagData      = (trends.engagement       || []).map(d => ({ date: fmtDate(d.date), curtidas: d.likes, comentários: d.comments, seguidores: d.follows }));
 
-    const postsChartData = (trends.dailyPosts || []).map(d => ({
-        date: formatDate(d.date),
-        value: d.count
-    }));
-
-    const newMembersChartData = (trends.dailyNewMembers || []).map(d => ({
-        date: formatDate(d.date),
-        value: d.count
-    }));
-
-    const monthlyGrowthData = (trends.monthlyGrowth || []).map(d => ({
-        month: d.label || d.month,
-        members: d.count
-    }));
-
-    const engagementData = (trends.engagement || []).map(d => ({
-        date: formatDate(d.date),
-        likes: d.likes,
-        comments: d.comments,
-        follows: d.follows
-    }));
-
-    const postsStatusData = [
-        { name: "Approved", value: stats.approvedPosts || 0, color: "#10b981" },
-        { name: "Pending", value: stats.pendingPosts || 0, color: "#f59e0b" },
-        { name: "Rejected", value: stats.rejectedPosts || 0, color: "#ef4444" }
+    const postsStatus = [
+        { name: "Aprovados",  value: stats.approvedPosts || 0, color: C_SUCCESS },
+        { name: "Pendentes",  value: stats.pendingPosts  || 0, color: C_WARNING },
+        { name: "Rejeitados", value: stats.rejectedPosts || 0, color: C_ERROR   },
     ].filter(d => d.value > 0);
 
     const chartTabs = [
-        { id: "logins", label: "Logins", icon: Activity, data: loginChartData, color: "#3b82f6" },
-        { id: "posts", label: "Posts", icon: FileText, data: postsChartData, color: "#10b981" },
-        { id: "members", label: "New Members", icon: UserPlus, data: newMembersChartData, color: "#8b5cf6" }
+        { id: "logins",   label: "Acessos",      icon: Activity, data: loginData,      color: C_BLUE   },
+        { id: "posts",    label: "Postagens",     icon: FileText, data: postsData,      color: C_CYAN   },
+        { id: "members",  label: "Novos Membros", icon: UserPlus, data: newMembersData, color: C_PURPLE },
     ];
+    const activeTab = chartTabs.find(t => t.id === activeChart) || chartTabs[0];
 
-    const activeChartConfig = chartTabs.find(t => t.id === activeChart) || chartTabs[0];
+    const tooltipStyle = { fontSize: 12, borderRadius: 6, border: "1px solid var(--border-default)", background: "var(--surface-card)" };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-black text-text-primary flex items-center gap-2">
-                        <BarChart3 className="text-brand-primary" size={24} />
-                        Analytics & Metrics
-                    </h1>
-                    <p className="text-text-muted text-xs mt-1">
-                        Platform performance and engagement overview
-                    </p>
-                </div>
-                <button
-                    onClick={fetchData}
-                    disabled={refreshing}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-surface-card border border-border-subtle rounded-lg text-xs font-bold text-text-secondary hover:bg-surface-subtle transition-colors disabled:opacity-50"
-                >
-                    <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-                    Refresh
-                </button>
-            </div>
+        <div className="space-y-5">
+            <PageHeader
+                title="Analytics"
+                subtitle="Desempenho e engajamento da plataforma"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <div className="flex bg-surface-subtle p-0.5 rounded-md">
+                            {TIME_RANGES.map(r => (
+                                <button
+                                    key={r.key}
+                                    onClick={() => handleRangeChange(r.key)}
+                                    className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                                        timeRange === r.key
+                                            ? "bg-surface-card text-brand-primary shadow-sm"
+                                            : "text-text-muted hover:text-text-secondary"
+                                    }`}
+                                >
+                                    {r.label}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => fetchData()}
+                            disabled={refreshing}
+                            className="btn-secondary gap-2 py-1.5 text-xs"
+                        >
+                            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+                            Atualizar
+                        </button>
+                    </div>
+                }
+            />
 
-            {/* KPI Cards */}
+            {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-surface-card border border-border-subtle rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                            <Users className="text-blue-600" size={16} />
-                        </div>
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Members</span>
-                    </div>
-                    <p className="text-2xl font-black text-text-primary">{stats.members || 0}</p>
-                </div>
-
-                <div className="bg-surface-card border border-border-subtle rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <Wifi className="text-green-600" size={16} />
-                        </div>
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Online</span>
-                    </div>
-                    <p className="text-2xl font-black text-green-600">{stats.online || 0}</p>
-                    <p className="text-[10px] text-text-muted mt-1">in last 5 min</p>
-                </div>
-
-                <div className="bg-surface-card border border-border-subtle rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <FileText className="text-purple-600" size={16} />
-                        </div>
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Posts</span>
-                    </div>
-                    <p className="text-2xl font-black text-text-primary">{stats.totalPosts || 0}</p>
-                </div>
-
-                <div className="bg-surface-card border border-border-subtle rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 bg-amber-100 rounded-lg">
-                            <Calendar className="text-amber-600" size={16} />
-                        </div>
-                        <span className="text-[10px] font-bold text-text-muted uppercase">Events</span>
-                    </div>
-                    <p className="text-2xl font-black text-text-primary">{stats.upcomingEvents || 0}</p>
-                </div>
+                <KpiCard icon={Users}    label="Membros"   value={stats.members}        iconBg="bg-brand-primary-light"  iconColor="text-brand-primary" />
+                <KpiCard icon={Wifi}     label="Online"    value={stats.online}          iconBg="bg-status-success-bg"    iconColor="text-status-success" valueColor="text-status-success" />
+                <KpiCard icon={FileText} label="Postagens" value={stats.totalPosts}      iconBg="bg-status-pending-bg"    iconColor="text-status-pending" />
+                <KpiCard icon={Calendar} label="Eventos"   value={stats.upcomingEvents}  iconBg="bg-status-warning-bg"    iconColor="text-status-warning" />
             </div>
 
-            {/* Gráfico Principal com Tabs */}
-            <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-                    <h2 className="font-bold text-text-primary text-sm">Weekly Activity</h2>
-                    <div className="flex bg-surface-subtle p-0.5 rounded-lg">
+            {/* Gráfico principal com tabs */}
+            <div className="bg-surface-card border border-border-default rounded-lg shadow-card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
+                    <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                        <BarChart3 size={15} className="text-brand-primary" />
+                        Atividade Semanal
+                    </h2>
+                    <div className="flex bg-surface-subtle p-0.5 rounded-md">
                         {chartTabs.map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveChart(tab.id)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${activeChart === tab.id
-                                    ? "bg-brand-primary text-white"
-                                    : "text-text-muted hover:text-text-primary"
-                                    }`}
+                                onClick={() => setActive(tab.id)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-all ${
+                                    activeChart === tab.id
+                                        ? "bg-brand-primary text-white shadow-sm"
+                                        : "text-text-muted hover:text-text-primary"
+                                }`}
                             >
-                                <tab.icon size={12} />
+                                <tab.icon size={11} />
                                 <span className="hidden sm:inline">{tab.label}</span>
                             </button>
                         ))}
                     </div>
                 </div>
                 <div className="p-4">
-                    {activeChartConfig.data.length > 0 ? (
+                    {activeTab.data.length > 0 ? (
                         <ResponsiveContainer width="100%" height={240}>
-                            <AreaChart data={activeChartConfig.data}>
+                            <AreaChart data={activeTab.data}>
                                 <defs>
-                                    <linearGradient id={`gradient-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={activeChartConfig.color} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={activeChartConfig.color} stopOpacity={0} />
+                                    <linearGradient id={`grad-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%"  stopColor={activeTab.color} stopOpacity={0.25} />
+                                        <stop offset="95%" stopColor={activeTab.color} stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                                <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip
-                                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                                    labelStyle={{ fontWeight: "bold" }}
-                                />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
+                                <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                                <Tooltip contentStyle={tooltipStyle} />
                                 <Area
                                     type="monotone"
                                     dataKey="value"
-                                    stroke={activeChartConfig.color}
+                                    stroke={activeTab.color}
                                     strokeWidth={2}
-                                    fill={`url(#gradient-${activeChart})`}
-                                    name={activeChartConfig.label}
+                                    fill={`url(#grad-${activeChart})`}
+                                    name={activeTab.label}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-[240px] text-text-muted">
-                            <Activity size={32} className="mb-2 opacity-50" />
-                            <p className="text-sm">No data for this period</p>
+                        <div className="flex flex-col items-center justify-center h-60 text-text-muted gap-2">
+                            <Activity size={28} className="opacity-40" />
+                            <p className="text-sm">Sem dados para este período</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Grid de Gráficos Secundários */}
+            {/* Gráficos secundários */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Status de Postagens (Pizza) */}
-                <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-border-subtle">
-                        <h2 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                            <PieIcon size={16} className="text-brand-primary" />
-                            Posts Status
+                {/* Pizza — status de postagens */}
+                <div className="bg-surface-card border border-border-default rounded-lg shadow-card overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border-default">
+                        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                            <PieIcon size={14} className="text-brand-primary" />
+                            Status das Postagens
                         </h2>
                     </div>
                     <div className="p-4">
-                        {postsStatusData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={200}>
-                                <PieChart>
-                                    <Pie
-                                        data={postsStatusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={50}
-                                        outerRadius={80}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                        labelLine={false}
-                                    >
-                                        {postsStatusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
+                        {postsStatus.length > 0 ? (
+                            <>
+                                <ResponsiveContainer width="100%" height={180}>
+                                    <PieChart>
+                                        <Pie
+                                            data={postsStatus}
+                                            cx="50%" cy="50%"
+                                            innerRadius={45} outerRadius={72}
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                        >
+                                            {postsStatus.map((entry, i) => (
+                                                <Cell key={i} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip contentStyle={tooltipStyle} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="flex justify-center gap-4 mt-2">
+                                    {postsStatus.map((item, i) => (
+                                        <div key={i} className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                                            <span className="text-[10px] font-semibold text-text-muted">{item.name}: {item.value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         ) : (
-                            <div className="flex items-center justify-center h-[200px] text-text-muted text-sm">
-                                No posts yet
+                            <div className="flex items-center justify-center h-48 text-text-muted text-sm">
+                                Sem postagens ainda
                             </div>
                         )}
-                        <div className="flex justify-center gap-4 mt-2">
-                            {postsStatusData.map((item, i) => (
-                                <div key={i} className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                                    <span className="text-[10px] font-bold text-text-muted">{item.name}: {item.value}</span>
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 </div>
 
-                {/* Crescimento Mensal */}
-                <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-border-subtle">
-                        <h2 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                            <TrendingUp size={16} className="text-brand-primary" />
-                            Monthly Growth
+                {/* Barras — crescimento mensal */}
+                <div className="bg-surface-card border border-border-default rounded-lg shadow-card overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border-default">
+                        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                            <TrendingUp size={14} className="text-brand-primary" />
+                            Crescimento Mensal
                         </h2>
                     </div>
                     <div className="p-4">
-                        {monthlyGrowthData.length > 0 ? (
+                        {monthlyData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={200}>
-                                <BarChart data={monthlyGrowthData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                    <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                                    <YAxis tick={{ fontSize: 10 }} />
-                                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                                    <Bar dataKey="members" fill="#3b82f6" radius={[4, 4, 0, 0]} name="New Members" />
+                                <BarChart data={monthlyData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                                    <XAxis dataKey="mes" tick={{ fontSize: 10 }} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                                    <Tooltip contentStyle={tooltipStyle} />
+                                    <Bar dataKey="membros" fill={C_BLUE} radius={[4, 4, 0, 0]} name="Novos Membros" />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="flex items-center justify-center h-[200px] text-text-muted text-sm">
-                                Insufficient data
+                            <div className="flex items-center justify-center h-48 text-text-muted text-sm">
+                                Dados insuficientes
                             </div>
                         )}
                     </div>
@@ -300,51 +288,45 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Engajamento */}
-            {engagementData.length > 0 && (
-                <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-border-subtle">
-                        <h2 className="font-bold text-text-primary text-sm flex items-center gap-2">
-                            <Heart size={16} className="text-brand-primary" />
-                            Community Engagement
+            {engagData.length > 0 && (
+                <div className="bg-surface-card border border-border-default rounded-lg shadow-card overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border-default">
+                        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                            <Heart size={14} className="text-brand-primary" />
+                            Engajamento da Comunidade
                         </h2>
                     </div>
                     <div className="p-4">
                         <ResponsiveContainer width="100%" height={200}>
-                            <LineChart data={engagementData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                                <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                            <LineChart data={engagData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} />
+                                <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                                <Tooltip contentStyle={tooltipStyle} />
                                 <Legend wrapperStyle={{ fontSize: 10 }} />
-                                <Line type="monotone" dataKey="likes" stroke="#ef4444" strokeWidth={2} name="Likes" />
-                                <Line type="monotone" dataKey="comments" stroke="#3b82f6" strokeWidth={2} name="Comments" />
-                                <Line type="monotone" dataKey="follows" stroke="#10b981" strokeWidth={2} name="Follows" />
+                                <Line type="monotone" dataKey="curtidas"    stroke={C_ERROR}   strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="comentários" stroke={C_BLUE}    strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="seguidores"  stroke={C_SUCCESS} strokeWidth={2} dot={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
-            )
-            }
+            )}
 
-            {/* Métricas Quick Facts */}
+            {/* Cards de totais por status */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
-                    <p className="text-xs font-bold opacity-80">Approved Posts</p>
-                    <p className="text-2xl font-black">{stats.approvedPosts || 0}</p>
-                </div>
-                <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
-                    <p className="text-xs font-bold opacity-80">Pending</p>
-                    <p className="text-2xl font-black">{stats.pendingPosts || 0}</p>
-                </div>
-                <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-4 text-white">
-                    <p className="text-xs font-bold opacity-80">Rejected</p>
-                    <p className="text-2xl font-black">{stats.rejectedPosts || 0}</p>
-                </div>
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-                    <p className="text-xs font-bold opacity-80">Webinars</p>
-                    <p className="text-2xl font-black">{stats.webinars || 0}</p>
-                </div>
+                {[
+                    { label: "Postagens Aprovadas", value: stats.approvedPosts, bg: "bg-status-success",    text: "text-white" },
+                    { label: "Pendentes",           value: stats.pendingPosts,  bg: "bg-status-warning",    text: "text-white" },
+                    { label: "Rejeitadas",          value: stats.rejectedPosts, bg: "bg-status-error",      text: "text-white" },
+                    { label: "Webinars",            value: stats.webinars,      bg: "bg-brand-primary",     text: "text-white" },
+                ].map(({ label, value, bg, text }) => (
+                    <div key={label} className={`${bg} rounded-lg p-4 shadow-card`}>
+                        <p className={`text-xs font-semibold ${text} opacity-80`}>{label}</p>
+                        <p className={`text-2xl font-bold ${text} mt-1`}>{value ?? 0}</p>
+                    </div>
+                ))}
             </div>
-        </div >
+        </div>
     );
 }

@@ -1,295 +1,320 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, UserCheck, UserX, Eye, UserPlus, Loader2, X, MoreHorizontal, Check, ShieldAlert, FileText, Stethoscope, Briefcase, Mail, Camera, Save, Edit2, Lock, Upload } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import {
+    Search, UserCheck, UserX, Eye, UserPlus,
+    X, Check, ShieldAlert, FileText, Stethoscope,
+    Briefcase, Mail, Save, Edit2, Lock, Upload
+} from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/Skeleton";
 
-export default function MembersManagement() {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+/* ── helpers ── */
+function statusBadge(status) {
+    if (status === "PENDING")  return <Badge variant="warning"  className="gap-1"><ShieldAlert size={9} />Pendente</Badge>;
+    if (status === "APPROVED") return <Badge variant="success"  className="gap-1"><Check size={9} />Ativo</Badge>;
+    return                            <Badge variant="error"    className="gap-1"><UserX size={9} />Bloqueado</Badge>;
+}
 
-    // Modal de detalhes e edição
-    const [selectedMember, setSelectedMember] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({});
-    const [editImage, setEditImage] = useState(null);
+function roleBadge(role) {
+    return role === "ADMIN"
+        ? <Badge variant="info">Admin</Badge>
+        : <Badge variant="neutral">Membro</Badge>;
+}
 
-    // Modal de criação
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [creating, setCreating] = useState(false);
-    const [newMember, setNewMember] = useState({
-        name: "",
-        email: "",
-        password: "",
-        role: "MEMBER"
-    });
+function fmtDate(date) {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
 
-    // Buscar membros do banco
-    const fetchMembers = async (search = "") => {
+/* ── componente ── */
+export default function MembrosPage() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || "";
+    const [search, setSearch]               = useState("");
+    const [members, setMembers]             = useState([]);
+    const [loading, setLoading]             = useState(true);
+    const [error, setError]                 = useState("");
+    const [selected, setSelected]           = useState(null);
+    const [isEditing, setIsEditing]         = useState(false);
+    const [editForm, setEditForm]           = useState({});
+    const [editImage, setEditImage]         = useState(null);
+    const [showCreate, setShowCreate]       = useState(false);
+    const [creating, setCreating]           = useState(false);
+    const [newMember, setNewMember]         = useState({ name: "", email: "", password: "", role: "MEMBER" });
+    const [selectedIds, setSelectedIds]     = useState([]);
+
+    const fetchMembers = async (q = "") => {
         try {
             setLoading(true);
-            const res = await fetch(`/api/members${search ? `?search=${search}` : ""}`);
+            const res  = await fetch(`/api/members${q ? `?search=${q}` : ""}`);
             const data = await res.json();
-
-            if (data.success) {
-                setMembers(data.members);
-            } else {
-                setError(data.error || "Error loading members");
-            }
-        } catch (err) {
-            setError("Connection error");
+            if (data.success) setMembers(data.members);
+            else setError(data.error || "Erro ao carregar membros");
+        } catch {
+            setError("Erro de conexão");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchMembers();
-    }, []);
-
-    // Busca com debounce
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchMembers(searchTerm);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
-
-    // Ao selecionar membro, prepara form de edição
-    useEffect(() => {
-        if (selectedMember) {
-            setEditForm({ ...selectedMember, password: "" }); // Senha vazia por padrão
-            setEditImage(selectedMember.image);
-            setIsEditing(false);
+        if (initialSearch) {
+            setSearch(initialSearch);
+            fetchMembers(initialSearch);
+            return;
         }
-    }, [selectedMember]);
+        fetchMembers();
+    }, [initialSearch]);
+    useEffect(() => {
+        const t = setTimeout(() => fetchMembers(search), 300);
+        return () => clearTimeout(t);
+    }, [search]);
+    useEffect(() => { setSelectedIds([]); }, [search]);
+    useEffect(() => {
+        if (selected) { setEditForm({ ...selected, password: "" }); setEditImage(selected.image); setIsEditing(false); }
+    }, [selected]);
 
-    const handleDelete = async (id, name) => {
-        if (!confirm(`Do you really want to delete "${name}"?`)) return;
-
-        try {
-            const res = await fetch(`/api/members?id=${id}`, { method: "DELETE" });
-            const data = await res.json();
-
-            if (data.success) {
-                setMembers(members.filter(m => m.id !== id));
-                if (selectedMember?.id === id) setSelectedMember(null);
-            } else {
-                alert("Error deleting: " + data.error);
-            }
-        } catch (err) {
-            alert("Connection error");
+    const updateStatus = async (id, status) => {
+        const res = await fetch("/api/members", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, status }),
+        });
+        if (res.ok) {
+            setMembers(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+            if (selected?.id === id) setSelected(s => ({ ...s, status }));
         }
     };
 
-    const handleStatusUpdate = async (id, newStatus) => {
-        try {
-            const res = await fetch("/api/members", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status: newStatus })
-            });
-
-            if (res.ok) {
-                // Atualiza localmente
-                const updatedMembers = members.map(m => m.id === id ? { ...m, status: newStatus } : m);
-                setMembers(updatedMembers);
-
-                // Atualiza modal se aberto
-                if (selectedMember && selectedMember.id === id) {
-                    setSelectedMember({ ...selectedMember, status: newStatus });
-                }
-            } else {
-                alert("Error updating status");
-            }
-        } catch (error) {
-            alert("Connection error");
+    const updateStatusBulk = async (status) => {
+        if (!selectedIds.length) return;
+        const res = await fetch("/api/members", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: selectedIds, status }),
+        });
+        if (res.ok) {
+            setSelectedIds([]);
+            fetchMembers(search);
         }
+    };
+
+    const updateRoleBulk = async (role) => {
+        if (!selectedIds.length) return;
+        const res = await fetch("/api/members", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: selectedIds, role }),
+        });
+        if (res.ok) {
+            setSelectedIds([]);
+            fetchMembers(search);
+        }
+    };
+
+    const handleDelete = async (id, name) => {
+        if (!confirm(`Excluir "${name}"?`)) return;
+        const res  = await fetch(`/api/members?id=${id}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) {
+            setMembers(prev => prev.filter(m => m.id !== id));
+            if (selected?.id === id) setSelected(null);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!selectedIds.length) return;
+        if (!confirm(`Excluir ${selectedIds.length} membro(s)?`)) return;
+        const res = await fetch(`/api/members?ids=${selectedIds.join(",")}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) {
+            setSelectedIds([]);
+            fetchMembers(search);
+        }
+    };
+
+    const allSelected = members.length > 0 && members.every((m) => selectedIds.includes(m.id));
+    const toggleSelectAll = () => {
+        if (allSelected) return setSelectedIds([]);
+        setSelectedIds(members.map((m) => m.id));
+    };
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
     };
 
     const handleEditSave = async (e) => {
         e.preventDefault();
-        try {
-            const payload = { ...editForm, image: editImage };
-            if (!payload.password) delete payload.password; // Remove senha se vazia
-
-            const res = await fetch("/api/members", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                // Atualiza lista principal
-                setMembers(members.map(m => m.id === editForm.id ? { ...m, ...payload, image: editImage } : m));
-                // Atualiza modal visualizacao
-                setSelectedMember({ ...editForm, image: editImage });
-                setIsEditing(false);
-                alert("Profile updated successfully!");
-            } else {
-                alert("Error saving changes.");
-            }
-        } catch (err) {
-            alert("Connection error.");
+        const payload = { ...editForm, image: editImage };
+        if (!payload.password) delete payload.password;
+        const res = await fetch("/api/members", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+            setMembers(prev => prev.map(m => m.id === editForm.id ? { ...m, ...payload } : m));
+            setSelected({ ...editForm, image: editImage });
+            setIsEditing(false);
         }
     };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setEditImage(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => setEditImage(reader.result);
+        reader.readAsDataURL(file);
     };
 
     const handleCreate = async (e) => {
         e.preventDefault();
         setCreating(true);
         setError("");
-
         try {
-            const res = await fetch("/api/members", {
+            const res  = await fetch("/api/members", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newMember)
+                body: JSON.stringify(newMember),
             });
-
             const data = await res.json();
-
             if (data.success) {
-                setShowCreateModal(false);
+                setShowCreate(false);
                 setNewMember({ name: "", email: "", password: "", role: "MEMBER" });
                 fetchMembers();
             } else {
-                setError(data.error || "Error creating member");
+                setError(data.error || "Erro ao criar membro");
             }
-        } catch (err) {
-            setError("Connection error");
+        } catch {
+            setError("Erro de conexão");
         } finally {
             setCreating(false);
         }
     };
 
-    const formatDate = (date) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" });
-    };
-
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <h1 className="text-2xl font-black text-text-primary">Members</h1>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="btn btn-primary flex items-center gap-2 text-sm"
-                >
-                    <UserPlus size={16} />
-                    New Member
-                </button>
-            </div>
+        <div className="space-y-5 min-w-0">
+            <PageHeader
+                title="Gestão de Membros"
+                subtitle={`${members.length} membro${members.length !== 1 ? "s" : ""} cadastrado${members.length !== 1 ? "s" : ""}`}
+                actions={
+                    <button onClick={() => setShowCreate(true)} className="btn-primary gap-2">
+                        <UserPlus size={15} />
+                        Novo Membro
+                    </button>
+                }
+            />
 
-            {/* Filtros e Busca */}
-            <div className="card p-4 flex flex-col sm:flex-row gap-3">
+            {/* Busca */}
+            <div className="card p-3 flex flex-col sm:flex-row gap-3 min-w-0">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                     <input
                         type="text"
-                        placeholder="Search by name or email..."
-                        className="w-full pl-10 pr-4 py-2 bg-surface-subtle border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none transition-all text-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por nome ou e-mail..."
+                        className="input !pl-10"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
             </div>
 
+            {selectedIds.length > 0 && (
+                <div className="bg-brand-primary-light border border-brand-primary/20 text-brand-primary px-3 py-2 rounded-md flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold mr-1">{selectedIds.length} selecionado(s)</span>
+                    <button onClick={() => updateStatusBulk("APPROVED")} className="btn-primary text-xs py-1.5 px-3">Ativar</button>
+                    <button onClick={() => updateStatusBulk("REJECTED")} className="btn-danger text-xs py-1.5 px-3">Bloquear</button>
+                    <button onClick={() => updateRoleBulk("MEMBER")} className="btn-secondary text-xs py-1.5 px-3">Tornar Membro</button>
+                    <button onClick={() => updateRoleBulk("ADMIN")} className="btn-secondary text-xs py-1.5 px-3">Tornar Admin</button>
+                    <button onClick={handleBulkDelete} className="btn-secondary text-xs py-1.5 px-3">Excluir</button>
+                </div>
+            )}
+
             {/* Tabela */}
             <div className="card p-0 overflow-hidden">
                 {loading ? (
-                    <div className="p-8 flex justify-center">
-                        <Loader2 className="animate-spin text-brand-primary" size={32} />
+                    <div className="p-6 space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <Skeleton variant="avatar" className="w-9 h-9 rounded-lg" />
+                                <div className="flex-1 space-y-1.5">
+                                    <Skeleton variant="text" className="w-48 h-3" />
+                                    <Skeleton variant="text" className="w-32 h-3" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
+                ) : error ? (
+                    <div className="p-8 text-center text-status-error text-sm">{error}</div>
                 ) : members.length === 0 ? (
-                    <div className="p-8 text-center text-text-muted">No members found.</div>
+                    <div className="p-8">
+                        <EmptyState
+                            icon={UserCheck}
+                            title="Nenhum membro encontrado"
+                            description={search ? "Tente outro termo de busca." : "Adicione o primeiro membro da plataforma."}
+                            action={!search && (
+                                <button onClick={() => setShowCreate(true)} className="btn-primary gap-2">
+                                    <UserPlus size={14} /> Novo Membro
+                                </button>
+                            )}
+                        />
+                    </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[700px]">
-                            <thead className="bg-surface-subtle border-b border-border-subtle">
+                        <table className="w-full min-w-[640px]">
+                            <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-4 py-3 w-auto">Member</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-4 py-3 hidden md:table-cell w-64">Email</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-4 py-3 w-24">Role</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-4 py-3 w-28">Status</th>
-                                    <th className="text-left text-[10px] font-black text-text-muted uppercase px-4 py-3 hidden sm:table-cell w-32">Joined</th>
-                                    <th className="text-right text-[10px] font-black text-text-muted uppercase px-4 py-3 w-24">Actions</th>
+                                    {["select", "Membro", "E-mail", "Função", "Status", "Cadastro", ""].map((h, i) => (
+                                        <th key={i} className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wider px-4 py-3">
+                                            {h === "select" ? (
+                                                <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                                            ) : h}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-subtle">
-                                {members.map((member) => (
-                                    <tr key={member.id} className="hover:bg-surface-subtle transition-colors">
+                                {members.map((m) => (
+                                    <tr key={m.id} className="hover:bg-surface-subtle transition-colors">
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(m.id)}
+                                                onChange={() => toggleSelect(m.id)}
+                                            />
+                                        </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs flex-shrink-0 uppercase overflow-hidden">
-                                                    {member.image ? (
-                                                        <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        member.name?.charAt(0) || "?"
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-bold text-text-primary text-sm truncate">{member.name}</p>
-                                                    <p className="text-[10px] text-text-muted truncate max-w-[200px] md:hidden">{member.email}</p>
-                                                </div>
+                                                <Avatar src={m.image} name={m.name} size="sm" />
+                                                <p className="text-sm font-medium text-text-primary truncate max-w-[180px]">{m.name}</p>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 hidden md:table-cell">
-                                            <span className="text-xs text-text-secondary truncate block">{member.email}</span>
+                                            <span className="text-xs text-text-secondary">{m.email}</span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${member.role === "ADMIN"
-                                                ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
-                                                : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                                }`}>
-                                                {member.role === "ADMIN" ? "Admin" : "Member"}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {member.status === 'PENDING' ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 animate-pulse">
-                                                    <ShieldAlert size={10} />
-                                                    Pending
-                                                </span>
-                                            ) : member.status === 'APPROVED' ? (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                                                    <Check size={10} />
-                                                    Active
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                                                    <UserX size={10} />
-                                                    Rejected
-                                                </span>
-                                            )}
-                                        </td>
+                                        <td className="px-4 py-3">{roleBadge(m.role)}</td>
+                                        <td className="px-4 py-3">{statusBadge(m.status)}</td>
                                         <td className="px-4 py-3 hidden sm:table-cell">
-                                            <span className="text-xs text-text-muted">{formatDate(member.createdAt)}</span>
+                                            <span className="text-xs text-text-muted">{fmtDate(m.createdAt)}</span>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-1 justify-end">
                                                 <button
-                                                    className="p-1.5 hover:bg-surface-active rounded-lg text-text-muted hover:text-text-primary"
-                                                    title="View Details"
-                                                    onClick={() => setSelectedMember(member)}
+                                                    onClick={() => setSelected(m)}
+                                                    className="p-1.5 text-text-muted hover:text-brand-primary hover:bg-brand-primary-light rounded-md transition-colors"
+                                                    title="Ver detalhes"
                                                 >
                                                     <Eye size={14} />
                                                 </button>
                                                 <button
-                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-text-muted hover:text-red-500 rounded-lg transition-colors"
-                                                    title="Delete"
-                                                    onClick={() => handleDelete(member.id, member.name)}
+                                                    onClick={() => handleDelete(m.id, m.name)}
+                                                    className="p-1.5 text-text-muted hover:text-status-error hover:bg-status-error-bg rounded-md transition-colors"
+                                                    title="Excluir"
                                                 >
                                                     <UserX size={14} />
                                                 </button>
@@ -303,41 +328,39 @@ export default function MembersManagement() {
                 )}
             </div>
 
-            {/* MODAL DE DETALHES + EDIÇÃO */}
-            {selectedMember && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-surface-card rounded-2xl shadow-2xl w-full max-w-lg border border-border-default overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        {/* Header */}
-                        <div className="relative h-24 bg-gradient-to-r from-brand-primary to-emerald-600 shrink-0">
+            {/* ── Modal detalhes / edição ── */}
+            {selected && (
+                <div className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-surface-card rounded-xl shadow-modal w-full max-w-lg border border-border-default flex flex-col max-h-[90vh] animate-scale-in">
+                        {/* Cabeçalho colorido */}
+                        <div className="relative h-24 bg-gradient-to-r from-brand-primary to-accent rounded-t-xl shrink-0">
                             <button
-                                onClick={() => setSelectedMember(null)}
-                                className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-1.5 rounded-full transition-colors z-10"
+                                onClick={() => setSelected(null)}
+                                className="absolute top-3 right-3 p-1.5 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
                             >
-                                <X size={18} />
+                                <X size={16} />
                             </button>
-
-                            {/* Toggle Edit Mode */}
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`absolute top-4 right-14 p-1.5 rounded-full transition-colors z-10 flex items-center gap-1 px-3 ${isEditing ? 'bg-white text-brand-primary font-bold' : 'bg-black/20 text-white hover:bg-black/40'}`}
+                                className={`absolute top-3 right-12 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                                    isEditing ? "bg-white text-brand-primary" : "bg-black/20 text-white hover:bg-black/40"
+                                }`}
                             >
-                                <Edit2 size={14} />
-                                <span className="text-xs">{isEditing ? 'Editing' : 'Edit'}</span>
+                                <Edit2 size={12} />
+                                {isEditing ? "Editando" : "Editar"}
                             </button>
-
-                            <div className="absolute -bottom-10 left-6">
-                                <div className="w-20 h-20 rounded-2xl bg-surface-card p-1 shadow-lg relative group">
-                                    <div className="w-full h-full rounded-xl bg-surface-subtle flex items-center justify-center overflow-hidden">
-                                        {editImage ? (
-                                            <img src={editImage} alt="Profile" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-2xl font-black text-brand-primary">{selectedMember.name?.charAt(0)}</span>
-                                        )}
+                            {/* Avatar */}
+                            <div className="absolute -bottom-10 left-5">
+                                <div className="w-20 h-20 rounded-xl bg-surface-card p-1 shadow-card relative group">
+                                    <div className="w-full h-full rounded-lg bg-surface-subtle overflow-hidden flex items-center justify-center">
+                                        {editImage
+                                            ? <img src={editImage} alt="foto" className="w-full h-full object-cover" />
+                                            : <span className="text-2xl font-bold text-brand-primary">{selected.name?.charAt(0)}</span>
+                                        }
                                     </div>
-
                                     {isEditing && (
-                                        <label className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                                            <Upload className="text-white" size={24} />
+                                        <label className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                            <Upload className="text-white" size={20} />
                                             <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                                         </label>
                                     )}
@@ -345,190 +368,129 @@ export default function MembersManagement() {
                             </div>
                         </div>
 
-                        {/* Conteúdo - Com Scroll se necessário */}
-                        <div className="pt-12 px-6 pb-6 overflow-y-auto">
+                        {/* Conteúdo */}
+                        <div className="pt-12 px-5 pb-5 overflow-y-auto">
                             {!isEditing ? (
-                                // --- MODO VISUALIZAÇÃO ---
                                 <>
-                                    <div className="flex justify-between items-start mb-6">
+                                    <div className="flex items-start justify-between mb-5">
                                         <div>
-                                            <h3 className="text-xl font-black text-text-primary">{selectedMember.name}</h3>
-                                            <p className="text-sm text-text-muted flex items-center gap-1">
-                                                <Mail size={12} /> {selectedMember.email}
+                                            <h3 className="text-lg font-bold text-text-primary">{selected.name}</h3>
+                                            <p className="text-xs text-text-muted flex items-center gap-1 mt-0.5">
+                                                <Mail size={11} />{selected.email}
                                             </p>
                                         </div>
-                                        <div className="text-right">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${selectedMember.status === 'PENDING' ? "bg-yellow-100 text-yellow-700" :
-                                                selectedMember.status === 'APPROVED' ? "bg-emerald-100 text-emerald-700" :
-                                                    "bg-red-100 text-red-700"
-                                                }`}>
-                                                {selectedMember.status === 'PENDING' ? 'Pending' :
-                                                    selectedMember.status === 'APPROVED' ? 'Approved' : 'Rejected'}
-                                            </span>
+                                        {statusBadge(selected.status)}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="bg-surface-subtle rounded-md p-3">
+                                            <p className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-1 mb-1">
+                                                <Briefcase size={11} /> CRM
+                                            </p>
+                                            <p className="text-sm text-text-primary">{selected.crm || "Não informado"}</p>
+                                        </div>
+                                        <div className="bg-surface-subtle rounded-md p-3">
+                                            <p className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-1 mb-1">
+                                                <Stethoscope size={11} /> Especialidade
+                                            </p>
+                                            <p className="text-sm text-text-primary">{selected.specialty || "Não informada"}</p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-surface-subtle p-3 rounded-lg">
-                                            <div className="flex items-center gap-2 text-text-muted mb-1 text-xs uppercase font-bold">
-                                                <Briefcase size={14} /> CRM
-                                            </div>
-                                            <p className="text-text-primary font-medium">{selectedMember.crm || "Not provided"}</p>
-                                        </div>
-                                        <div className="bg-surface-subtle p-3 rounded-lg">
-                                            <div className="flex items-center gap-2 text-text-muted mb-1 text-xs uppercase font-bold">
-                                                <Stethoscope size={14} /> Specialty
-                                            </div>
-                                            <p className="text-text-primary font-medium">{selectedMember.specialty || "Not provided"}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-surface-subtle p-3 rounded-lg mb-8">
-                                        <div className="flex items-center gap-2 text-text-muted mb-2 text-xs uppercase font-bold">
-                                            <FileText size={14} /> Bio
-                                        </div>
-                                        <p className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap">
-                                            {selectedMember.bio || "No biography available."}
+                                    <div className="bg-surface-subtle rounded-md p-3 mb-5">
+                                        <p className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-1 mb-2">
+                                            <FileText size={11} /> Biografia
+                                        </p>
+                                        <p className="text-sm text-text-secondary leading-relaxed">
+                                            {selected.bio || "Sem biografia."}
                                         </p>
                                     </div>
 
-                                    {/* Ações de Aprovação */}
-                                    {selectedMember.status === 'PENDING' && (
-                                        <div className="grid grid-cols-2 gap-3 border-t border-border-subtle pt-6">
+                                    <div className="border-t border-border-default pt-4 flex items-center justify-between">
+                                        {selected.status === "PENDING" && (
+                                            <div className="flex gap-2 w-full">
+                                                <button
+                                                    onClick={() => updateStatus(selected.id, "REJECTED")}
+                                                    className="btn-danger flex-1 py-2"
+                                                >
+                                                    <X size={14} /> Rejeitar
+                                                </button>
+                                                <button
+                                                    onClick={() => updateStatus(selected.id, "APPROVED")}
+                                                    className="btn-primary flex-1 py-2"
+                                                >
+                                                    <Check size={14} /> Aprovar
+                                                </button>
+                                            </div>
+                                        )}
+                                        {selected.status === "APPROVED" && (
                                             <button
-                                                onClick={() => handleStatusUpdate(selectedMember.id, 'REJECTED')}
-                                                className="py-3 rounded-xl border border-red-200 text-red-600 font-bold hover:bg-red-50 hover:border-red-300 transition-all flex items-center justify-center gap-2"
+                                                onClick={() => updateStatus(selected.id, "REJECTED")}
+                                                className="text-xs text-status-error hover:text-red-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-status-error-bg transition-colors"
                                             >
-                                                <XOctagonIcon size={18} />
-                                                Reject
+                                                <UserX size={13} /> Desativar membro
                                             </button>
+                                        )}
+                                        {selected.status === "REJECTED" && (
                                             <button
-                                                onClick={() => handleStatusUpdate(selectedMember.id, 'APPROVED')}
-                                                className="py-3 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-primary-hover shadow-lg shadow-brand-primary/20 transition-all flex items-center justify-center gap-2"
+                                                onClick={() => updateStatus(selected.id, "APPROVED")}
+                                                className="text-xs text-status-success hover:text-green-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-status-success-bg transition-colors"
                                             >
-                                                <Check size={18} />
-                                                Approve
+                                                <Check size={13} /> Reativar membro
                                             </button>
-                                        </div>
-                                    )}
-                                    {/* Ações de Bloqueio para Aprovados */}
-                                    {selectedMember.status === 'APPROVED' && (
-                                        <div className="border-t border-border-subtle pt-6 flex justify-end">
-                                            <button
-                                                onClick={() => handleStatusUpdate(selectedMember.id, 'REJECTED')}
-                                                className="text-xs text-red-500 hover:text-red-700 font-bold flex items-center gap-1 border border-transparent hover:border-red-200 px-3 py-2 rounded-lg transition-colors"
-                                            >
-                                                <UserX size={14} /> Deactivate/Block Member
-                                            </button>
-                                        </div>
-                                    )}
-                                    {/* Reativação */}
-                                    {selectedMember.status === 'REJECTED' && (
-                                        <div className="border-t border-border-subtle pt-6 flex justify-end">
-                                            <button
-                                                onClick={() => handleStatusUpdate(selectedMember.id, 'APPROVED')}
-                                                className="text-xs text-emerald-600 hover:text-emerald-800 font-bold flex items-center gap-1 border border-transparent hover:border-emerald-200 px-3 py-2 rounded-lg transition-colors"
-                                            >
-                                                <Check size={14} /> Reactivate Member
-                                            </button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </>
                             ) : (
-                                // --- MODO EDIÇÃO ---
-                                <form onSubmit={handleEditSave} className="space-y-4">
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="text-xs font-bold text-text-secondary">Full Name</label>
-                                            <input
-                                                type="text"
-                                                className="w-full input-field p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                value={editForm.name}
-                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-text-secondary">Email</label>
-                                            <input
-                                                type="email"
-                                                className="w-full input-field p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                value={editForm.email}
-                                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="text-xs font-bold text-text-secondary">CRM</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full input-field p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                    value={editForm.crm || ''}
-                                                    onChange={(e) => setEditForm({ ...editForm, crm: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-text-secondary">Specialty</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full input-field p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                    value={editForm.specialty || ''}
-                                                    onChange={(e) => setEditForm({ ...editForm, specialty: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-text-secondary">Bio</label>
-                                            <textarea
-                                                className="w-full input-field p-2 rounded-lg bg-surface-subtle border border-border-subtle h-24 resize-none"
-                                                value={editForm.bio || ''}
-                                                onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="bg-orange-50 dark:bg-orange-900/10 p-3 rounded-lg border border-orange-100 dark:border-orange-900/30">
-                                            <label className="text-xs font-bold text-orange-700 dark:text-orange-400 flex items-center gap-1 mb-1">
-                                                <Lock size={12} /> Reset Password (Optional)
-                                            </label>
-                                            <input
-                                                type="password"
-                                                placeholder="Leave blank to keep current"
-                                                className="w-full input-field p-2 rounded-lg bg-white dark:bg-black/20 border border-orange-200 dark:border-orange-900/30"
-                                                value={editForm.password || ''}
-                                                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-xs font-bold text-text-secondary">Status</label>
-                                            <select
-                                                className="w-full p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                value={editForm.status}
-                                                onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                                            >
-                                                <option value="PENDING">Pending</option>
-                                                <option value="APPROVED">Approved (Active)</option>
-                                                <option value="REJECTED">Rejected (Blocked)</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-text-secondary">Role</label>
-                                            <select
-                                                className="w-full p-2 rounded-lg bg-surface-subtle border border-border-subtle"
-                                                value={editForm.role}
-                                                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                                            >
-                                                <option value="MEMBER">Member</option>
-                                                <option value="ADMIN">Administrator</option>
-                                            </select>
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            className="w-full bg-brand-primary text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-primary-hover shadow-lg shadow-brand-primary/20 transition-all mt-4"
-                                        >
-                                            <Save size={18} /> Save Changes
-                                        </button>
+                                <form onSubmit={handleEditSave} className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-secondary mb-1">Nome completo</label>
+                                        <input className="input" value={editForm.name || ""} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
                                     </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-secondary mb-1">E-mail</label>
+                                        <input type="email" className="input" value={editForm.email || ""} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} required />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-secondary mb-1">CRM</label>
+                                            <input className="input" value={editForm.crm || ""} onChange={e => setEditForm(f => ({ ...f, crm: e.target.value }))} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-secondary mb-1">Especialidade</label>
+                                            <input className="input" value={editForm.specialty || ""} onChange={e => setEditForm(f => ({ ...f, specialty: e.target.value }))} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-text-secondary mb-1">Biografia</label>
+                                        <textarea className="input h-20 resize-none" value={editForm.bio || ""} onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))} />
+                                    </div>
+                                    <div className="bg-status-warning-bg border border-status-warning/20 rounded-md p-3">
+                                        <label className="block text-xs font-semibold text-status-warning flex items-center gap-1 mb-1">
+                                            <Lock size={11} /> Nova senha (opcional)
+                                        </label>
+                                        <input type="password" className="input" placeholder="Deixar em branco para manter" value={editForm.password || ""} onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-secondary mb-1">Status</label>
+                                            <select className="input" value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}>
+                                                <option value="PENDING">Pendente</option>
+                                                <option value="APPROVED">Ativo</option>
+                                                <option value="REJECTED">Bloqueado</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-text-secondary mb-1">Função</label>
+                                            <select className="input" value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}>
+                                                <option value="MEMBER">Membro</option>
+                                                <option value="ADMIN">Administrador</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="btn-primary w-full gap-2 mt-2">
+                                        <Save size={14} /> Salvar alterações
+                                    </button>
                                 </form>
                             )}
                         </div>
@@ -536,92 +498,45 @@ export default function MembersManagement() {
                 </div>
             )}
 
-            {/* Modal de Criação (Mantido igual) */}
-            {showCreateModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-surface-card rounded-xl shadow-2xl w-full max-w-sm border border-border-subtle">
-                        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-                            <h3 className="text-base font-black text-text-primary">New Member</h3>
-                            <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="p-1.5 hover:bg-surface-subtle rounded-lg"
-                            >
-                                <X size={16} />
+            {/* ── Modal criar membro ── */}
+            {showCreate && (
+                <div className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-surface-card rounded-xl shadow-modal w-full max-w-sm border border-border-default animate-scale-in">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
+                            <h3 className="text-sm font-bold text-text-primary">Novo Membro</h3>
+                            <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-surface-subtle rounded-md transition-colors">
+                                <X size={15} className="text-text-muted" />
                             </button>
                         </div>
-
-                        <form onSubmit={handleCreate} className="p-4 space-y-3">
+                        <form onSubmit={handleCreate} className="px-5 py-4 space-y-3">
+                            {error && <p className="text-xs text-status-error bg-status-error-bg rounded-md px-3 py-2">{error}</p>}
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-3 py-2 text-sm bg-surface-subtle border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none"
-                                    placeholder="Full name"
-                                    value={newMember.name}
-                                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                                    required
-                                />
+                                <label className="block text-xs font-semibold text-text-secondary mb-1">Nome</label>
+                                <input className="input" placeholder="Nome completo" value={newMember.name} onChange={e => setNewMember(n => ({ ...n, name: e.target.value }))} required />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary mb-1">E-mail</label>
-                                <input
-                                    type="email"
-                                    className="w-full px-3 py-2 text-sm bg-surface-subtle border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none"
-                                    placeholder="email@exemplo.com"
-                                    value={newMember.email}
-                                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                                    required
-                                />
+                                <label className="block text-xs font-semibold text-text-secondary mb-1">E-mail</label>
+                                <input type="email" className="input" placeholder="email@exemplo.com" value={newMember.email} onChange={e => setNewMember(n => ({ ...n, email: e.target.value }))} required />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary mb-1">Password</label>
-                                <input
-                                    type="password"
-                                    className="w-full px-3 py-2 text-sm bg-surface-subtle border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none"
-                                    placeholder="******"
-                                    value={newMember.password}
-                                    onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
-                                    required
-                                />
+                                <label className="block text-xs font-semibold text-text-secondary mb-1">Senha</label>
+                                <input type="password" className="input" placeholder="Mínimo 6 caracteres" value={newMember.password} onChange={e => setNewMember(n => ({ ...n, password: e.target.value }))} required minLength={6} />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-bold text-text-secondary mb-1">Type</label>
-                                <select
-                                    className="w-full px-3 py-2 text-sm bg-surface-subtle border border-border-subtle rounded-lg focus:ring-1 focus:ring-brand-primary outline-none"
-                                    value={newMember.role}
-                                    onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                                >
-                                    <option value="MEMBER">Member</option>
-                                    <option value="ADMIN">Administrator</option>
+                                <label className="block text-xs font-semibold text-text-secondary mb-1">Função</label>
+                                <select className="input" value={newMember.role} onChange={e => setNewMember(n => ({ ...n, role: e.target.value }))}>
+                                    <option value="MEMBER">Membro</option>
+                                    <option value="ADMIN">Administrador</option>
                                 </select>
                             </div>
-
-                            <div className="pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={creating}
-                                    className="w-full btn btn-primary py-2 text-sm"
-                                >
-                                    {creating ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Create Member"}
-                                </button>
-                            </div>
+                            <button type="submit" disabled={creating} className="btn-primary w-full mt-1 gap-2">
+                                {creating ? <Spinner size="sm" /> : <UserPlus size={14} />}
+                                {creating ? "Criando..." : "Criar Membro"}
+                            </button>
                         </form>
                     </div>
                 </div>
             )}
         </div>
     );
-}
-
-function XOctagonIcon({ size, className }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-    )
 }

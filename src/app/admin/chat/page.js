@@ -26,6 +26,8 @@ export default function AdminChatPage() {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [sending, setSending] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentUserId, setCurrentUserId] = useState("");
+    const [sendError, setSendError] = useState("");
 
     // New Chat State
     const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -34,6 +36,7 @@ export default function AdminChatPage() {
     const [loadingUsers, setLoadingUsers] = useState(false);
 
     const messagesEndRef = useRef(null);
+    const loadedContactRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,29 +62,39 @@ export default function AdminChatPage() {
     };
 
     useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const res = await fetch("/api/auth/session");
+                const session = await res.json();
+                if (session?.user?.id) setCurrentUserId(session.user.id);
+            } catch {}
+        };
+        fetchSession();
         fetchContacts();
     }, []);
 
     // Fetch Messages
     useEffect(() => {
         if (selectedContact) {
-            const fetchMessages = async () => {
-                setLoadingMessages(true);
+            const isFirstLoadForContact = loadedContactRef.current !== selectedContact.id;
+            const fetchMessages = async (showLoader = false) => {
+                if (showLoader) setLoadingMessages(true);
                 try {
                     const res = await fetch(`/api/messages/${selectedContact.id}`);
                     const data = await res.json();
                     if (data.success) {
                         setMessages(data.messages);
+                        loadedContactRef.current = selectedContact.id;
                     }
                 } catch (error) {
                     console.error("Error loading messages:", error);
                 } finally {
-                    setLoadingMessages(false);
+                    if (showLoader) setLoadingMessages(false);
                 }
             };
 
-            fetchMessages();
-            const interval = setInterval(fetchMessages, 3000); // Polling
+            fetchMessages(isFirstLoadForContact);
+            const interval = setInterval(() => fetchMessages(false), 5000);
             return () => clearInterval(interval);
         }
     }, [selectedContact]);
@@ -115,13 +128,14 @@ export default function AdminChatPage() {
         if (!newMessage.trim() || !selectedContact) return;
 
         const tempId = crypto.randomUUID();
-        const content = newMessage;
+        const content = newMessage.trim();
+        setSendError("");
 
         // Optimistic Update
         setMessages(prev => [...prev, {
             id: tempId,
             content: content,
-            senderId: "me",
+            senderId: currentUserId || "me",
             createdAt: new Date().toISOString()
         }]);
         setNewMessage("");
@@ -139,14 +153,19 @@ export default function AdminChatPage() {
             const data = await res.json();
 
             if (data.success) {
+                setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.messageId || tempId } : m));
                 // Refresh contacts to move this conversation to top or add if new
                 fetchContacts();
             } else {
-                console.error(data.error);
-                alert("Error sending message: " + data.error);
+                setMessages((prev) => prev.filter((m) => m.id !== tempId));
+                setNewMessage(content);
+                setSendError(data.error || "Erro ao enviar mensagem.");
             }
         } catch (error) {
             console.error("Error sending:", error);
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            setNewMessage(content);
+            setSendError("Erro de conexão ao enviar mensagem.");
         } finally {
             setSending(false);
         }
@@ -167,7 +186,7 @@ export default function AdminChatPage() {
     );
 
     return (
-        <div className="h-[calc(100vh-8rem)] bg-surface-card rounded-2xl border border-border-default shadow-xl overflow-hidden flex">
+        <div className="h-[calc(100vh-8rem)] flex">
 
             {/* Sidebar */}
             <div className={`${selectedContact ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-col border-r border-border-default bg-surface-subtle`}>
@@ -277,7 +296,7 @@ export default function AdminChatPage() {
 
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-surface-subtle/50">
-                        {loadingMessages ? (
+                        {loadingMessages && messages.length === 0 ? (
                             <div className="flex justify-center py-10">
                                 <Loader2 className="animate-spin text-brand-primary/50" size={32} />
                             </div>
@@ -292,7 +311,7 @@ export default function AdminChatPage() {
                             </div>
                         ) : (
                             messages.map((msg, index) => {
-                                const isMe = msg.senderId === "me" || msg.senderId !== selectedContact.id;
+                                const isMe = currentUserId ? msg.senderId === currentUserId : (msg.senderId === "me" || msg.senderId !== selectedContact.id);
 
                                 return (
                                     <div key={msg.id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -300,10 +319,10 @@ export default function AdminChatPage() {
                                             ? 'bg-brand-primary text-white rounded-tr-none'
                                             : 'bg-surface-card text-text-primary border border-border-default rounded-tl-none'
                                             }`}>
-                                            <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                                            <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isMe ? 'text-primary-100' : 'text-text-muted'}`}>
+                                            <p className={`leading-relaxed whitespace-pre-wrap break-words ${isMe ? '!text-white' : ''}`}>{msg.content}</p>
+                                            <div className={`text-[10px] mt-1 flex items-center justify-end gap-1 ${isMe ? '!text-white/80' : 'text-text-muted'}`}>
                                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                {isMe && <CheckCheck size={14} className="text-primary-100" />}
+                                                {isMe && <CheckCheck size={14} className="!text-white/80" />}
                                             </div>
                                         </div>
                                     </div>
@@ -315,6 +334,7 @@ export default function AdminChatPage() {
 
                     {/* Input */}
                     <div className="p-4 bg-surface-card border-t border-border-default">
+                        {sendError && <p className="mb-2 text-xs text-status-error">{sendError}</p>}
                         <form onSubmit={handleSendMessage} className="flex items-end gap-3 max-w-4xl mx-auto">
                             <button type="button" className="p-3 text-text-muted hover:text-brand-primary hover:bg-surface-subtle rounded-xl transition-colors">
                                 <Paperclip size={20} />

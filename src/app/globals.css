@@ -1,6 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 
 @variant dark (&:where(.dark, .dark *));
 
@@ -156,7 +156,9 @@
    BASE STYLES
 ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   @apply bg-surface-page text-text-primary;
@@ -256,7 +258,7 @@ a:hover { @apply text-brand-primary-hover; }
          bg-surface-card text-text-primary text-sm
          outline-none transition-all duration-150
          placeholder:text-text-muted
-         focus:border-brand-primary focus:ring-2 focus:ring-brand-primary-ring
+         focus:border-brand-primary focus:ring-0
          disabled:bg-surface-subtle disabled:opacity-60 disabled:cursor-not-allowed;
 }
 
@@ -276,10 +278,15 @@ a:hover { @apply text-brand-primary-hover; }
   color: var(--color-brand-primary-active);
 }
 
-/* ── Focus global ── */
-:focus-visible {
-  outline: 2px solid var(--color-brand-primary);
-  outline-offset: 2px;
+/* ── Focus global (sem borda retangular para campos de texto) ── */
+input:focus,
+textarea:focus,
+select:focus,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ── Animações ── */

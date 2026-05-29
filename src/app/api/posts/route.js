@@ -1,6 +1,7 @@
 import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { sendEmail } from '@/lib/email';
 
 // GET - Listar postagens
 export async function GET(request) {
@@ -54,15 +55,34 @@ export async function PATCH(request) {
             return NextResponse.json({ success: false, error: 'Apenas administradores podem moderar postagens' }, { status: 403 });
         }
 
-        const { id, status } = await request.json();
+        const { id, ids, status } = await request.json();
 
-        if (!id || !status) {
-            return NextResponse.json({ success: false, error: 'ID e Status são obrigatórios' }, { status: 400 });
+        if ((!id && (!Array.isArray(ids) || !ids.length)) || !status) {
+            return NextResponse.json({ success: false, error: 'ID(s) e Status são obrigatórios' }, { status: 400 });
         }
 
-        await query('UPDATE Post SET status = ? WHERE id = ?', [status, id]);
+        const targetIds = Array.isArray(ids) && ids.length ? ids : [id];
+        const placeholders = targetIds.map(() => '?').join(',');
+        await query(`UPDATE Post SET status = ? WHERE id IN (${placeholders})`, [status, ...targetIds]);
 
-        return NextResponse.json({ success: true });
+        try {
+            const authors = await query(
+                `SELECT p.title, u.email FROM Post p JOIN User u ON u.id = p.authorId WHERE p.id IN (${placeholders})`,
+                targetIds
+            );
+            const subject = status === 'APPROVED' ? 'Sua postagem foi aprovada' : 'Atualização sobre sua postagem';
+            for (const row of authors) {
+                await sendEmail({
+                    to: row.email,
+                    subject,
+                    html: `<p>Olá! A postagem <strong>${row.title}</strong> foi atualizada para o status <strong>${status}</strong>.</p>`
+                });
+            }
+        } catch (e) {
+            console.error('Email notification error:', e);
+        }
+
+        return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
         console.error('Error updating post:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -79,22 +99,28 @@ export async function DELETE(request) {
 
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
+        const idsParam = searchParams.get('ids');
+        const ids = idsParam ? idsParam.split(',').map(v => v.trim()).filter(Boolean) : [];
 
-        if (!id) {
+        if (!id && !ids.length) {
             return NextResponse.json({ success: false, error: 'ID é obrigatório' }, { status: 400 });
         }
 
+        const targetIds = ids.length ? ids : [id];
+        const placeholders = targetIds.map(() => '?').join(',');
+
         // Se não for ADMIN, verificar se é o autor (opcional, mas bom pra segurança)
         if (session.user.role !== 'ADMIN') {
-            const post = await query('SELECT authorId FROM Post WHERE id = ?', [id]);
-            if (post[0]?.authorId !== session.user.id) {
+            const rows = await query(`SELECT id, authorId FROM Post WHERE id IN (${placeholders})`, targetIds);
+            const forbidden = rows.some((post) => post.authorId !== session.user.id);
+            if (forbidden || rows.length !== targetIds.length) {
                 return NextResponse.json({ success: false, error: 'Sem permissão para excluir esta postagem' }, { status: 403 });
             }
         }
 
-        await query('DELETE FROM Post WHERE id = ?', [id]);
+        await query(`DELETE FROM Post WHERE id IN (${placeholders})`, targetIds);
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
         console.error('Error deleting post:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

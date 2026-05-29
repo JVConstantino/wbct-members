@@ -7,21 +7,22 @@ import {
     Send,
     ArrowLeft,
     Image as ImageIcon,
-    Loader2,
-    AlertCircle,
     CheckCircle2,
     Sparkles,
-    FileText
+    AlertCircle,
+    Tag,
+    FolderKanban
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { Spinner } from "@/components/ui/Skeleton";
 
 const TextEditor = dynamic(() => import("@/components/TextEditor"), {
     ssr: false,
     loading: () => (
-        <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 h-[350px] flex items-center justify-center">
+        <div className="border border-border-default rounded-md bg-surface-subtle h-[320px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
-                <Loader2 className="animate-spin text-primary-500" size={32} />
-                <span className="text-xs font-bold text-slate-400">Loading editor...</span>
+                <Spinner size="md" />
+                <span className="text-xs text-text-muted">Carregando editor...</span>
             </div>
         </div>
     )
@@ -35,29 +36,34 @@ export default function CreatePost() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
-
     const [uploading, setUploading] = useState(false);
+    const [category, setCategory] = useState("CARDIOLOGIA");
+    const [tagsInput, setTagsInput] = useState("");
+
+    const categories = [
+        "CARDIOLOGIA",
+        "CLINICA_MEDICA",
+        "ENDOCRINOLOGIA",
+        "INFECTOLOGIA",
+        "NEUROLOGIA",
+        "PEDIATRIA",
+        "URG_EMERGENCIA",
+        "OUTROS",
+    ];
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         setUploading(true);
         const uploadData = new FormData();
         uploadData.append("file", file);
-
         try {
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: uploadData
-            });
+            const res = await fetch("/api/upload", { method: "POST", body: uploadData });
             const data = await res.json();
-            if (data.success) {
-                setImage(data.url);
-            }
+            if (data.success) setImage(data.url);
         } catch (error) {
-            console.error("Upload failed:", error);
-            setError("Failed to upload image.");
+            console.error("Upload falhou:", error);
+            setError("Erro ao enviar imagem.");
         } finally {
             setUploading(false);
         }
@@ -67,23 +73,28 @@ export default function CreatePost() {
         e.preventDefault();
         setLoading(true);
         setError("");
-
         try {
+            const tags = tagsInput
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+                .slice(0, 8);
+
+            const metadataBlock = `\n<hr><p><strong>Categoria:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
             const res = await fetch("/api/posts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, content, image }),
+                body: JSON.stringify({ title, content: `${content}${metadataBlock}`, image, category, tags }),
             });
-
             const data = await res.json();
             if (data.success) {
                 setSuccess(true);
                 setTimeout(() => router.push("/membro"), 3000);
             } else {
-                setError(data.error || "Error submitting post.");
+                setError(data.error || "Erro ao enviar postagem.");
             }
-        } catch (err) {
-            setError("Failed to connect to server.");
+        } catch {
+            setError("Falha na conexão com o servidor.");
         } finally {
             setLoading(false);
         }
@@ -91,70 +102,98 @@ export default function CreatePost() {
 
     if (success) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 min-h-[70vh] text-center animate-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-8">
-                    <CheckCircle2 size={56} />
+            <div className="flex flex-col items-center justify-center py-20 min-h-[70vh] text-center">
+                <div className="w-20 h-20 bg-status-success-bg text-status-success rounded-full flex items-center justify-center mb-6">
+                    <CheckCircle2 size={44} />
                 </div>
-                <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-4">Post Submitted!</h2>
-                <p className="text-slate-500 font-medium text-lg max-w-md mx-auto">
-                    Excellent contribution. Your post has been sent for review and will soon be available in the community feed.
+                <h2 className="text-2xl font-display font-bold text-text-primary mb-3">Postagem Enviada!</h2>
+                <p className="text-text-secondary text-sm max-w-sm mx-auto leading-relaxed">
+                    Ótima contribuição! Seu artigo foi enviado para revisão e em breve estará disponível no feed da comunidade.
                 </p>
-                <Link href="/membro" className="btn-primary mt-10 px-10">
-                    Back to Feed
+                <Link href="/membro" className="btn-primary mt-8 px-8">
+                    Voltar ao Feed
                 </Link>
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-10">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="max-w-5xl mx-auto space-y-6 pb-8">
+            {/* Cabeçalho */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <Link
                         href="/membro"
-                        className="flex items-center gap-2 text-slate-500 font-bold hover:text-primary-600 transition-colors group mb-4"
+                        className="flex items-center gap-1.5 text-text-muted text-xs font-semibold hover:text-brand-primary transition-colors group mb-3"
                     >
-                        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to Feed
+                        <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                        Voltar ao Feed
                     </Link>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Share your <span className="text-primary-600 underline underline-offset-8">Knowledge</span></h1>
+                    <h1 className="text-xl font-display font-bold text-text-primary">
+                        Compartilhe seu <span className="text-brand-primary">Conhecimento</span>
+                    </h1>
+                    <p className="text-xs text-text-secondary mt-0.5">Publique artigos médicos para a comunidade WBCT</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => router.push('/membro')}
-                        className="px-8 py-3 rounded-2xl border-2 border-slate-100 font-bold text-slate-500 hover:bg-slate-50 transition-all"
-                    >
-                        Cancel
-                    </button>
-                </div>
+                <button onClick={() => router.push("/membro")} className="btn-secondary text-sm">
+                    Cancelar
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Form Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                {/* Formulário */}
                 <div className="lg:col-span-3">
-                    <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 p-10 lg:p-14 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 space-y-8">
+                    <form onSubmit={handleSubmit} className="bg-surface-card rounded-lg border border-border-default shadow-card p-6 space-y-5">
                         {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold flex items-center gap-3 animate-in shake">
-                                <AlertCircle size={18} />
+                            <div className="p-3 bg-status-error-bg border border-status-error/20 rounded-md text-status-error text-xs font-semibold flex items-center gap-2">
+                                <AlertCircle size={15} />
                                 {error}
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-wider">Post Title</label>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Título da Postagem</label>
                             <input
                                 type="text"
-                                className="input text-lg font-bold"
-                                placeholder="What's the topic of your reflection?"
+                                className="input text-base font-semibold"
+                                placeholder="Qual é o tema do seu artigo?"
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={e => setTitle(e.target.value)}
                                 required
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-black text-slate-700 ml-1 uppercase tracking-wider">Publication Content</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                                    <FolderKanban size={13} /> Categoria
+                                </label>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="input"
+                                >
+                                    {categories.map((c) => (
+                                        <option key={c} value={c}>{c.replaceAll("_", " ")}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
+                                    <Tag size={13} /> Tags
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Ex: hipertensao, conduta, diretriz"
+                                    value={tagsInput}
+                                    onChange={(e) => setTagsInput(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Conteúdo da Publicação</label>
                             <TextEditor
                                 initialContent={content}
                                 onChange={(html) => setContent(html)}
@@ -164,81 +203,86 @@ export default function CreatePost() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn-primary w-full py-5 rounded-lg flex items-center justify-center gap-3 text-lg group disabled:opacity-50"
+                            className="btn-primary w-full py-3 flex items-center justify-center gap-2 group disabled:opacity-50"
                         >
                             {loading ? (
-                                <Loader2 className="animate-spin" size={24} />
+                                <Spinner size="sm" />
                             ) : (
                                 <>
-                                    Publish for Review
-                                    <Send className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={20} />
+                                    Enviar para Revisão
+                                    <Send size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                 </>
                             )}
                         </button>
                     </form>
                 </div>
 
-                {/* Sidebar: Image Upload + Tips */}
-                <div className="space-y-6">
-                    {/* Image Upload Card */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                                <ImageIcon className="text-primary-600" size={20} />
+                {/* Sidebar */}
+                <div className="space-y-4">
+                    {/* Upload de capa */}
+                    <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-brand-primary-light rounded-md">
+                                <ImageIcon className="text-brand-primary" size={15} />
                             </div>
-                            <h4 className="text-base font-black text-slate-900 dark:text-white">Cover Image</h4>
+                            <h4 className="text-sm font-semibold text-text-primary">Imagem de Capa</h4>
                         </div>
 
                         {image ? (
-                            <div className="relative aspect-video rounded-xl overflow-hidden group">
+                            <div className="relative aspect-video rounded-md overflow-hidden group">
                                 <img src={image} className="w-full h-full object-cover" alt="Capa" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <button
                                         type="button"
                                         onClick={() => setImage("")}
-                                        className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold shadow-lg hover:bg-red-600 transition-colors"
+                                        className="px-3 py-1.5 bg-status-error text-white rounded text-xs font-semibold hover:bg-status-error/90 transition-colors"
                                     >
-                                        Remove
+                                        Remover
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <label className={`flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-xl cursor-pointer transition-all ${uploading ? 'border-primary-300 bg-primary-50/50' : 'border-slate-200 dark:border-slate-700 hover:border-primary-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                            <label className={`flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-md cursor-pointer transition-all ${uploading ? "border-brand-primary/40 bg-brand-primary-light/30" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
                                 {uploading ? (
-                                    <Loader2 className="animate-spin text-primary-600" size={32} />
+                                    <Spinner size="md" />
                                 ) : (
                                     <>
-                                        <ImageIcon className="text-slate-300 dark:text-slate-600 mb-2" size={36} />
-                                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Click to upload</span>
-                                        <span className="text-[10px] text-slate-300 dark:text-slate-600 mt-1">PNG, JPG até 5MB</span>
+                                        <ImageIcon className="text-text-muted mb-1.5" size={28} />
+                                        <span className="text-xs font-semibold text-text-muted">Clique para enviar</span>
+                                        <span className="text-[10px] text-text-muted mt-0.5">PNG, JPG até 5MB</span>
                                     </>
                                 )}
                                 <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                             </label>
                         )}
-                        <p className="text-xs text-slate-400 text-center">Images increase engagement by 2x</p>
+                        <p className="text-[10px] text-text-muted text-center">Imagens aumentam o engajamento em 2×</p>
                     </div>
 
-                    {/* Tips Card */}
-                    <div className="bg-slate-100 dark:bg-slate-800 p-6 rounded-xl space-y-5">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                                <Sparkles className="text-primary-600 dark:text-primary-400" size={20} />
+                    {/* Dicas */}
+                    <div className="bg-surface-subtle rounded-lg border border-border-subtle p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-brand-primary-light rounded-md">
+                                <Sparkles className="text-brand-primary" size={15} />
                             </div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">Elite Post Tips</h3>
+                            <h3 className="text-sm font-semibold text-text-primary">Dicas de Postagem</h3>
                         </div>
-                        <ul className="space-y-3">
+                        <ul className="space-y-2">
                             {[
-                                "Use a catchy and direct title.",
-                                "Be ethical and preserve patient image.",
-                                "Add references when applicable."
+                                "Use um título claro e direto.",
+                                "Seja ético e preserve a imagem dos pacientes.",
+                                "Adicione referências bibliográficas quando aplicável."
                             ].map((tip, idx) => (
-                                <li key={idx} className="flex gap-3 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                                    <span className="text-primary-600 dark:text-primary-500 font-black">•</span>
+                                <li key={idx} className="flex gap-2 text-xs text-text-secondary leading-relaxed">
+                                    <span className="text-brand-primary font-bold shrink-0">•</span>
                                     {tip}
                                 </li>
                             ))}
                         </ul>
+                        <div className="pt-2 border-t border-border-subtle">
+                            <p className="text-[10px] text-text-muted">
+                                Dica: use de 3 a 5 tags para melhorar descoberta no feed.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

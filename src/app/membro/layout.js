@@ -1,89 +1,103 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
     Home, BookOpen, PlusSquare, Calendar,
     PlayCircle, User, LogOut, Menu, X,
-    FileText, ChevronRight, Search, MessageSquare,
-    Stethoscope, Sun, Moon, Bell
+    FileText, ChevronRight, MessageSquare,
+    PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
-import { NotificationDropdown } from "@/components/NotificationDropdown";
+import NotificationDropdown from "@/components/NotificationDropdown";
 import { Avatar } from "@/components/ui/Avatar";
 
 const menuItems = [
-    { icon: Home,        label: "Feed Principal",    href: "/membro" },
-    { icon: BookOpen,    label: "Articles HUB",      href: "/membro/blog" },
-    { icon: User,        label: "Diretório Médico",   href: "/membro/diretorio" },
+    { icon: Home,          label: "Feed Principal",   href: "/membro" },
+    { icon: BookOpen,      label: "Articles HUB",     href: "/membro/blog" },
+    { icon: User,          label: "Diretorio Medico", href: "/membro/diretorio" },
     { icon: MessageSquare, label: "Mensagens",        href: "/membro/chat" },
-    { icon: Calendar,    label: "Agenda",             href: "/membro/eventos" },
-    { icon: PlayCircle,  label: "WBCT Academy",       href: "/membro/webinars" },
-    { icon: FileText,    label: "Minhas Postagens",   href: "/membro/minhas-postagens" },
-    { icon: PlusSquare,  label: "Novo Conteúdo",      href: "/membro/criar" },
+    { icon: Calendar,      label: "Agenda",           href: "/membro/eventos" },
+    { icon: Calendar,      label: "Meus Eventos",     href: "/membro/eventos/meus-eventos" },
+    { icon: PlayCircle,    label: "Webinars",         href: "/membro/webinars" },
+    { icon: FileText,      label: "Minhas Postagens", href: "/membro/minhas-postagens" },
+    { icon: PlusSquare,    label: "Novo Conteudo",    href: "/membro/criar" },
+    { icon: User,          label: "Meu Perfil",       href: "/membro/perfil" },
 ];
 
-function applyTheme(t) {
-    document.documentElement.classList.toggle("dark", t === "dark");
-    document.documentElement.setAttribute("data-theme", t);
+function forceLightTheme() {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.setAttribute("data-theme", "light");
 }
 
 export default function MemberLayout({ children }) {
     const pathname = usePathname();
     const { data: session } = useSession();
-    const [theme, setTheme] = useState("light");
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
+    const sidebarRef = useRef(null);
 
     useEffect(() => { setMobileOpen(false); }, [pathname]);
 
     useEffect(() => {
-        const saved = localStorage.getItem("theme")
-            || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-        setTheme(saved);
-        applyTheme(saved);
-    }, []);
+        forceLightTheme();
+        const media = window.matchMedia("(min-width: 1024px)");
+        const updateMedia = () => setIsDesktop(media.matches);
+        updateMedia();
+        media.addEventListener("change", updateMedia);
 
-    // Activity ping para rastrear usuários online
-    useEffect(() => {
         const ping = async () => {
             try { await fetch("/api/activity", { method: "POST" }); } catch {}
         };
         ping();
         const interval = setInterval(ping, 120000);
-        return () => clearInterval(interval);
+
+        return () => {
+            media.removeEventListener("change", updateMedia);
+            clearInterval(interval);
+        };
     }, []);
 
-    const toggleTheme = () => {
-        const next = theme === "light" ? "dark" : "light";
-        setTheme(next);
-        localStorage.setItem("theme", next);
-        applyTheme(next);
-    };
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [isDesktop]);
 
-    const userName  = session?.user?.name  || "Membro";
+    useEffect(() => {
+        const offset = isDesktop ? (desktopCollapsed ? 88 : 272) : 0;
+        document.documentElement.style.setProperty("--shell-offset", `${offset}px`);
+        return () => document.documentElement.style.setProperty("--shell-offset", "0px");
+    }, [isDesktop, desktopCollapsed]);
+
+    const userName = session?.user?.name || "Membro";
     const userImage = session?.user?.image || "";
     const userEmail = session?.user?.email || "";
+    const isCollapsed = isDesktop && desktopCollapsed;
+    const sidebarWidth = isCollapsed ? 88 : 272;
 
     return (
         <div className="flex min-h-screen bg-surface-page transition-colors duration-300">
+            <AnimatePresence>
+                {mobileOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm z-[60] lg:hidden"
+                        onClick={() => setMobileOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
 
-            {/* Overlay mobile */}
-            {mobileOpen && (
-                <div
-                    className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm z-[55] lg:hidden"
-                    onClick={() => setMobileOpen(false)}
-                />
-            )}
-
-            {/* ── Sidebar ── */}
-            <aside className={`
-                fixed inset-y-0 left-0 z-[60] w-64
-                bg-surface-sidebar border-r border-border-default shadow-sidebar
-                flex flex-col transition-transform duration-300
-                lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-            `}>
-                {/* Botão fechar mobile */}
+            <motion.aside
+                ref={sidebarRef}
+                animate={{ width: sidebarWidth }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                className={`fixed inset-y-0 left-0 z-[70] bg-surface-sidebar border-r border-border-default shadow-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full pointer-events-none lg:pointer-events-auto"}`}
+            >
                 <button
                     onClick={() => setMobileOpen(false)}
                     className="absolute top-4 right-4 lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-subtle rounded-md transition-colors"
@@ -92,22 +106,20 @@ export default function MemberLayout({ children }) {
                     <X size={18} />
                 </button>
 
-                {/* Logo */}
-                <div className="px-5 py-5 border-b border-border-default">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-brand-primary rounded-lg flex items-center justify-center shadow-button-primary shrink-0">
-                            <Stethoscope size={18} className="text-white" />
+                <div className="h-16 px-4 border-b border-border-default flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0">
+                            <Image src="/logo.png" alt="WBCT" width={36} height={36} className="w-9 h-9 rounded-md object-cover" />
                         </div>
-                        <div>
-                            <p className="font-display text-base font-bold text-text-primary leading-none">WBCT</p>
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mt-0.5">Área do Médico</p>
-                        </div>
+                        {!isCollapsed && (
+                            <div>
+                                <p className="font-display text-base font-bold text-text-primary leading-none tracking-wide">WBCT MEMBRO</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Nav */}
                 <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-                    <p className="px-3 mb-3 text-[10px] font-bold text-text-muted uppercase tracking-widest">Menu principal</p>
                     {menuItems.map((item) => {
                         const active = pathname === item.href;
                         return (
@@ -119,82 +131,72 @@ export default function MemberLayout({ children }) {
                                         ? "bg-brand-primary text-white shadow-sm"
                                         : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
                                 }`}
+                                title={isCollapsed ? item.label : undefined}
                             >
-                                <div className="flex items-center gap-2.5">
+                                <div className={`flex items-center min-w-0 ${isCollapsed ? "gap-0" : "gap-2.5"}`}>
                                     <item.icon
                                         size={16}
                                         className={active ? "text-white" : "text-text-muted group-hover:text-brand-primary transition-colors"}
                                     />
-                                    {item.label}
+                                    {!isCollapsed && <span className={active ? "text-white" : ""}>{item.label}</span>}
                                 </div>
-                                {active && <ChevronRight size={13} className="text-white/70" />}
+                                {!isCollapsed && active && <ChevronRight size={13} className="text-white/70" />}
                             </Link>
                         );
                     })}
                 </nav>
 
-                {/* Usuário */}
                 <div className="px-3 py-4 border-t border-border-default space-y-3">
-                    <div className="flex items-center gap-2.5 px-2">
+                    <div className={`flex items-center px-2 ${isCollapsed ? "justify-center" : "gap-2.5"}`}>
                         <Avatar src={userImage} name={userName} size="sm" online />
-                        <div className="min-w-0">
-                            <p className="text-sm font-semibold text-text-primary truncate leading-tight">{userName}</p>
-                            <p className="text-[10px] text-text-muted truncate">{userEmail}</p>
-                        </div>
+                        {!isCollapsed && (
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-text-primary truncate leading-tight">{userName}</p>
+                                <p className="text-[10px] text-text-muted truncate">{userEmail}</p>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="btn-ghost w-full justify-start px-2 py-2 text-xs text-status-error hover:bg-status-error-bg hover:text-status-error gap-2"
+                        className={`btn-ghost w-full px-2 py-2 text-xs text-status-error hover:bg-status-error-bg hover:text-status-error gap-2 ${isCollapsed ? "justify-center" : "justify-start"}`}
+                        title={isCollapsed ? "Sair da conta" : undefined}
                     >
                         <LogOut size={14} />
-                        Sair da conta
+                        {!isCollapsed && "Sair da conta"}
                     </button>
                 </div>
-            </aside>
+            </motion.aside>
 
-            {/* ── Main ── */}
-            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-
-                {/* Header */}
-                <header className="h-14 sticky top-0 z-40 bg-surface-header backdrop-blur-md border-b border-border-default flex items-center justify-between px-4 md:px-6">
-                    {/* Mobile: menu + logo */}
-                    <div className="flex items-center gap-3 lg:hidden">
+            <motion.div
+                className="flex-1 flex flex-col min-h-screen min-w-0"
+                animate={{ marginLeft: isDesktop ? (desktopCollapsed ? 88 : 272) : 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                style={{ marginLeft: 0 }}
+            >
+                <header className="h-16 sticky top-0 z-40 bg-surface-header backdrop-blur-md border-b border-border-default flex items-center justify-between px-4 md:px-6">
+                    <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setMobileOpen(true)}
-                            className="p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
+                            onClick={() => setDesktopCollapsed((v) => !v)}
+                            className="hidden lg:flex p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
+                            aria-label={desktopCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
+                        >
+                            {desktopCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+                        </button>
+
+                        <button
+                            onClick={() => setMobileOpen((v) => !v)}
+                            className="lg:hidden p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
                             aria-label="Abrir menu"
                         >
                             <Menu size={18} />
                         </button>
-                        <div className="w-7 h-7 bg-brand-primary rounded-md flex items-center justify-center">
-                            <Stethoscope size={15} className="text-white" />
-                        </div>
                     </div>
 
-                    {/* Busca */}
-                    <div className="hidden md:flex items-center gap-2 bg-surface-subtle px-3 py-2 rounded-md border border-border-default w-72 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary-ring transition-all">
-                        <Search size={14} className="text-text-muted shrink-0" />
-                        <input
-                            type="text"
-                            placeholder="Buscar no hub..."
-                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-text-muted text-text-primary"
-                        />
-                    </div>
+                    <div className="hidden md:block" />
 
-                    {/* Ações direita */}
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 text-text-secondary hover:bg-surface-subtle hover:text-brand-primary rounded-md transition-colors border border-border-default"
-                            aria-label={theme === "light" ? "Modo escuro" : "Modo claro"}
-                        >
-                            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-                        </button>
-
                         <NotificationDropdown />
-
                         <div className="hidden sm:block w-px h-6 bg-border-default mx-1" />
-
                         <Link
                             href="/membro/perfil"
                             className="hidden sm:flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-subtle border border-transparent hover:border-border-default transition-all"
@@ -205,11 +207,10 @@ export default function MemberLayout({ children }) {
                     </div>
                 </header>
 
-                {/* Conteúdo */}
-                <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+                <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
                     {children}
                 </main>
-            </div>
+            </motion.div>
         </div>
     );
 }

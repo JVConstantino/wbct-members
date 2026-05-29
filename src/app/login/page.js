@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     Mail, Lock, User, Eye, EyeOff,
     Stethoscope, FileText, ArrowRight, ArrowLeft,
     Briefcase, CheckCircle, Clock, Camera, Upload,
-    Sun, Moon, AlertCircle,
+    AlertCircle,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Skeleton";
 
@@ -59,7 +59,7 @@ function ErrorMessage({ message, type = "error" }) {
     );
 }
 
-export default function LoginPage() {
+function LoginForm() {
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [registerStep, setRegisterStep] = useState(1);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -76,57 +76,112 @@ export default function LoginPage() {
     const [registerSpecialty, setRegisterSpecialty] = useState("");
     const [registerBio, setRegisterBio] = useState("");
     const [registerImage, setRegisterImage] = useState("");
+    const [registerImagePreview, setRegisterImagePreview] = useState("");
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [pendingApprovalView, setPendingApprovalView] = useState(false);
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [theme, setTheme] = useState("light");
-    const router = useRouter();
+    const router       = useRouter();
+    const searchParams = useSearchParams();
+
+    // Ler erros que o NextAuth injeta via query string (?error=...)
+    useEffect(() => {
+        const urlError = searchParams.get("error");
+        if (urlError) {
+            if (urlError === "PENDING") {
+                setError("Conta aguardando aprovação da equipe WBCT.");
+            } else if (urlError === "REJECTED") {
+                setError("Cadastro recusado. Entre em contato com o suporte.");
+            } else if (urlError === "CredentialsSignin") {
+                setError("E-mail ou senha incorretos.");
+            } else if (urlError) {
+                setError("Erro ao entrar. Verifique suas credenciais.");
+            }
+        }
+    }, [searchParams]);
 
     useEffect(() => {
-        const saved = localStorage.getItem("theme");
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const active = saved || (prefersDark ? "dark" : "light");
-        setTheme(active);
-        document.documentElement.classList.toggle("dark", active === "dark");
-        document.documentElement.setAttribute("data-theme", active);
+        document.documentElement.classList.remove("dark");
+        document.documentElement.setAttribute("data-theme", "light");
     }, []);
-
-    const toggleTheme = () => {
-        const next = theme === "light" ? "dark" : "light";
-        setTheme(next);
-        localStorage.setItem("theme", next);
-        document.documentElement.classList.toggle("dark");
-        document.documentElement.setAttribute("data-theme", next);
-    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
+        setPendingApprovalView(false);
         if (!loginEmail.trim() || !loginPassword.trim()) {
             setError("Preencha todos os campos.");
             return;
         }
         setLoading(true);
         try {
+            try {
+                const verifyRes = await fetch("/api/auth/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: loginEmail.trim(),
+                        password: loginPassword,
+                    }),
+                });
+
+                if (!verifyRes.ok) {
+                    const verifyData = await verifyRes.json().catch(() => ({}));
+                    const verifyError = String(verifyData.error || "").toLowerCase();
+
+                    if (verifyRes.status === 403 && verifyError.includes("aprova")) {
+                        setIsRegisterMode(true);
+                        setRegisterStep(1);
+                        setPendingApprovalView(true);
+                        return;
+                    }
+
+                    if (verifyRes.status === 403 && verifyError.includes("recus")) {
+                        setError("Cadastro recusado. Entre em contato com o suporte.");
+                        return;
+                    }
+
+                    if (verifyRes.status === 401) {
+                        setError("E-mail ou senha incorretos.");
+                        return;
+                    }
+
+                    setError("Erro ao validar acesso. Tente novamente.");
+                    return;
+                }
+            } catch {
+                // Fallback: se a prevalidacao falhar por rede, tenta o signIn direto.
+            }
+
             const result = await signIn("credentials", {
                 redirect: false,
-                email: loginEmail,
+                email:    loginEmail.trim(),
                 password: loginPassword,
             });
-            if (result.error) {
-                if (result.error.includes("approv") || result.error.includes("aprovação")) {
-                    setError("Conta aguardando aprovação da equipe WBCT.");
-                } else if (result.error.includes("refused") || result.error.includes("recusad")) {
+
+            if (result?.error) {
+                const err = result.error;
+                if (err === "PENDING" || err.toLowerCase().includes("pending") || err.toLowerCase().includes("aprovação") || err.toLowerCase().includes("aguarda")) {
+                    setIsRegisterMode(true);
+                    setRegisterStep(1);
+                    setPendingApprovalView(true);
+                } else if (err === "REJECTED" || err.toLowerCase().includes("rejected") || err.toLowerCase().includes("recusad")) {
                     setError("Cadastro recusado. Entre em contato com o suporte.");
                 } else {
                     setError("E-mail ou senha incorretos.");
                 }
-            } else {
-                const res = await fetch("/api/auth/session");
-                const session = await res.json();
-                router.push(session?.user?.role === "ADMIN" ? "/admin" : "/membro");
+                return;
             }
-        } catch {
+
+            const session = await getSession();
+            if (session?.user) {
+                router.push(session.user.role === "ADMIN" ? "/admin" : "/membro");
+            } else {
+                setError("E-mail ou senha incorretos.");
+            }
+        } catch (err) {
+            console.error("Login error:", err);
             setError("Erro de conexão. Tente novamente.");
         } finally {
             setLoading(false);
@@ -147,17 +202,58 @@ export default function LoginPage() {
         setRegisterStep(2);
     };
 
-    const handleImageChange = (e) => {
+    const handleImageChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        const allowedTypes = new Set([
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/heic",
+            "image/heif",
+        ]);
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        const allowedExt = new Set(["jpg", "jpeg", "png", "heic", "heif"]);
+
+        if (!allowedTypes.has(file.type) && !allowedExt.has(ext || "")) {
+            setError("Formato inválido. Use HEIC, PNG, JPG ou JPEG.");
+            return;
+        }
+
         if (file.size > 2 * 1024 * 1024) {
             setError("A imagem deve ter no máximo 2 MB.");
             return;
         }
+
         setError("");
-        const reader = new FileReader();
-        reader.onloadend = () => setRegisterImage(reader.result);
-        reader.readAsDataURL(file);
+        const previewUrl = URL.createObjectURL(file);
+        setRegisterImagePreview(previewUrl);
+        setUploadingImage(true);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await fetch("/api/upload?public=1", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                setError(data.error || "Erro ao enviar imagem.");
+                setRegisterImagePreview("");
+                return;
+            }
+
+            setRegisterImage(data.url);
+        } catch (error) {
+            setError("Erro ao enviar imagem. Tente novamente.");
+            setRegisterImagePreview("");
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const handleRegister = async (e) => {
@@ -193,30 +289,28 @@ export default function LoginPage() {
         setError("");
         setRegisterStep(1);
         setRegistrationSuccess(false);
+        setPendingApprovalView(false);
         setRegisterImage("");
+        setRegisterImagePreview("");
     };
 
     return (
-        <div className="min-h-screen w-full bg-surface-section flex items-center justify-center p-4 relative transition-colors duration-300">
-
-            {/* Botão de tema */}
-            <button
-                onClick={toggleTheme}
-                className="absolute top-4 right-4 p-2.5 rounded-lg bg-surface-card text-text-secondary shadow-sm border border-border-default hover:bg-surface-subtle hover:text-text-primary transition-all z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
-                aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
-            >
-                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
+        <div className="min-h-screen w-full bg-surface-section flex items-center justify-center p-3 sm:p-4 relative transition-colors duration-300">
 
             {/* Card principal */}
-            <div className={`relative w-full max-w-[900px] bg-surface-card rounded-2xl shadow-modal overflow-hidden border border-border-default flex flex-col md:block transition-all duration-300 ${registerStep === 2 && isRegisterMode ? 'md:h-[680px]' : 'md:h-[600px]'}`}>
+            <div className={`relative w-full max-w-[900px] bg-surface-card rounded-xl sm:rounded-2xl shadow-modal overflow-hidden border border-border-default flex flex-col md:block transition-all duration-300 ${registerStep === 2 && isRegisterMode ? 'md:h-[680px]' : 'md:h-[600px]'}`}>
 
                 {/* ── Formulário de Login ── */}
-                <div className={`absolute top-0 left-0 w-full md:w-1/2 h-full flex flex-col justify-center px-8 py-10 transition-all duration-700 ${isRegisterMode ? 'md:opacity-0 md:translate-x-full pointer-events-none' : 'md:opacity-100 md:translate-x-0 z-10'}`}>
-                    <form onSubmit={handleLogin} className="flex flex-col justify-center max-w-sm mx-auto w-full gap-5">
+                <div className={`relative md:absolute top-0 left-0 w-full md:w-1/2 h-auto md:h-full flex flex-col justify-center px-4 sm:px-8 py-7 sm:py-10 transition-all duration-700 ${isRegisterMode ? 'hidden md:flex md:opacity-0 md:translate-x-full pointer-events-none' : 'flex md:opacity-100 md:translate-x-0 z-10'}`}>
+                    <form
+                        onSubmit={handleLogin}
+                        className="flex flex-col justify-center max-w-sm mx-auto w-full gap-5"
+                        suppressHydrationWarning
+                    >
 
                         <div className="text-center">
-                            <h2 className="font-display text-2xl font-bold text-text-primary">Acessar plataforma</h2>
+                            <img src="/logo.png" alt="WBCT" className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 object-contain" />
+                            <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Acessar plataforma</h2>
                             <p className="text-xs text-text-muted mt-1">Bem-vindo de volta à comunidade WBCT</p>
                         </div>
 
@@ -272,10 +366,10 @@ export default function LoginPage() {
                 </div>
 
                 {/* ── Formulário de Registro ── */}
-                <div className={`absolute top-0 left-0 md:left-1/2 w-full md:w-1/2 h-full flex flex-col justify-center px-8 py-10 transition-all duration-700 ${!isRegisterMode ? 'md:opacity-0 md:-translate-x-full pointer-events-none hidden md:flex' : 'flex md:opacity-100 md:translate-x-0 z-10'}`}>
+                <div className={`relative md:absolute top-0 left-0 md:left-1/2 w-full md:w-1/2 h-auto md:h-full flex flex-col justify-center px-4 sm:px-8 py-7 sm:py-10 transition-all duration-700 ${!isRegisterMode ? 'hidden md:flex md:opacity-0 md:-translate-x-full pointer-events-none' : 'flex md:opacity-100 md:translate-x-0 z-10'}`}>
 
                     {/* Tela de sucesso */}
-                    {registrationSuccess ? (
+                    {(registrationSuccess || pendingApprovalView) ? (
                         <div className="flex flex-col items-center justify-center h-full text-center animate-scale-in max-w-sm mx-auto w-full">
                             <div className="w-16 h-16 rounded-2xl bg-status-success-bg flex items-center justify-center mb-5">
                                 <CheckCircle size={32} className="text-status-success" />
@@ -294,11 +388,15 @@ export default function LoginPage() {
                             </button>
                         </div>
                     ) : (
-                        <form onSubmit={handleRegister} className="flex flex-col justify-center max-w-sm mx-auto w-full gap-4">
+                        <form
+                            onSubmit={handleRegister}
+                            className="flex flex-col justify-center max-w-sm mx-auto w-full gap-4"
+                            suppressHydrationWarning
+                        >
 
                             {/* Header com steps */}
                             <div className="text-center">
-                                <h2 className="font-display text-2xl font-bold text-text-primary">Criar conta</h2>
+                                <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Criar conta</h2>
                                 <div className="flex items-center justify-center gap-1.5 mt-3">
                                     <div className={`h-1 rounded-full transition-all duration-300 ${registerStep === 1 ? 'w-8 bg-brand-primary' : 'w-3 bg-brand-primary-light'}`} />
                                     <div className={`h-1 rounded-full transition-all duration-300 ${registerStep === 2 ? 'w-8 bg-brand-primary' : 'w-3 bg-surface-subtle'}`} />
@@ -367,8 +465,8 @@ export default function LoginPage() {
                                     <div className="flex justify-center">
                                         <label className="relative cursor-pointer group">
                                             <div className="w-18 h-18 w-[72px] h-[72px] rounded-xl bg-surface-subtle border-2 border-border-default group-hover:border-brand-primary flex items-center justify-center overflow-hidden transition-colors duration-150">
-                                                {registerImage
-                                                    ? <img src={registerImage} alt="Foto de perfil" className="w-full h-full object-cover" />
+                                                {(registerImagePreview || registerImage)
+                                                    ? <img src={registerImagePreview || registerImage} alt="Foto de perfil" className="w-full h-full object-cover" />
                                                     : <Camera size={24} className="text-text-muted" />
                                                 }
                                             </div>
@@ -377,13 +475,14 @@ export default function LoginPage() {
                                             </span>
                                             <input
                                                 type="file"
-                                                accept="image/*"
+                                                accept=".heic,.heif,.png,.jpg,.jpeg,image/heic,image/heif,image/png,image/jpeg"
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                                 onChange={handleImageChange}
                                                 aria-label="Foto de perfil (opcional)"
                                             />
                                         </label>
                                     </div>
+                                    {uploadingImage && <p className="text-[11px] text-text-muted text-center">Enviando imagem...</p>}
 
                                     <FormField icon={Briefcase}>
                                         <input
@@ -419,7 +518,7 @@ export default function LoginPage() {
                                         <button
                                             type="button"
                                             onClick={() => { setRegisterStep(1); setError(""); }}
-                                            className="btn-secondary w-11 h-11 p-0 justify-center rounded-lg shrink-0"
+                                            className="btn-secondary w-10 h-10 sm:w-11 sm:h-11 p-0 justify-center rounded-lg shrink-0"
                                             aria-label="Voltar"
                                         >
                                             <ArrowLeft size={17} />
@@ -460,13 +559,13 @@ export default function LoginPage() {
                         {/* Conteúdo — modo LOGIN (mostra convite p/ registro) */}
                         <div className={`absolute w-full h-full flex flex-col items-center justify-center px-10 text-center transition-all duration-500 ${isRegisterMode ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
                             <div className="mb-6">
-                                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-                                    <Stethoscope size={28} className="text-white" />
+                                <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+                                    <img src="/logo.png" alt="WBCT" className="w-16 h-16 rounded-md object-contain" />
                                 </div>
-                                <h2 className="font-display text-3xl font-bold text-white leading-tight">
+                                <h2 className="font-display text-3xl font-bold !text-white leading-tight">
                                     Olá, Doutor!
                                 </h2>
-                                <p className="text-white/80 text-sm mt-3 leading-relaxed max-w-[220px]">
+                                <p className="!text-white text-sm mt-3 leading-relaxed max-w-[220px]">
                                     Entre com seus dados profissionais e acesse a comunidade médica exclusiva WBCT.
                                 </p>
                             </div>
@@ -481,16 +580,16 @@ export default function LoginPage() {
                         {/* Conteúdo — modo REGISTRO (mostra convite p/ login) */}
                         <div className={`absolute w-full h-full flex flex-col items-center justify-center px-10 text-center transition-all duration-500 ${isRegisterMode ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8 pointer-events-none'}`}>
                             <div className="mb-6">
-                                <div className="text-3xl font-display font-black text-white tracking-tight mb-1">
-                                    WBCT
+                                <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
+                                    <img src="/logo.png" alt="WBCT" className="w-16 h-16 rounded-md object-contain" />
                                 </div>
                                 <div className="text-xs text-white/60 uppercase tracking-widest mb-5">
                                     Plataforma Médica
                                 </div>
-                                <h2 className="font-display text-2xl font-bold text-white leading-tight">
+                                <h2 className="font-display text-2xl font-bold !text-white leading-tight">
                                     Bem-vindo de volta!
                                 </h2>
-                                <p className="text-white/80 text-sm mt-3 leading-relaxed max-w-[220px]">
+                                <p className="!text-white text-sm mt-3 leading-relaxed max-w-[220px]">
                                     Já faz parte da comunidade? Acesse sua conta e continue conectado.
                                 </p>
                             </div>
@@ -505,9 +604,17 @@ export default function LoginPage() {
                 </div>
             </div>
 
-            <p className="fixed bottom-4 text-xs text-text-muted select-none">
-                © {new Date().getFullYear()} WBCT · Plataforma Médica
+            <p className="fixed bottom-3 sm:bottom-4 text-[10px] sm:text-xs text-text-muted select-none px-3 text-center">
+                © {new Date().getFullYear()} WBCT · Feito por Criativa Digital + Constantino.dev
             </p>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
     );
 }

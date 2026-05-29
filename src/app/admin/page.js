@@ -17,6 +17,14 @@ import { Skeleton }        from "@/components/ui/Skeleton";
 import { EmptyState }      from "@/components/ui/EmptyState";
 import { PageHeader }      from "@/components/ui/PageHeader";
 
+const TIME_RANGES = [
+    { key: "24h",  label: "24h" },
+    { key: "48h",  label: "48h" },
+    { key: "7d",   label: "7d" },
+    { key: "30d",  label: "30d" },
+    { key: "90d",  label: "90d" },
+];
+
 // ── Cores dos gráficos (tokens fixos para recharts) ──
 const CHART_BLUE    = "#2563eb";
 const CHART_BLUE_DIM = "rgba(37,99,235,0.12)";
@@ -56,27 +64,42 @@ function StatCard({ title, value, icon: Icon, accent = false, live = false, load
 export default function AdminDashboard() {
     const [data, setData]       = useState(null);
     const [loading, setLoading] = useState(true);
+    const [timeRange, setTimeRange] = useState("7d");
+    const [mounted, setMounted] = useState(false);
+
+    const fetchStats = async (range) => {
+        try {
+            const r = range || timeRange;
+            const res    = await fetch(`/api/admin/stats?range=${r}`);
+            const result = await res.json();
+            if (result.success) setData(result);
+        } catch (e) {
+            console.error("Erro ao carregar estatísticas:", e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res    = await fetch("/api/admin/stats");
-                const result = await res.json();
-                if (result.success) setData(result);
-            } catch (e) {
-                console.error("Erro ao carregar estatísticas:", e);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchStats();
         const iv = setInterval(fetchStats, 30000);
         return () => clearInterval(iv);
     }, []);
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const handleRangeChange = (range) => {
+        setTimeRange(range);
+        setLoading(true);
+        fetchStats(range);
+    };
+
     const online       = data?.stats?.online       || 0;
     const totalMembers = data?.stats?.members       || 0;
     const pendingPosts = data?.stats?.pendingPosts  || 0;
+    const pendingMembers = data?.stats?.pendingMembers || 0;
     const upcomingEvt  = data?.stats?.upcomingEvents || 0;
 
     const postStatusData = [
@@ -113,7 +136,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="space-y-5 animate-fade-in">
+        <div className="space-y-5 animate-fade-in min-w-0">
 
             <PageHeader
                 title="Dashboard"
@@ -130,8 +153,87 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <StatCard title="Membros"      value={totalMembers} icon={Users}    loading={loading} accent />
                 <StatCard title="Online agora" value={online}       icon={Wifi}     loading={loading} live />
-                <StatCard title="Pendentes"    value={pendingPosts} icon={Clock}    loading={loading} />
+                <StatCard title="Posts pendentes" value={pendingPosts} icon={Clock}    loading={loading} />
                 <StatCard title="Eventos"      value={upcomingEvt}  icon={Calendar} loading={loading} />
+            </div>
+
+            {/* ── Cadastros pendentes ── */}
+            <div className="card p-0 overflow-hidden space-y-0">
+                <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <UserPlus size={15} className="text-status-warning" />
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Cadastros pendentes de aprovação</h3>
+                    </div>
+                    {pendingMembers > 0 && (
+                        <Badge variant="warning" dot>{pendingMembers} pendente{pendingMembers !== 1 ? "s" : ""}</Badge>
+                    )}
+                </div>
+
+                {loading ? (
+                    <div className="p-4">
+                        <Skeleton variant="table" lines={3} />
+                    </div>
+                ) : !data?.pendingMembers?.length ? (
+                    <EmptyState
+                        icon={<CheckCircle size={22} />}
+                        title="Nenhum cadastro pendente"
+                        description="Todas as solicitações de acesso já foram tratadas."
+                    />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[520px] text-sm">
+                            <thead>
+                                <tr className="bg-surface-section">
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Nome</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">E-mail</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Solicitado em</th>
+                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.pendingMembers.map((member) => (
+                                    <tr key={member.id} className="border-t border-border-subtle hover:bg-surface-subtle transition-colors">
+                                        <td className="px-4 py-3">
+                                            <span className="font-medium text-text-primary truncate max-w-[220px] block">{member.name || "Sem nome"}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-xs text-text-muted truncate max-w-[220px] block">{member.email}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-xs text-text-muted">{new Date(member.createdAt).toLocaleDateString("pt-BR")}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <Link
+                                                href={`/admin/membros?search=${encodeURIComponent(member.email)}`}
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-hover"
+                                            >
+                                                Revisar
+                                                <ChevronRight size={12} />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Filtro de período ── */}
+            <div className="flex flex-wrap items-center gap-1 bg-surface-subtle p-1 rounded-md w-fit max-w-full">
+                {TIME_RANGES.map(r => (
+                    <button
+                        key={r.key}
+                        onClick={() => handleRangeChange(r.key)}
+                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                            timeRange === r.key
+                                ? "bg-surface-card text-brand-primary shadow-sm"
+                                : "text-text-muted hover:text-text-secondary"
+                        }`}
+                    >
+                        {r.label}
+                    </button>
+                ))}
             </div>
 
             {/* ── Gráficos ── */}
@@ -141,11 +243,12 @@ export default function AdminDashboard() {
                 <div className="card lg:col-span-2 space-y-4">
                     <div className="flex items-center gap-2">
                         <Activity size={16} className="text-brand-primary" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Atividade semanal</h3>
-                        <span className="ml-auto text-xs text-text-muted">Logins por dia</span>
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Atividades de login</h3>
+                        <span className="ml-auto text-xs text-text-muted">Período selecionado</span>
                     </div>
                     <div className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        {mounted ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={200}>
                             <AreaChart data={loginHistory}>
                                 <defs>
                                     <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
@@ -180,6 +283,7 @@ export default function AdminDashboard() {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                        ) : <Skeleton variant="stat" className="h-full w-full" />}
                     </div>
                 </div>
 
@@ -194,7 +298,8 @@ export default function AdminDashboard() {
                     ) : (
                         <>
                             <div className="h-[160px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                {mounted ? (
+                                <ResponsiveContainer width="100%" height="100%" minWidth={220} minHeight={160}>
                                     <PieChart>
                                         <Pie
                                             data={postStatusData} cx="50%" cy="50%"
@@ -215,6 +320,7 @@ export default function AdminDashboard() {
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
+                                ) : <Skeleton variant="stat" className="h-full w-full" />}
                             </div>
                             <div className="space-y-1.5">
                                 {postStatusData.map((item, i) => (
@@ -237,39 +343,50 @@ export default function AdminDashboard() {
 
                 {/* Crescimento mensal */}
                 <div className="bg-brand-strong rounded-lg p-5 space-y-4 border border-brand-strong">
-                    <div className="flex items-center gap-2">
-                        <BarChart3 size={16} className="text-brand-primary-light" />
-                        <h3 className="font-display text-sm font-semibold text-white">Crescimento</h3>
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <BarChart3 size={16} className="text-white" />
+                            <h3 className="font-display text-sm font-semibold text-white">Crescimento</h3>
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-white/10 text-white font-semibold uppercase tracking-wide">
+                            mensal
+                        </span>
                     </div>
                     <div className="h-[110px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        {mounted ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={110}>
                             <BarChart data={growthData} barSize={14}>
                                 <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                                     {growthData.map((_, i) => (
                                         <Cell
                                             key={i}
-                                            fill={i === growthData.length - 1 ? CHART_BLUE : "rgba(255,255,255,0.1)"}
+                                            fill={i === growthData.length - 1 ? CHART_BLUE : "rgba(255,255,255,0.72)"}
                                         />
                                     ))}
                                 </Bar>
                                 <XAxis
                                     dataKey="month"
-                                    tick={{ fontSize: 10, fill: "#64748b" }}
+                                    tick={{ fontSize: 10, fill: "rgba(255,255,255,0.78)", fontWeight: 600 }}
                                     axisLine={false} tickLine={false}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
+                        ) : <Skeleton variant="stat" className="h-full w-full" />}
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1 text-white"><span className="w-2 h-2 rounded-full bg-white" /> meses anteriores</span>
+                        <span className="inline-flex items-center gap-1 text-primary-200"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_BLUE }} /> mes atual</span>
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t border-white/10">
                         <div>
                             <p className="text-2xl font-display font-bold text-white">
                                 +{growthData[growthData.length - 1]?.count || 0}
                             </p>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-primary-300">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
                                 novos este mês
                             </p>
                         </div>
-                        <TrendingUp size={20} className="text-primary-400" />
+                        <TrendingUp size={20} className="text-white" />
                     </div>
                 </div>
 
