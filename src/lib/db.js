@@ -1,11 +1,8 @@
 import mysql from 'mysql2/promise';
 
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL não definida. Configure a variável de ambiente antes de iniciar o servidor.');
-}
+let pool = null;
 
-// Função para extrair dados da DATABASE_URL
-const parseDbUrl = (url) => {
+function parseDbUrl(url) {
     try {
         const regex = /mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
         const match = url.match(regex);
@@ -22,35 +19,39 @@ const parseDbUrl = (url) => {
         console.error("Erro ao processar DATABASE_URL:", e);
     }
     return null;
-};
-
-const dbConfig = parseDbUrl(process.env.DATABASE_URL);
-
-if (!dbConfig) {
-    throw new Error('DATABASE_URL inválida. Formato esperado: mysql://usuario:senha@host:porta/banco');
 }
 
-// Adiciona opções de pool
-const poolConfig = {
-    ...dbConfig,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000
-};
+function getPool() {
+    if (pool) return pool;
+    if (!process.env.DATABASE_URL) {
+        throw new Error('DATABASE_URL não definida. Configure a variável de ambiente ou defina USE_APPWRITE_DB=1 para usar Appwrite como banco primário.');
+    }
+    const dbConfig = parseDbUrl(process.env.DATABASE_URL);
+    if (!dbConfig) {
+        throw new Error('DATABASE_URL inválida. Formato esperado: mysql://usuario:senha@host:porta/banco');
+    }
+    pool = mysql.createPool({
+        ...dbConfig,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000
+    });
+    return pool;
+}
 
-const pool = mysql.createPool(poolConfig);
+export function isDatabaseConfigured() {
+    return Boolean(process.env.DATABASE_URL);
+}
 
 export async function query(sql, params = []) {
     try {
-        // Converter undefined para null para evitar erros do driver mysql2
         const safeParams = params.map(p => p === undefined ? null : p);
-        const [results] = await pool.execute(sql, safeParams);
+        const [results] = await getPool().execute(sql, safeParams);
         return results;
     } catch (error) {
         console.error('❌ Erro na query SQL:', error.message);
-        // Se for erro de acesso, mostrar detalhes do host
         if (error.code === 'ER_ACCESS_DENIED_ERROR') {
             console.error('⚠️ Detalhes do erro de acesso:', error.sqlMessage);
         }
@@ -60,7 +61,7 @@ export async function query(sql, params = []) {
 
 export async function testConnection() {
     try {
-        const connection = await pool.getConnection();
+        const connection = await getPool().getConnection();
         console.log('✅ Conexão estabelecida com sucesso!');
         connection.release();
         return true;
@@ -70,4 +71,4 @@ export async function testConnection() {
     }
 }
 
-export default pool;
+export default { query, testConnection, isDatabaseConfigured };
