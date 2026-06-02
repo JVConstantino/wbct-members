@@ -2,6 +2,8 @@
 NIXPACKS_NODE_VERSION = "20"
 NODE_VERSION = "20"
 NPM_VERSION = "10"
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
 
 [phases.setup]
 nixPkgs = ["nodejs_20", "npm-10_x", "openssl"]
@@ -10,7 +12,11 @@ nixPkgs = ["nodejs_20", "npm-10_x", "openssl"]
 cmds = ["npm ci --no-audit --no-fund"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = [
+  "npm run build",
+  "cp -r public .next/standalone/public",
+  "cp -r .next/static .next/standalone/.next/static"
+]
 
 [start]
-cmd = "cd .next/standalone && NODE_OPTIONS=--max-http-header-size=262144 node server.js"
+cmd = "cd .next/standalone && HOSTNAME=0.0.0.0 PORT=${PORT:-3000} NODE_OPTIONS=--max-http-header-size=262144 node server.js"
