@@ -160,7 +160,7 @@ PROJETO-TESTE-02/
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── jsconfig.json                   # Path aliases (@/*)
-└── package.json                    # engines.node >=20.19.0
+└── package.json                    # engines.node >=20.0.0 (relaxed for Easy Panel)
 ```
 
 ---
@@ -531,6 +531,46 @@ building  ──► release/*  ──► main
 - Webhook trigger: `POST http://<host>:3000/api/deploy/<token>`
 - Build provider: **Nixpacks** (`.nixpacks.toml` pins Node 20 + npm 10)
 - Required env vars in Easy Panel: `AUTH_SECRET`, `AUTH_URL` (production domain), `AUTH_TRUST_HOST=true`, all `APPWRITE_*` vars
+- **Contabo VPS** as host (185.217.125.183), fronted by Traefik for HTTPS / Let's Encrypt
+
+### Easy Panel Build Configuration (Nixpacks v1.41.0)
+
+> ⚠️ **Nixpacks 1.41.0 (shipped with Easy Panel) PARTIALLY honors `.nixpacks.toml`**: it reads `[variables]` and `[phases.setup]`, but `[phases.install]`, `[phases.build]`, and `[start]` get **overridden by the UI fields** (or by the panel defaults). As of 2026-06-02, the safe pattern is to set the three fields directly in **Build** in the Easy Panel UI:
+
+| UI field | Value to paste |
+|---|---|
+| Build method | **Nixpacks** |
+| Nixpacks version | `1.41.0` |
+| Comando de Instalação (Install) | `npm ci --no-audit --no-fund` |
+| Comando de Build (Build) | `npm run build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static` |
+| Comando de Início (Start) | `node scripts/check-node.js && cd .next/standalone && HOSTNAME=0.0.0.0 PORT=${PORT:-3000} NODE_OPTIONS=--max-http-header-size=262144 node server.js` |
+| Pacotes Nix | _empty_ (already declared in `.nixpacks.toml`) |
+| Pacotes APT | _empty_ |
+
+The two `cp -r` steps in the build command are **critical** when `next.config.js` uses `output: "standalone"`: without them, `public/` and `.next/static/` are not copied to `.next/standalone/` and every asset returns 404 in production. The local `npm run build` only verifies the JS compiles; the cp step is what makes the standalone image self-contained.
+
+### Environment Variables in Easy Panel
+
+**Never** use the "create .env" option (if offered). Paste each var as a `KEY=VALUE` line in the **Environment** tab. This injects them as runtime env vars (no leak into Docker layers). Current production envs:
+
+```
+NODE_ENV=production
+AUTH_SECRET=<openssl rand -base64 32>
+AUTH_URL=https://wbctmember.org/    # no trailing slash
+AUTH_TRUST_HOST=true
+APPWRITE_ENDPOINT=https://database.wbctmember.org/v1
+APPWRITE_PROJECT_ID=6a18d35f002ce6e1c766
+APPWRITE_API_KEY=standard_<rotated-server-key>
+APPWRITE_DATABASE_ID=staging
+```
+
+> ⚠️ `APPWRITE_API_KEY` is a **server key with full read/write**. Never commit. Rotate immediately if exposed in any chat/log/screenshot. The key previously visible in this repo's local `.env` must be considered compromised and was rotated on 2026-06-02.
+
+### Persistent Volume (uploads)
+
+`src/app/api/upload/route.js` writes to `process.cwd() + "public/uploads"`. With the Start command above, `process.cwd()` is `/app/.next/standalone`, so uploads land in `/app/.next/standalone/public/uploads`. **Without a persistent volume, every restart/redploy wipes user uploads.**
+
+In Easy Panel → Service → **Volumes** → Mount path: `/app/.next/standalone/public/uploads` (5–10 GB recommended).
 
 ### Production Build
 ```bash
@@ -544,6 +584,10 @@ npm run start
 - `ClientFetchError: NetworkError` → `AUTH_URL` in `.env` doesn't match the server port; update it and clear browser cookies
 - Stale `authjs.callback-url` cookie → clear all browser cookies for localhost in DevTools → Application → Cookies
 - Node version < 20 → already fixed in `.nixpacks.toml` with `NODE_VERSION = "20"`
+- **Nixpacks banner shows `nodejs_24, npm-9_x`** (instead of the `nodejs_20, npm-10_x` declared in `.nixpacks.toml`) → the TOML was ignored; re-check the UI fields above and **clear build cache** before redeploy
+- **`⚠ The "middleware" file convention is deprecated`** appears in the build log → Easypanel is pulling an old commit (e.g. from `wbct-members` when `origin` is ahead); verify the Source branch points to a commit that contains `src/proxy.js`
+- **404 on `/_next/static/*` and `/uploads/*` in production** → the two `cp -r` steps didn't run; the build command in the UI must be the full one above
+- **`SecretsUsedInArgOrEnv` warnings on the final image** → known limitation of Nixpacks 1.x; secrets get baked into a Dockerfile layer. Mitigate by rotating keys after every build, using Easy Panel Secrets (if available), or upgrading to Nixpacks 2.x
 
 ---
 
@@ -682,7 +726,7 @@ const allUsers = await listAll(COLS.users, [Query.equal("status", "PENDING")]);
 
 3. **Author name fallback** — Some migrated posts reference `authorId` values that do not exist in the Appwrite `users` collection (incomplete data migration). The code handles this gracefully with an "Unknown author" fallback (rendered in English).
 
-4. **Middleware deprecation** — Next 16 warns `"middleware" file convention is deprecated. Please use "proxy" instead`. Cosmetic warning, no impact.
+4. **Middleware deprecation** — ✅ **Fixed 2026-06-02**: `src/middleware.js` renamed to `src/proxy.js` and the deprecated `export const runtime = 'nodejs'` line was removed (proxy always runs on the Node.js runtime in Next 16). The Next 16 warning is gone.
 
 5. **N+1 queries in list endpoints** — Routes like `/api/users/directory` and `/api/posts` fetch authors individually per document (no JOINs in Appwrite). Performance degrades with >500 records. Acceptable for current scale.
 
@@ -690,4 +734,54 @@ const allUsers = await listAll(COLS.users, [Query.equal("status", "PENDING")]);
 
 ---
 
-*Last updated: 2026-06-01 · Database: Appwrite (node-appwrite v16.0.0) · Deploy target: Easy Panel (Nixpacks, Node 20) · UI language: English (pt-BR redirects still served)*
+*Last updated: 2026-06-02 · Database: Appwrite (node-appwrite v16.0.0) · Deploy target: Easy Panel + Contabo (Nixpacks 1.41.0, Node 20) · UI language: English (pt-BR redirects still served) · Last deploy commit: `39f2854`*
+
+---
+
+## 18. Recent Changes (2026-06-02) — Deploy hardening on Easy Panel / Contabo
+
+Goal: get a clean, reproducible production deploy on Contabo + Easy Panel, with the standalone Next.js output correctly shipped and all required envs documented.
+
+### Code changes (commit `39f2854` on `building`)
+
+- **Removed `prisma/` folder and `.gitignore` entry** — `prisma/schema.prisma` was a leftover from the pre-Appwrite MySQL era. Prisma is not in `package.json` and was producing `EBADENGINE` warnings that broke `npm ci` on the Nixpacks 1.41.0 builder.
+- **Renamed `src/middleware.js` → `src/proxy.js`** — Next 16 deprecates the `middleware` filename. The file itself is unchanged (still uses `auth()` from NextAuth v5, same matcher, same redirect logic). The `export const runtime = 'nodejs'` line was removed because proxy always runs on the Node.js runtime in Next 16 (keeping it triggers a build error: "Route segment config is not allowed in Proxy file").
+- **Hardened `.nixpacks.toml`** — added `NODE_ENV` and `NEXT_TELEMETRY_DISABLED` variables; the build phase now copies `public/` and `.next/static/` into `.next/standalone/` (required for `output: "standalone"`); the start command now binds `HOSTNAME=0.0.0.0` and reads `$PORT` from the env (Easy Panel sets it automatically).
+- **`.gitignore`** — removed the now-orphaned `/generated/prisma` line. `.env` remains ignored.
+- **Relaxed `engines.node` from `>=20.19.0` to `>=20.0.0`** so Easy Panel's Node 20 build satisfies the constraint while still rejecting Node 18 (which would fail on the proxy file).
+
+### Deploy target
+
+- **Host**: Contabo VPS, fronted by Traefik for HTTPS / Let's Encrypt.
+- **Build**: Nixpacks 1.41.0 (the version pinned by Easy Panel).
+- **Source branch**: `building` (pushed to **both** `origin` → `JVConstantino/WBCT-SISTEMA-NOVO.git` and `wbct-members` → `JVConstantino/wbct-members.git`, because the existing Easy Panel service was originally configured against the `wbct-members` URL).
+- **Production domain**: `https://wbctmember.org/` (set as `AUTH_URL`).
+
+### Appwrite credentials
+
+- Endpoint: `https://database.wbctmember.org/v1`
+- Project ID: `6a18d35f002ce6e1c766`
+- Database ID: `staging`
+- API key: was previously `standard_5e7feddf5fab91b5748187cea3649c230b3876309cf9cddf26a5a4fd34fbf69c76d18b21ef5f15629197a0c46f68a607f2a2cffcba42eab08192b34cb83eb9223c3b7578953e5bcbd6d6ad030650d3451e09a052b7936bf44c1572b28ff628ca4d54c89598ed1b9d698ffe57b0601a393e3bcbe09ccf7297f91e298c9d4d17c9` and is **considered compromised** (exposed in this chat); **rotated on 2026-06-02** and the new key was pasted into the Easy Panel Environment tab.
+
+### Build-time gotchas discovered
+
+1. **Nixpacks 1.41.0 partially honors `.nixpacks.toml`**: it reads `[variables]` and `[phases.setup]`, but `[phases.install]`, `[phases.build]`, and `[start]` get overridden by the UI fields (or by panel defaults). The first Easy Panel build showed `nodejs_24, npm-9_x` in the Nixpacks banner even though `.nixpacks.toml` declared `nodejs_20, npm-10_x`. **Fix**: set the Install/Build/Start commands directly in the Easy Panel UI (see section 11).
+2. **`output: "standalone"` requires manual `cp` steps** for `public/` and `.next/static/`. Without them, the standalone server starts but every asset returns 404. These copies are baked into the Install/Build/Start command in the Easy Panel UI.
+3. **Easy Panel service Source URL matters more than the local `origin` remote**: the existing service was created against the `wbct-members` URL. Even after pushing to `origin`, Easypanel kept pulling `58724bc` from `wbct-members` until the same commit was also pushed there.
+4. **`node-appwrite` module not found** (seen in an older `dev.log`) is now resolved — the dep is in `package.json` and `npm ci` installs 235 packages without EBADENGINE after the Prisma cleanup.
+
+### Post-deploy smoke test (still pending verification)
+
+- `https://wbctmember.org/` returns 200/307 (root → `/login` when unauthenticated)
+- DevTools → Network: `/_next/static/...` and `/uploads/...` return 200
+- Admin login works, `/api/admin/stats` returns 200 (was failing in older `dev.log`)
+- The build log no longer shows the "middleware deprecated" warning
+- The Nixpacks banner shows the custom commands from the UI (proves override is working)
+
+### Open follow-ups
+
+- [ ] Verify the post-deploy smoke test
+- [ ] Add a persistent volume at `/app/.next/standalone/public/uploads` in Easy Panel so user uploads survive redeploys
+- [ ] (Optional) Upgrade Easy Panel's Nixpacks to 2.x to fully honor `.nixpacks.toml` and eliminate the `SecretsUsedInArgOrEnv` warnings
+- [ ] (Optional) Migrate legacy `src/app/membro/*` folders to English slugs to drop the redirects/rewrites indirection in `next.config.js`
