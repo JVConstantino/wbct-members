@@ -9,12 +9,12 @@ export default auth((req) => {
     const role = req.auth?.user?.role;
 
     const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-    const isMemberRoute = nextUrl.pathname.startsWith("/membro");
+    const isMemberRoute = nextUrl.pathname.startsWith("/member") || nextUrl.pathname.startsWith("/member");
     const isAuthRoute = nextUrl.pathname === "/login";
 
     if (isAuthRoute) {
         if (isLoggedIn) {
-            return NextResponse.redirect(new URL(role === "ADMIN" ? "/admin" : "/membro", nextUrl));
+            return NextResponse.redirect(new URL(role === "ADMIN" ? "/admin" : "/member", nextUrl));
         }
         return null;
     }
@@ -24,7 +24,7 @@ export default auth((req) => {
     }
 
     if (isAdminRoute && role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/membro", nextUrl));
+        return NextResponse.redirect(new URL("/member", nextUrl));
     }
 
     return null;

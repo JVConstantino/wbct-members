@@ -30,7 +30,7 @@ const MenuBar = ({ editor }) => {
 
     const setLink = () => {
         const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt('URL do link', previousUrl || 'https://');
+        const url = window.prompt('Link URL', previousUrl || 'https://');
         if (url === null) return;
         if (url === '') {
             editor.chain().focus().unsetLink().run();
@@ -40,7 +40,7 @@ const MenuBar = ({ editor }) => {
     };
 
     const addImage = () => {
-        const url = window.prompt('URL da imagem', 'https://');
+        const url = window.prompt('Image URL', 'https://');
         if (!url) return;
         editor.chain().focus().setImage({ src: url }).run();
     };
@@ -177,7 +177,7 @@ export default function TextEditor({ initialContent, onChange }) {
             Link.configure({ openOnClick: false, autolink: true }),
             Image,
             Placeholder.configure({
-                placeholder: 'Escreva o conteudo do artigo aqui...',
+                placeholder: 'Write the article content here...',
             }),
         ],
         content: initialContent || '',

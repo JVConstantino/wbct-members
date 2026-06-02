@@ -10,23 +10,23 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import Modal from "@/components/ui/Modal";
 
 const FILTERS = [
-    { id: "all",      label: "Todas"     },
-    { id: "pending",  label: "Pendentes" },
-    { id: "approved", label: "Aprovadas" },
-    { id: "rejected", label: "Rejeitadas"},
+    { id: "all",      label: "All"     },
+    { id: "pending",  label: "Pendings" },
+    { id: "approved", label: "Approved" },
+    { id: "rejected", label: "Rejected"},
 ];
 
 function PostStatusBadge({ status }) {
-    if (status === "APPROVED") return <Badge variant="success">Aprovado</Badge>;
-    if (status === "REJECTED") return <Badge variant="error">Rejeitado</Badge>;
-    return <Badge variant="warning">Pendente</Badge>;
+    if (status === "APPROVED") return <Badge variant="success">Approved</Badge>;
+    if (status === "REJECTED") return <Badge variant="error">Rejected</Badge>;
+    return <Badge variant="warning">Pending</Badge>;
 }
 
 function fmtDate(date) {
-    return new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    return new Date(date).toLocaleDateString("en-US", { day: "2-digit", month: "short" });
 }
 
-export default function PostagensPage() {
+export default function PostsPage() {
     const [posts, setPosts]         = useState([]);
     const [loading, setLoading]     = useState(true);
     const [filter, setFilter]       = useState("all");
@@ -44,9 +44,9 @@ export default function PostagensPage() {
             const res = await fetch(`/api/posts${q}`);
             const data = await res.json();
             if (data.success) setPosts(data.posts);
-            else setError(data.error || "Erro ao carregar postagens");
+            else setError(data.error || "Failed to load posts");
         } catch {
-            setError("Erro de conexão");
+            setError("Connection error");
         } finally {
             setLoading(false);
         }
@@ -80,7 +80,7 @@ export default function PostagensPage() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Excluir esta postagem permanentemente?")) return;
+        if (!confirm("Delete this post permanently?")) return;
         const res = await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success) fetchPosts();
@@ -88,7 +88,7 @@ export default function PostagensPage() {
 
     const handleBulkDelete = async () => {
         if (!selectedIds.length) return;
-        if (!confirm(`Excluir ${selectedIds.length} postagem(ns) permanentemente?`)) return;
+        if (!confirm(`Delete ${selectedIds.length} post(s) permanentemente?`)) return;
         const res = await fetch(`/api/posts?ids=${selectedIds.join(",")}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success) {
@@ -104,16 +104,16 @@ export default function PostagensPage() {
             const res = await fetch(`/api/posts/${id}`);
             const data = await res.json();
             if (data.success) setPreviewPost(data.post);
-            else setError(data.error || "Erro ao carregar preview");
+            else setError(data.error || "Failed to load preview");
         } catch {
-            setError("Erro ao carregar preview");
+            setError("Failed to load preview");
         } finally {
             setPreviewLoading(false);
         }
     };
 
     const handleDeleteComment = async (commentId) => {
-        if (!confirm("Excluir este comentário?")) return;
+        if (!confirm("Delete this comment?")) return;
         const res = await fetch(`/api/comments/${commentId}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success && previewPost) {
@@ -141,8 +141,8 @@ export default function PostagensPage() {
     return (
         <div className="space-y-5">
             <PageHeader
-                title="Postagens"
-                subtitle={`${filtered.length} postagem${filtered.length !== 1 ? "s" : ""}`}
+                title="Posts"
+                subtitle={`${filtered.length} post${filtered.length !== 1 ? "s" : ""}`}
             />
 
             {/* Toolbar */}
@@ -169,7 +169,7 @@ export default function PostagensPage() {
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={13} />
                     <input
                         type="text"
-                        placeholder="Buscar por título ou autor..."
+                        placeholder="Search by title or author..."
                         className="input !pl-10 text-xs w-full"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -188,7 +188,7 @@ export default function PostagensPage() {
                     <span className="text-xs font-semibold mr-1">{selectedIds.length} selecionada(s)</span>
                     <button onClick={() => updateStatusBulk("APPROVED")} className="btn-primary text-xs py-1.5 px-3">Aprovar</button>
                     <button onClick={() => updateStatusBulk("REJECTED")} className="btn-danger text-xs py-1.5 px-3">Rejeitar</button>
-                    <button onClick={handleBulkDelete} className="btn-secondary text-xs py-1.5 px-3">Excluir</button>
+                    <button onClick={handleBulkDelete} className="btn-secondary text-xs py-1.5 px-3">Delete</button>
                 </div>
             )}
 
@@ -210,8 +210,8 @@ export default function PostagensPage() {
                     <div className="p-8">
                         <EmptyState
                             icon={FileText}
-                            title="Nenhuma postagem encontrada"
-                            description={search ? "Tente outro termo de busca." : "Não há postagens neste filtro."}
+                            title="No posts found"
+                            description={search ? "Try another search term." : "There are no posts in this filter."}
                         />
                     </div>
                 ) : (
@@ -219,7 +219,7 @@ export default function PostagensPage() {
                         <table className="w-full min-w-[600px]">
                             <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
-                                    {["select", "Título", "Autor", "Data", "Status", ""].map((h, i) => (
+                                    {["select", "Title", "Autor", "Data", "Status", ""].map((h, i) => (
                                         <th key={i} className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wider px-4 py-3">
                                             {h === "select" ? (
                                                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
@@ -238,7 +238,7 @@ export default function PostagensPage() {
                                                 onChange={() => toggleSelect(post.id)}
                                             />
                                         </td>
-                                        {/* Título */}
+                                        {/* Title */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-2.5">
                                                 {post.image ? (
@@ -277,7 +277,7 @@ export default function PostagensPage() {
                                         <td className="px-4 py-3">
                                             <PostStatusBadge status={post.status} />
                                         </td>
-                                        {/* Ações */}
+                                        {/* Actions */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1">
                                                 {post.status === "PENDING" && (
@@ -307,7 +307,7 @@ export default function PostagensPage() {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(post.id)}
-                                                    title="Excluir"
+                                                    title="Delete"
                                                     className="p-1.5 text-text-muted hover:text-status-error hover:bg-status-error-bg rounded-md transition-colors"
                                                 >
                                                     <Trash2 size={12} />
@@ -328,7 +328,7 @@ export default function PostagensPage() {
                     setPreviewOpen(false);
                     setPreviewPost(null);
                 }}
-                title="Preview da postagem"
+                title="Post preview"
                 size="2xl"
             >
                 {previewLoading ? (
@@ -338,7 +338,7 @@ export default function PostagensPage() {
                         <Skeleton variant="text" className="h-40 w-full" />
                     </div>
                 ) : !previewPost ? (
-                    <p className="text-sm text-text-muted">Nenhum conteudo para exibir.</p>
+                    <p className="text-sm text-text-muted">No content to display.</p>
                 ) : (
                     <div className="space-y-4">
                         <div>
@@ -363,9 +363,9 @@ export default function PostagensPage() {
                         </div>
 
                         <div className="space-y-2 border-t border-border-default pt-3">
-                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Moderação de comentários</p>
+                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Comment moderation</p>
                             {(previewPost.comments || []).length === 0 ? (
-                                <p className="text-xs text-text-muted">Sem comentários nesta postagem.</p>
+                                <p className="text-xs text-text-muted">No comments on this post.</p>
                             ) : (
                                 (previewPost.comments || []).map((c) => (
                                     <div key={c.id} className="flex items-start justify-between gap-3 p-2 rounded border border-border-subtle bg-surface-subtle">
@@ -376,7 +376,7 @@ export default function PostagensPage() {
                                         <button
                                             onClick={() => handleDeleteComment(c.id)}
                                             className="p-1.5 rounded text-status-error hover:bg-status-error-bg"
-                                            title="Excluir comentário"
+                                            title="Delete comment"
                                         >
                                             <Trash2 size={12} />
                                         </button>

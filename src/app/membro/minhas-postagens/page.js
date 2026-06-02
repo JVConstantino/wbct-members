@@ -21,9 +21,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 
 const STATUS_MAP = {
-    APPROVED: { label: "Aprovado", icon: CheckCircle2, classes: "bg-status-success-bg text-status-success border-status-success/20" },
-    PENDING:  { label: "Em Revisão", icon: Clock, classes: "bg-status-warning-bg text-status-warning border-status-warning/20" },
-    REJECTED: { label: "Recusado", icon: XCircle, classes: "bg-status-error-bg text-status-error border-status-error/20" },
+    APPROVED: { label: "Approved", icon: CheckCircle2, classes: "bg-status-success-bg text-status-success border-status-success/20" },
+    PENDING:  { label: "In Review", icon: Clock, classes: "bg-status-warning-bg text-status-warning border-status-warning/20" },
+    REJECTED: { label: "Rejected", icon: XCircle, classes: "bg-status-error-bg text-status-error border-status-error/20" },
 };
 
 function StatusBadge({ status }) {
@@ -54,13 +54,13 @@ export default function MyPosts() {
             const res = await fetch("/api/membro/posts");
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error || `Erro do servidor: ${res.status}`);
+                throw new Error(errData.error || `Server error: ${res.status}`);
             }
             const data = await res.json();
             if (data.success) setPosts(data.posts);
-            else throw new Error(data.error || "Falha ao carregar dados.");
+            else throw new Error(data.error || "Failed to load data.");
         } catch (error) {
-            console.error("Erro ao carregar posts:", error);
+            console.error("Failed to load posts:", error);
             setError(error.message);
         } finally {
             setLoading(false);
@@ -68,19 +68,19 @@ export default function MyPosts() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
+        if (!confirm("Are you sure you want to delete this post?")) return;
         try {
             const res = await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
             const data = await res.json();
             if (data.success) setPosts(posts.filter(p => p.id !== id));
         } catch (error) {
-            console.error("Erro ao excluir:", error);
+            console.error("Failed to delete:", error);
         }
     };
 
     const handleBulkDelete = async () => {
         if (!selectedIds.length) return;
-        if (!confirm(`Tem certeza que deseja excluir ${selectedIds.length} postagem(ns)?`)) return;
+        if (!confirm(`Are you sure you want to delete ${selectedIds.length} post(s)?`)) return;
         try {
             const res = await fetch(`/api/posts?ids=${selectedIds.join(",")}`, { method: "DELETE" });
             const data = await res.json();
@@ -89,14 +89,14 @@ export default function MyPosts() {
                 setSelectedIds([]);
             }
         } catch (error) {
-            console.error("Erro ao excluir em massa:", error);
+            console.error("Failed to bulk delete:", error);
         }
     };
 
     const FILTERS = [
-        { key: "all", label: "Todas" },
-        { key: "approved", label: "Aprovadas" },
-        { key: "pending", label: "Em Revisão" },
+        { key: "all", label: "All" },
+        { key: "approved", label: "Approved" },
+        { key: "pending", label: "In Review" },
     ];
 
     const filteredPosts = posts.filter(p => {
@@ -118,7 +118,7 @@ export default function MyPosts() {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Carregando seu portfólio...</p>
+                <p className="text-text-muted text-sm">Loading your portfolio...</p>
             </div>
         );
     }
@@ -126,11 +126,11 @@ export default function MyPosts() {
     return (
         <div className="space-y-5 pb-8">
             <PageHeader
-                title="Minhas Publicações"
-                subtitle="Acompanhe o desempenho e status dos seus conteúdos"
+                title="My Publications"
+                subtitle="Track the performance and status of your content"
                 actions={
-                    <Button variant="primary" size="sm" icon={<Sparkles size={14} />} as={Link} href="/membro/criar">
-                        Nova Postagem
+                    <Button variant="primary" size="sm" icon={<Sparkles size={14} />} as={Link} href="/member/create">
+                        New Post
                     </Button>
                 }
             />
@@ -139,7 +139,7 @@ export default function MyPosts() {
                 <div className="p-4 bg-status-error-bg border border-status-error/20 rounded-md text-status-error font-semibold flex items-center gap-3">
                     <AlertCircle size={18} />
                     <div className="flex-1">
-                        <p className="text-sm">Erro ao carregar postagens.</p>
+                        <p className="text-sm">Failed to load posts.</p>
                         <p className="text-xs opacity-80">{error}</p>
                     </div>
                     <button onClick={fetchMyPosts} className="btn-danger text-xs">
@@ -179,23 +179,23 @@ export default function MyPosts() {
             {selectedIds.length > 0 && (
                 <div className="bg-status-warning-bg border border-status-warning/20 rounded-md p-3 flex items-center justify-between">
                     <span className="text-xs font-semibold text-status-warning">{selectedIds.length} selecionada(s)</span>
-                    <button onClick={handleBulkDelete} className="btn-danger text-xs">Excluir selecionadas</button>
+                    <button onClick={handleBulkDelete} className="btn-danger text-xs">Delete selecionadas</button>
                 </div>
             )}
 
             <div className="flex items-center gap-2 text-xs text-text-muted">
                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
-                <span>Selecionar todas visíveis</span>
+                <span>Select all visible</span>
             </div>
 
             {filteredPosts.length === 0 ? (
                 <EmptyState
                     icon={FileText}
-                    title="Nenhuma postagem encontrada"
-                    description="Você ainda não possui publicações neste status."
+                    title="No posts found"
+                    description="You do not have posts with this status yet."
                     action={
-                        <Link href="/membro/criar" className="btn-primary text-sm flex items-center gap-1.5">
-                            <Sparkles size={14} /> Começar a escrever
+                        <Link href="/member/create" className="btn-primary text-sm flex items-center gap-1.5">
+                            <Sparkles size={14} /> Start writing
                         </Link>
                     }
                 />
@@ -226,7 +226,7 @@ export default function MyPosts() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <StatusBadge status={post.status} />
                                     <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide flex items-center gap-1">
-                                        <Clock size={10} /> {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                        <Clock size={10} /> {new Date(post.createdAt).toLocaleDateString("en-US")}
                                     </span>
                                 </div>
                                 <h3 className="text-sm font-semibold text-text-primary group-hover:text-brand-primary transition-colors line-clamp-2 leading-snug">
@@ -241,7 +241,7 @@ export default function MyPosts() {
                                     <div className="flex items-center gap-1.5 text-text-muted text-xs">
                                         <MessageSquare size={12} className="text-brand-primary" />
                                         <span className="font-semibold text-text-secondary">{post.commentCount || 0}</span>
-                                        <span>comentários</span>
+                                        <span>comments</span>
                                     </div>
                                 </div>
                             </div>
@@ -250,25 +250,25 @@ export default function MyPosts() {
                             <div className="flex md:flex-col gap-2 shrink-0">
                                 {post.status === "APPROVED" && (
                                     <Link
-                                        href={`/membro/postagens/${post.id}`}
+                                        href={`/member/posts/${post.id}`}
                                         className="flex-1 md:flex-none btn-secondary text-xs flex items-center justify-center gap-1.5"
                                     >
                                         <Eye size={13} /> Ver
                                     </Link>
                                 )}
                                 <Link
-                                    href={`/membro/editar/post/${post.id}`}
+                                    href={`/member/edit/post/${post.id}`}
                                     className="flex-1 md:flex-none px-3 py-2 rounded bg-status-warning-bg text-status-warning hover:bg-status-warning hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
-                                    title="Editar"
+                                    title="Edit"
                                 >
-                                    <Edit3 size={13} /> Editar
+                                    <Edit3 size={13} /> Edit
                                 </Link>
                                 <button
                                     onClick={() => handleDelete(post.id)}
                                     className="flex-1 md:flex-none px-3 py-2 rounded bg-status-error-bg text-status-error hover:bg-status-error hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
-                                    title="Excluir"
+                                    title="Delete"
                                 >
-                                    <Trash2 size={13} /> Excluir
+                                    <Trash2 size={13} /> Delete
                                 </button>
                             </div>
                         </div>

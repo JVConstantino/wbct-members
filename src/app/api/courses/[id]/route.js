@@ -1,23 +1,23 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
-// PATCH - Atualizar curso
 export async function PATCH(request, { params }) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { id } = await params;
         const { title, description, image } = await request.json();
 
-        await query(`
-            UPDATE Course 
-            SET title = ?, description = ?, image = ?, updatedAt = NOW()
-            WHERE id = ?
-        `, [title, description ?? null, image ?? null, id]);
+        await db.updateDocument(DB_ID, COLS.courses, id, {
+            title,
+            description: description ?? null,
+            image: image ?? null,
+            updatedAt: new Date().toISOString(),
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -26,17 +26,15 @@ export async function PATCH(request, { params }) {
     }
 }
 
-// DELETE - Remover curso
 export async function DELETE(request, { params }) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { id } = await params;
-        await query('DELETE FROM Course WHERE id = ?', [id]);
-
+        await db.deleteDocument(DB_ID, COLS.courses, id);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error deleting course:', error);

@@ -38,13 +38,11 @@ export default function NotificationDropdown() {
 
     useEffect(() => {
         fetchNotifications();
-        // Polling a cada 30s
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
-        // Fechar ao clicar fora
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
@@ -87,9 +85,9 @@ export default function NotificationDropdown() {
 
     const getLink = (notif) => {
         switch (notif.type) {
-            case 'MESSAGE': return `/membro/chat`; // Poderia ir direto pro chat específico se tivesse lógica no frontend
+            case 'MESSAGE': return `/member/chat`;
             case 'POST_APPROVED':
-            case 'POST_REJECTED': return `/membro/minhas-postagens`;
+            case 'POST_REJECTED': return `/member/my-posts`;
             default: return '#';
         }
     };

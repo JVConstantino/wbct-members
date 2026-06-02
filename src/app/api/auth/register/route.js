@@ -6,18 +6,15 @@ export async function POST(request) {
     try {
         const { name, email, password, bio, specialty, crm, image } = await request.json();
 
-        // Verificações básicas
         if (!name || !email || !password) {
-            return NextResponse.json({ success: false, error: 'Campos obrigatórios ausentes.' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Required fields are missing.' }, { status: 400 });
         }
 
-        // Verificar se usuário já existe
         const existing = await getUserByEmail(email);
         if (existing) {
-            return NextResponse.json({ success: false, error: 'Este e-mail já está cadastrado.' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'This email is already registered.' }, { status: 400 });
         }
 
-        // Hash da senha
         const hashedPassword = await bcrypt.hash(password, 10);
         await createPendingUser({
             name,
@@ -29,7 +26,7 @@ export async function POST(request) {
             image,
         });
 
-        return NextResponse.json({ success: true, message: 'Médico cadastrado com sucesso!' });
+        return NextResponse.json({ success: true, message: 'Doctor registered successfully!' });
     } catch (error) {
         console.error('Registration Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

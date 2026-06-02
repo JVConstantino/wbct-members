@@ -31,7 +31,7 @@ export default function MemberHome() {
                 if (postsData.success)  setPosts(postsData.posts);
                 if (eventsData.success) setEvents(eventsData.events.slice(0, 3));
             } catch (err) {
-                console.error("Erro ao carregar dados:", err);
+                console.error("Failed to load data:", err);
             } finally {
                 setLoading(false);
             }
@@ -40,28 +40,28 @@ export default function MemberHome() {
     }, []);
 
     const formatTime = (date) =>
-        new Date(date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-    const firstName = session?.user?.name?.split(" ")[0] || "Médico";
+    const firstName = session?.user?.name?.split(" ")[0] || "Doctor";
 
     return (
         <div className="space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
 
-            {/* Banner de boas-vindas */}
+            {/* Welcome banner */}
             <div className="relative overflow-hidden rounded-lg bg-surface-card border border-border-default shadow-card px-4 sm:px-6 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-brand-primary/5 rounded-full blur-3xl -mt-12 -mr-12 pointer-events-none" />
                 <div className="relative z-10">
                     <h2 className="text-lg sm:text-xl font-display font-bold text-text-primary">
-                        Olá, <span className="text-brand-primary">{firstName}</span>
+                        Hello, <span className="text-brand-primary">{firstName}</span>
                     </h2>
                     <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-                        Explore os conteúdos da comunidade e compartilhe seu conhecimento.
+                        Explore community content and share your knowledge.
                     </p>
                 </div>
                 <div className="relative z-10 shrink-0">
-                    <Link href="/membro/criar" className="btn-primary gap-2 w-full sm:w-auto justify-center">
+                    <Link href="/member/create" className="btn-primary gap-2 w-full sm:w-auto justify-center">
                         <PlusSquare size={15} />
-                        Nova Postagem
+                        New Post
                     </Link>
                 </div>
             </div>
@@ -75,7 +75,7 @@ export default function MemberHome() {
                         <div className="p-1.5 bg-brand-primary-light text-brand-primary rounded-md">
                             <TrendingUp size={15} />
                         </div>
-                        <h3 className="text-sm sm:text-base font-display font-semibold text-text-primary">Feed da Comunidade</h3>
+                        <h3 className="text-sm sm:text-base font-display font-semibold text-text-primary">Community Feed</h3>
                     </div>
 
                     {loading ? (
@@ -92,12 +92,12 @@ export default function MemberHome() {
                     ) : posts.length === 0 ? (
                         <EmptyState
                             icon={BookOpen}
-                            title="Nenhuma postagem ainda"
-                            description="Seja o primeiro a compartilhar conhecimento com a comunidade."
+                            title="No posts yet"
+                            description="Be the first to share knowledge with the community."
                             action={
-                                <Link href="/membro/criar" className="btn-primary gap-2">
+                                <Link href="/member/create" className="btn-primary gap-2">
                                     <PlusSquare size={14} />
-                                    Criar primeira postagem
+                                    Create first post
                                 </Link>
                             }
                         />
@@ -106,7 +106,7 @@ export default function MemberHome() {
                             {posts.map((post) => (
                                 <Link
                                     key={post.id}
-                                    href={`/membro/postagens/${post.id}`}
+                                    href={`/member/posts/${post.id}`}
                                     className="group flex flex-col bg-surface-card rounded-lg border border-border-default shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
                                 >
                                     {/* Imagem de capa */}
@@ -124,12 +124,12 @@ export default function MemberHome() {
                                         )}
                                         <div className="absolute top-2.5 left-2.5">
                                             <span className="bg-surface-card/95 backdrop-blur-sm px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-widest text-brand-primary shadow-sm">
-                                                Artigo
+                                                Article
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Conteúdo */}
+                                    {/* Content */}
                                     <div className="p-3 sm:p-4 flex-1 flex flex-col gap-3">
                                         {/* Autor + data */}
                                         <div className="flex items-center justify-between gap-2 min-w-0">
@@ -145,7 +145,7 @@ export default function MemberHome() {
                                             </div>
                                             <div className="hidden sm:flex items-center gap-1 text-text-muted text-[10px] shrink-0">
                                                 <Calendar size={10} />
-                                                {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                                {new Date(post.createdAt).toLocaleDateString("en-US")}
                                             </div>
                                         </div>
 
@@ -162,7 +162,7 @@ export default function MemberHome() {
                                         {/* Rodapé */}
                                         <div className="mt-auto pt-3 border-t border-border-subtle flex items-center justify-between">
                                             <span className="flex items-center gap-1 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
-                                                Ler artigo <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                                                Read article <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                             </span>
                                             <div className="flex items-center gap-1.5 text-text-muted">
                                                 <MessageSquare size={13} />
@@ -187,10 +187,10 @@ export default function MemberHome() {
                                     <div className="p-1.5 bg-status-warning-bg text-status-warning rounded-md">
                                         <Calendar size={14} />
                                     </div>
-                                    <h4 className="text-sm font-semibold text-text-primary">Próximos Eventos</h4>
+                                    <h4 className="text-sm font-semibold text-text-primary">Upcoming Events</h4>
                                 </div>
-                                <Link href="/membro/eventos" className="text-[10px] font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 transition-colors">
-                                    Ver todos <ArrowRight size={10} />
+                                <Link href="/member/events" className="text-[10px] font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 transition-colors">
+                                    View all <ArrowRight size={10} />
                                 </Link>
                             </div>
                             <div className="space-y-2">
@@ -209,7 +209,7 @@ export default function MemberHome() {
                                                 {new Date(event.date).getDate()}
                                             </span>
                                             <span className="text-[8px] font-semibold uppercase opacity-90">
-                                                {new Date(event.date).toLocaleDateString("pt-BR", { month: "short" })}
+                                                {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
                                             </span>
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -236,9 +236,9 @@ export default function MemberHome() {
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Em destaque</span>
                             </div>
                             <h4 className="text-sm sm:text-base font-display font-bold leading-snug">
-                                Webinars — Cursos e Webinars Médicos
+                                Webinars — Cursos e Webinars Doctors
                             </h4>
-                            <div className="aspect-video bg-surface-subtle rounded-md overflow-hidden relative group cursor-pointer">
+                            <div className="aspect-video bg-surface-subtle rounded-md overflow-hidden relative group courser-pointer">
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
                                         <PlayCircle size={22} className="text-white" />
@@ -246,10 +246,10 @@ export default function MemberHome() {
                                 </div>
                             </div>
                             <Link
-                                href="/membro/webinars"
+                                href="/member/webinars"
                                 className="flex items-center justify-between text-xs font-semibold text-brand-primary-light hover:text-white transition-colors group"
                             >
-                                <span>Ver todos os cursos</span>
+                                <span>View all os courses</span>
                                 <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
@@ -261,12 +261,12 @@ export default function MemberHome() {
                             <Users size={48} />
                         </div>
                         <div className="relative z-10 space-y-3">
-                            <h4 className="text-sm sm:text-base font-display font-bold">Convide um colega</h4>
+                            <h4 className="text-sm sm:text-base font-display font-bold">Invite a colleague</h4>
                             <p className="text-xs text-blue-100 leading-relaxed">
-                                A força da comunidade médica está na colaboração. Convide outros médicos para a plataforma.
+                                The strength of the medical community is collaboration. Invite other doctors to the platform.
                             </p>
                             <button className="w-full py-2.5 bg-white text-brand-primary rounded-md font-semibold text-xs shadow-sm hover:bg-blue-50 transition-colors uppercase tracking-wide">
-                                Gerar Link de Convite
+                                Generate Invite Link
                             </button>
                         </div>
                     </div>

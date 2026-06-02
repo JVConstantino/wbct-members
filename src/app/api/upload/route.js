@@ -25,7 +25,7 @@ export async function POST(request) {
         if (!isPublicUpload) {
             const session = await auth();
             if (!session?.user) {
-                return NextResponse.json({ success: false, error: "Não autorizado" }, { status: 401 });
+                return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
             }
         }
 
@@ -33,7 +33,7 @@ export async function POST(request) {
         const file = formData.get("file");
 
         if (!file) {
-            return NextResponse.json({ success: false, error: "Nenhum arquivo enviado" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
         }
 
         const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "";
@@ -43,14 +43,14 @@ export async function POST(request) {
 
         if (!allowedMime && !allowedExt) {
             return NextResponse.json(
-                { success: false, error: "Tipo de arquivo não permitido. Use HEIC, HEIF, JPG, JPEG, PNG, WebP, GIF ou PDF." },
+                { success: false, error: "File type not allowed. Use HEIC, HEIF, JPG, JPEG, PNG, WebP, GIF, or PDF." },
                 { status: 400 }
             );
         }
 
         if (isPublicUpload && ext === "pdf") {
             return NextResponse.json(
-                { success: false, error: "No cadastro, envie apenas imagens." },
+                { success: false, error: "For registration, upload images only." },
                 { status: 400 }
             );
         }
@@ -58,10 +58,9 @@ export async function POST(request) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // Validar tamanho
         if (buffer.byteLength > MAX_SIZE_BYTES) {
             return NextResponse.json(
-                { success: false, error: "Arquivo muito grande. Limite máximo: 5 MB." },
+                { success: false, error: "File too large. Maximum size: 5 MB." },
                 { status: 400 }
             );
         }
@@ -70,7 +69,6 @@ export async function POST(request) {
         const uploadDir = join(process.cwd(), "public", "uploads");
         await mkdir(uploadDir, { recursive: true });
 
-        // Sanitizar nome do arquivo e gerar nome único
         const safeExt = ext || "bin";
         const filename = `${randomUUID()}.${safeExt}`;
         const path = join(uploadDir, filename);

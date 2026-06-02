@@ -1,63 +1,74 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query } from '@/lib/appwrite';
 
-// GET - Listar aulas de um curso
 export async function GET(request, { params }) {
     try {
         const { id } = await params;
 
-        const lessons = await query(`
-            SELECT * FROM Lesson 
-            WHERE courseId = ? 
-            ORDER BY \`order\` ASC, createdAt ASC
-        `, [id]);
+        const lessonsRes = await db.listDocuments(DB_ID, COLS.lessons, [
+            Query.equal('courseId', id),
+            Query.orderAsc('order'),
+            Query.limit(200),
+        ]);
 
-        // Buscar anexos para cada aula
-        for (let lesson of lessons) {
-            lesson.attachments = await query('SELECT * FROM LessonAttachment WHERE lessonId = ?', [lesson.id]);
-        }
+        const lessons = await Promise.all(
+            lessonsRes.documents.map(async (l) => {
+                const attRes = await db.listDocuments(DB_ID, COLS.lessonAttachments, [
+                    Query.equal('lessonId', l.$id),
+                    Query.limit(50),
+                ]);
+                return {
+                    ...l,
+                    id: l.$id,
+                    attachments: attRes.documents.map(a => ({ ...a, id: a.$id })),
+                };
+            })
+        );
 
-        return NextResponse.json({
-            success: true,
-            lessons
-        });
+        return NextResponse.json({ success: true, lessons });
     } catch (error) {
         console.error('Error fetching lessons:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
-// POST - Criar nova aula
 export async function POST(request, { params }) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { id: courseId } = await params;
         const { title, description, videoUrl, order, attachments } = await request.json();
 
         if (!title || !videoUrl) {
-            return NextResponse.json({ success: false, error: 'Título e URL do vídeo são obrigatórios' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Title and video URL are required' }, { status: 400 });
         }
 
         const lessonId = 'lesson_' + Date.now().toString(36);
+        const now = new Date().toISOString();
 
-        await query(`
-            INSERT INTO Lesson (id, title, description, videoUrl, \`order\`, courseId, createdAt, updatedAt) 
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [lessonId, title, description ?? null, videoUrl, order ?? 0, courseId]);
+        await db.createDocument(DB_ID, COLS.lessons, lessonId, {
+            title,
+            description: description ?? null,
+            videoUrl,
+            order: order ?? 0,
+            courseId,
+            createdAt: now, updatedAt: now,
+        });
 
-        // Inserir anexos se houver
-        if (attachments && Array.isArray(attachments)) {
-            for (let att of attachments) {
+        if (Array.isArray(attachments)) {
+            for (const att of attachments) {
                 const attId = 'att_' + Math.random().toString(36).substr(2, 9);
-                await query(`
-                    INSERT INTO LessonAttachment (id, title, url, type, lessonId, createdAt)
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                `, [attId, att.title ?? '', att.url ?? '', att.type ?? 'other', lessonId]);
+                await db.createDocument(DB_ID, COLS.lessonAttachments, attId, {
+                    title: att.title ?? '',
+                    url: att.url ?? '',
+                    type: att.type ?? 'other',
+                    lessonId,
+                    createdAt: now,
+                });
             }
         }
 

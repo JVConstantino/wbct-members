@@ -62,7 +62,7 @@ export default function DoctorProfilePage({ params }) {
                 }
                 if (postsData.success) setPosts(postsData.posts);
             } catch (error) {
-                console.error("Erro ao carregar perfil:", error);
+                console.error("Failed to load profile:", error);
             } finally {
                 setLoading(false);
             }
@@ -79,7 +79,7 @@ export default function DoctorProfilePage({ params }) {
                 const data = await res.json();
                 if (data.success) setMessages(data.messages);
             } catch (error) {
-                console.error("Erro ao carregar mensagens:", error);
+                console.error("Failed to load messages:", error);
             } finally {
                 setChatLoading(false);
             }
@@ -100,7 +100,7 @@ export default function DoctorProfilePage({ params }) {
             const data = await res.json();
             if (data.success) setIsFollowing(data.isFollowing);
         } catch (error) {
-            console.error("Erro ao seguir:", error);
+            console.error("Failed to follow:", error);
         } finally {
             setFollowLoading(false);
         }
@@ -122,7 +122,7 @@ export default function DoctorProfilePage({ params }) {
                 setNewMessage("");
             }
         } catch (error) {
-            console.error("Erro ao enviar mensagem:", error);
+            console.error("Failed to send message:", error);
         } finally {
             setSending(false);
         }
@@ -139,7 +139,7 @@ export default function DoctorProfilePage({ params }) {
             const data = await res.json();
             if (data.success) setConnectionStatus(data.status || "PENDING");
         } catch (error) {
-            console.error("Erro ao conectar:", error);
+            console.error("Failed to connect:", error);
         } finally {
             setConnectLoading(false);
         }
@@ -149,7 +149,7 @@ export default function DoctorProfilePage({ params }) {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Carregando perfil...</p>
+                <p className="text-text-muted text-sm">Loading profile...</p>
             </div>
         );
     }
@@ -159,9 +159,9 @@ export default function DoctorProfilePage({ params }) {
             <div className="text-center py-20">
                 <EmptyState
                     icon={User}
-                    title="Médico não encontrado"
-                    description="Este perfil não está disponível."
-                    action={<Link href="/membro/diretorio" className="btn-secondary text-sm">← Voltar ao Diretório</Link>}
+                    title="Doctor not found"
+                    description="This profile is not available."
+                    action={<Link href="/member/directory" className="btn-secondary text-sm">← Back to Directory</Link>}
                 />
             </div>
         );
@@ -169,9 +169,9 @@ export default function DoctorProfilePage({ params }) {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-16 relative">
-            <Link href="/membro/diretorio" className="inline-flex items-center gap-1.5 text-text-muted hover:text-brand-primary font-semibold text-sm transition-colors">
+            <Link href="/member/directory" className="inline-flex items-center gap-1.5 text-text-muted hover:text-brand-primary font-semibold text-sm transition-colors">
                 <ArrowLeft size={15} />
-                Voltar ao Diretório
+                Back to Directory
             </Link>
 
             {/* Header */}
@@ -190,15 +190,15 @@ export default function DoctorProfilePage({ params }) {
 
                     <div className="flex-1 text-center sm:text-left">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
-                            <h1 className="text-2xl font-display font-bold text-white">{doctor.name || "Médico"}</h1>
+                            <h1 className="text-2xl font-display font-bold text-white">{doctor.name || "Doctor"}</h1>
                             <div className="flex items-center gap-2 justify-center">
                                 <button
                                     onClick={() => isFollowing && setShowChat(true)}
                                     disabled={!isFollowing}
-                                    title={!isFollowing ? "Siga para enviar mensagem" : "Enviar mensagem"}
-                                    className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-all border border-white/10 ${isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "bg-white/5 text-white/30 cursor-not-allowed"}`}
+                                    title={!isFollowing ? "Follow to send a message" : "Send message"}
+                                    className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-all border border-white/10 ${isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "bg-white/5 text-white/30 courser-not-allowed"}`}
                                 >
-                                    <MessageSquare size={13} /> Mensagem
+                                    <MessageSquare size={13} /> Message
                                 </button>
                                 <button
                                     onClick={handleFollow}
@@ -206,7 +206,7 @@ export default function DoctorProfilePage({ params }) {
                                     className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${isFollowing ? "bg-white/20 text-white hover:bg-white/30" : "btn-primary"}`}
                                 >
                                     {followLoading && <Spinner size="sm" />}
-                                    {isFollowing ? "Seguindo" : "Seguir"}
+                                    {isFollowing ? "Following" : "Follow"}
                                 </button>
                                 <button
                                     onClick={handleConnect}
@@ -214,14 +214,14 @@ export default function DoctorProfilePage({ params }) {
                                     className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${connectionStatus === "ACCEPTED" ? "bg-status-success-bg text-status-success" : "bg-white/20 text-white hover:bg-white/30"}`}
                                 >
                                     {connectLoading && <Spinner size="sm" />}
-                                    {connectionStatus === "ACCEPTED" ? "Conectados" : connectionStatus === "PENDING" ? "Solicitação Enviada" : "Conectar"}
+                                    {connectionStatus === "ACCEPTED" ? "Connected" : connectionStatus === "PENDING" ? "Request Sent" : "Connect"}
                                 </button>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
                             <span className="flex items-center gap-1 bg-brand-primary/20 text-brand-primary px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider">
-                                <Stethoscope size={12} /> Médico
+                                <Stethoscope size={12} /> Doctor
                             </span>
                             {doctor.stack && (
                                 <span className="flex items-center gap-1 bg-white/10 text-white/80 px-2.5 py-1 rounded text-xs font-semibold">
@@ -239,10 +239,10 @@ export default function DoctorProfilePage({ params }) {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { icon: FileText, value: posts.length, label: "Artigos" },
-                    { icon: Stethoscope, value: doctor.stack || "—", label: "Especialidade" },
+                    { icon: FileText, value: posts.length, label: "Articles" },
+                    { icon: Stethoscope, value: doctor.stack || "—", label: "Specialty" },
                     { icon: Award, value: doctor.crm || "—", label: "CRM" },
-                    { icon: Calendar, value: new Date(doctor.createdAt).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }), label: "Membro desde" },
+                    { icon: Calendar, value: new Date(doctor.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }), label: "Member since" },
                 ].map(({ icon: Icon, value, label }) => (
                     <div key={label} className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 text-center">
                         <Icon className="mx-auto text-brand-primary mb-1.5" size={18} />
@@ -252,21 +252,21 @@ export default function DoctorProfilePage({ params }) {
                 ))}
             </div>
 
-            {/* Publicações */}
+            {/* Publications */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-text-primary">Publicações</h2>
-                    <span className="text-xs text-text-muted">{posts.length} artigo{posts.length !== 1 ? "s" : ""}</span>
+                    <h2 className="text-base font-semibold text-text-primary">Publications</h2>
+                    <span className="text-xs text-text-muted">{posts.length} article{posts.length !== 1 ? "s" : ""}</span>
                 </div>
 
                 {posts.length === 0 ? (
-                    <EmptyState icon={FileText} title="Sem publicações ainda" description="Este médico ainda não possui artigos publicados." />
+                    <EmptyState icon={FileText} title="No posts yet" description="This doctor has not published articles yet." />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {posts.map(post => (
                             <Link
                                 key={post.id}
-                                href={`/membro/postagens/${post.id}`}
+                                href={`/member/posts/${post.id}`}
                                 className="group bg-surface-card rounded-lg border border-border-default shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all overflow-hidden"
                             >
                                 <div className="aspect-video bg-surface-subtle relative overflow-hidden">
@@ -285,10 +285,10 @@ export default function DoctorProfilePage({ params }) {
                                     <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
                                         <span className="text-[11px] text-text-muted flex items-center gap-1">
                                             <Calendar size={10} />
-                                            {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                            {new Date(post.createdAt).toLocaleDateString("en-US")}
                                         </span>
                                         <span className="text-[11px] text-brand-primary font-semibold flex items-center gap-1 group-hover:gap-1.5 transition-all">
-                                            Ler <ChevronRight size={11} />
+                                            Read <ChevronRight size={11} />
                                         </span>
                                     </div>
                                 </div>
@@ -308,7 +308,7 @@ export default function DoctorProfilePage({ params }) {
                                 <Avatar src={doctor.image} name={doctor.name} size="sm" />
                                 <div>
                                     <h3 className="font-semibold text-text-primary text-sm">{doctor.name}</h3>
-                                    <p className="text-[11px] text-text-muted">Médico · {doctor.stack || doctor.specialty || "Geral"}</p>
+                                    <p className="text-[11px] text-text-muted">Doctor · {doctor.stack || doctor.specialty || "General"}</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowChat(false)} className="text-text-muted hover:text-text-primary transition-colors">
@@ -324,7 +324,7 @@ export default function DoctorProfilePage({ params }) {
                             ) : messages.length === 0 ? (
                                 <div className="text-center py-8 text-text-muted text-xs">
                                     <MessageSquare className="mx-auto mb-2 opacity-40" size={28} />
-                                    <p>Envie a primeira mensagem para começar a conversa.</p>
+                                    <p>Send the first message to start the conversation.</p>
                                 </div>
                             ) : (
                                 messages.map((msg, index) => {
@@ -349,7 +349,7 @@ export default function DoctorProfilePage({ params }) {
                         <form onSubmit={handleSendMessage} className="p-3 bg-surface-card border-t border-border-default flex gap-2">
                             <input
                                 type="text"
-                                placeholder="Digite sua mensagem..."
+                                placeholder="Type your message..."
                                 value={newMessage}
                                 onChange={e => setNewMessage(e.target.value)}
                                 className="flex-1 input"
@@ -357,7 +357,7 @@ export default function DoctorProfilePage({ params }) {
                             <button
                                 type="submit"
                                 disabled={sending || !newMessage.trim()}
-                                className="p-2.5 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="p-2.5 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:courser-not-allowed transition-colors"
                             >
                                 {sending ? <Spinner size="sm" /> : <Send size={16} />}
                             </button>

@@ -1,29 +1,27 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 
 export async function DELETE(request, { params }) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const id = (await params).id;
-        const rows = await query('SELECT authorId FROM Comment WHERE id = ?', [id]);
-        if (!rows.length) {
-            return NextResponse.json({ success: false, error: 'Comentário não encontrado' }, { status: 404 });
-        }
+        const doc = await db.getDocument(DB_ID, COLS.comments, id);
 
         const isAdmin = session.user.role === 'ADMIN';
-        const isAuthor = rows[0].authorId === session.user.id;
+        const isAuthor = doc.authorId === session.user.id;
         if (!isAdmin && !isAuthor) {
-            return NextResponse.json({ success: false, error: 'Sem permissão' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
         }
 
-        await query('DELETE FROM Comment WHERE id = ? OR parentId = ?', [id, id]).catch(async () => {
-            await query('DELETE FROM Comment WHERE id = ?', [id]);
-        });
+        // Delete replies first
+        const replies = await listAll(COLS.comments, [Query.equal('parentId', id)]);
+        await Promise.all(replies.map(r => db.deleteDocument(DB_ID, COLS.comments, r.$id)));
+        await db.deleteDocument(DB_ID, COLS.comments, id);
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -2,7 +2,7 @@ import { cloneElement, createElement, isValidElement } from 'react';
 
 export function EmptyState({
   icon,
-  title = 'Nenhum item encontrado',
+  title = 'No items found',
   description,
   action,
   className = '',

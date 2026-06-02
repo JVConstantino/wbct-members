@@ -47,7 +47,7 @@ export default function CoursesManagement() {
             const data = await res.json();
             if (data.success) setCourses(data.courses);
         } catch (error) {
-            console.error("Erro ao carregar cursos:", error);
+            console.error("Failed to load courses:", error);
         } finally {
             setLoading(false);
         }
@@ -60,7 +60,7 @@ export default function CoursesManagement() {
             const data = await res.json();
             if (data.success) setLessons(data.lessons);
         } catch (error) {
-            console.error("Erro ao carregar aulas:", error);
+            console.error("Failed to load lessons:", error);
         } finally {
             setLoadingLessons(false);
         }
@@ -96,26 +96,26 @@ export default function CoursesManagement() {
                 fetchCourses();
             }
         } catch (error) {
-            console.error("Erro ao salvar curso:", error);
+            console.error("Failed to save course:", error);
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeleteCourse = async (id) => {
-        if (!confirm("Excluir este curso removerá todas as aulas vinculadas. Continuar?")) return;
+        if (!confirm("Deleting this course will remove all linked lessons. Continue?")) return;
         try {
             const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
             const data = await res.json();
             if (data.success) fetchCourses();
         } catch (error) {
-            console.error("Erro ao excluir curso:", error);
+            console.error("Failed to delete course:", error);
         }
     };
 
     const handleBulkDeleteCourses = async () => {
         if (!selectedCourseIds.length) return;
-        if (!confirm(`Excluir ${selectedCourseIds.length} curso(s)? Isso removerá aulas vinculadas.`)) return;
+        if (!confirm(`Delete ${selectedCourseIds.length} course(s)? This will remove linked lessons.`)) return;
         for (const id of selectedCourseIds) {
             await fetch(`/api/courses/${id}`, { method: "DELETE" });
         }
@@ -160,20 +160,20 @@ export default function CoursesManagement() {
                 if (data.success) { setShowLessonModal(false); fetchLessons(selectedCourse.id); }
             }
         } catch (error) {
-            console.error("Erro ao salvar aula:", error);
+            console.error("Failed to save lesson:", error);
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeleteLesson = async (id) => {
-        if (!confirm("Deseja excluir esta aula?")) return;
+        if (!confirm("Do you want to delete this lesson?")) return;
         try {
             const res = await fetch(`/api/lessons/${id}`, { method: "DELETE" });
             const data = await res.json();
             if (data.success) fetchLessons(selectedCourse.id);
         } catch (error) {
-            console.error("Erro ao excluir aula:", error);
+            console.error("Failed to delete lesson:", error);
         }
     };
 
@@ -191,7 +191,7 @@ export default function CoursesManagement() {
                 setLessonForm(prev => ({ ...prev, attachments: [...prev.attachments, { title: file.name, url: data.url, type }] }));
             }
         } catch (error) {
-            console.error("Erro no upload:", error);
+            console.error("Upload error:", error);
         } finally {
             setUploading(false);
             e.target.value = "";
@@ -209,7 +209,7 @@ export default function CoursesManagement() {
             const data = await res.json();
             if (data.success) setCourseForm(prev => ({ ...prev, image: data.url }));
         } catch (error) {
-            console.error("Erro no upload da capa:", error);
+            console.error("Cover upload error:", error);
         } finally {
             setUploadingCourse(false);
         }
@@ -231,24 +231,24 @@ export default function CoursesManagement() {
         c.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Vista: lista de cursos
+    // Vista: lista de courses
     if (!selectedCourse) {
         return (
             <div className="space-y-5">
                 <PageHeader
                     title="Cursos e Webinars"
-                    subtitle="Gerencie o conteúdo de webinars"
+                    subtitle="Manage webinar content"
                     actions={
                         <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openCourseModal()}>
-                            Novo Curso
+                            New Course
                         </Button>
                     }
                 />
 
                 {selectedCourseIds.length > 0 && (
                     <div className="bg-status-warning-bg border border-status-warning/20 rounded-md p-3 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-status-warning">{selectedCourseIds.length} curso(s) selecionado(s)</span>
-                        <button onClick={handleBulkDeleteCourses} className="btn-danger text-xs">Excluir selecionados</button>
+                        <span className="text-xs font-semibold text-status-warning">{selectedCourseIds.length} course(s) selected</span>
+                        <button onClick={handleBulkDeleteCourses} className="btn-danger text-xs">Delete selected</button>
                     </div>
                 )}
 
@@ -256,7 +256,7 @@ export default function CoursesManagement() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                     <input
                         type="text"
-                        placeholder="Buscar cursos..."
+                        placeholder="Search courses..."
                         className="input !pl-10"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -270,9 +270,9 @@ export default function CoursesManagement() {
                 ) : filteredCourses.length === 0 ? (
                     <EmptyState
                         icon={Video}
-                        title="Nenhum curso cadastrado"
-                        description="Crie o primeiro curso de webinars."
-                        action={<Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openCourseModal()}>Criar Curso</Button>}
+                        title="No courses registered"
+                        description="Crie o primeiro course de webinars."
+                        action={<Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openCourseModal()}>Create Course</Button>}
                     />
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -310,17 +310,17 @@ export default function CoursesManagement() {
                                 <div className="p-4 flex-1 flex flex-col">
                                     <h3 className="font-semibold text-sm text-text-primary mb-1 line-clamp-1">{course.title}</h3>
                                     <p className="text-text-secondary text-xs line-clamp-2 flex-1 mb-3">
-                                        {course.description || "Sem descrição."}
+                                        {course.description || "No description."}
                                     </p>
                                     <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
                                         <span className="text-[10px] font-bold text-text-muted uppercase tracking-wide">
-                                            {course.lessonCount || 0} aula{(course.lessonCount || 0) !== 1 ? "s" : ""}
+                                            {course.lessonCount || 0} lesson{(course.lessonCount || 0) !== 1 ? "s" : ""}
                                         </span>
                                         <button
                                             onClick={() => { setSelectedCourse(course); fetchLessons(course.id); }}
                                             className="text-xs font-semibold text-brand-primary hover:underline"
                                         >
-                                            Gerenciar
+                                            Manage
                                         </button>
                                     </div>
                                 </div>
@@ -330,38 +330,38 @@ export default function CoursesManagement() {
                 )}
 
                 {/* Modal: Curso */}
-                <Modal isOpen={showCourseModal} onClose={() => setShowCourseModal(false)} title={editingCourseId ? "Editar Curso" : "Novo Curso"} size="md">
+                <Modal isOpen={showCourseModal} onClose={() => setShowCourseModal(false)} title={editingCourseId ? "Edit Course" : "New Course"} size="md">
                     <form onSubmit={handleCourseSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Título do Curso</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Course Title</label>
                             <input type="text" className="input" value={courseForm.title} onChange={e => setCourseForm({ ...courseForm, title: e.target.value })} required />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Descrição</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Description</label>
                             <textarea className="input min-h-[80px]" value={courseForm.description} onChange={e => setCourseForm({ ...courseForm, description: e.target.value })} />
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-semibold text-text-secondary">Capa do Curso</label>
-                                <label className="cursor-pointer text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1">
+                                <label className="text-xs font-semibold text-text-secondary">Course Cover</label>
+                                <label className="courser-pointer text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1">
                                     <Upload size={12} />
-                                    {uploadingCourse ? "Enviando..." : "Upload"}
+                                    {uploadingCourse ? "Uploading..." : "Upload"}
                                     <input type="file" className="hidden" accept="image/*" onChange={handleCourseImageUpload} disabled={uploadingCourse} />
                                 </label>
                             </div>
                             <div className="flex gap-2">
-                                <input type="text" className="input flex-1" value={courseForm.image} onChange={e => setCourseForm({ ...courseForm, image: e.target.value })} placeholder="URL da imagem (ou use o upload)" />
+                                <input type="text" className="input flex-1" value={courseForm.image} onChange={e => setCourseForm({ ...courseForm, image: e.target.value })} placeholder="Image URL (or use upload)" />
                                 {courseForm.image && (
                                     <div className="w-12 h-12 rounded border border-border-subtle overflow-hidden">
-                                        <img src={courseForm.image} className="w-full h-full object-cover" alt="Capa" />
+                                        <img src={courseForm.image} className="w-full h-full object-cover" alt="Cover" />
                                     </div>
                                 )}
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
-                            <button type="button" onClick={() => setShowCourseModal(false)} className="flex-1 btn-secondary">Cancelar</button>
+                            <button type="button" onClick={() => setShowCourseModal(false)} className="flex-1 btn-secondary">Cancel</button>
                             <button type="submit" disabled={saving} className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
-                                {saving ? <Spinner size="sm" /> : "Salvar Curso"}
+                                {saving ? <Spinner size="sm" /> : "Save Course"}
                             </button>
                         </div>
                     </form>
@@ -370,7 +370,7 @@ export default function CoursesManagement() {
         );
     }
 
-    // Vista: aulas do curso selecionado
+    // View: lessons for the selected course
     return (
         <div className="space-y-5">
             <div className="flex items-center gap-3">
@@ -379,10 +379,10 @@ export default function CoursesManagement() {
                 </button>
                 <PageHeader
                     title={selectedCourse.title}
-                    subtitle="Gerenciando aulas deste curso"
+                    subtitle="Managing lessons for this course"
                     actions={
                         <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openLessonModal()}>
-                            Nova Aula
+                            New Lesson
                         </Button>
                     }
                 />
@@ -398,9 +398,9 @@ export default function CoursesManagement() {
                         <div className="p-12 text-center">
                             <EmptyState
                                 icon={Video}
-                                title="Nenhuma aula cadastrada"
-                                description="Adicione a primeira aula deste curso."
-                                action={<Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openLessonModal()}>Adicionar Aula</Button>}
+                                title="No lessons registered"
+                                description="Add the first lesson for this course."
+                                action={<Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openLessonModal()}>Add Lesson</Button>}
                             />
                         </div>
                     ) : (
@@ -415,22 +415,22 @@ export default function CoursesManagement() {
                                         <div className="flex items-center gap-3 mt-0.5">
                                             <span className="text-[11px] text-text-muted flex items-center gap-1">
                                                 <Video size={11} />
-                                                {getYoutubeId(lesson.videoUrl) ? "YouTube" : "Link externo"}
+                                                {getYoutubeId(lesson.videoUrl) ? "YouTube" : "External link"}
                                             </span>
                                             {lesson.attachments?.length > 0 && (
                                                 <span className="text-[11px] text-brand-primary font-medium flex items-center gap-1">
                                                     <FileText size={11} />
-                                                    {lesson.attachments.length} material{lesson.attachments.length !== 1 ? "is" : ""}
+                                                    {lesson.attachments.length} material{lesson.attachments.length !== 1 ? "s" : ""}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openLessonModal(lesson)} className="p-1.5 rounded text-text-secondary hover:text-brand-primary hover:bg-brand-primary-light transition-colors" title="Editar">
+                                    <button onClick={() => openLessonModal(lesson)} className="p-1.5 rounded text-text-secondary hover:text-brand-primary hover:bg-brand-primary-light transition-colors" title="Edit">
                                         <Edit size={15} />
                                     </button>
-                                    <button onClick={() => handleDeleteLesson(lesson.id)} className="p-1.5 rounded text-status-error hover:bg-status-error-bg transition-colors" title="Excluir">
+                                    <button onClick={() => handleDeleteLesson(lesson.id)} className="p-1.5 rounded text-status-error hover:bg-status-error-bg transition-colors" title="Delete">
                                         <Trash2 size={15} />
                                     </button>
                                 </div>
@@ -440,22 +440,22 @@ export default function CoursesManagement() {
                 </div>
             </div>
 
-            {/* Modal: Aula */}
-            <Modal isOpen={showLessonModal} onClose={() => setShowLessonModal(false)} title={editingLessonId ? "Editar Aula" : "Nova Aula"} size="lg">
+            {/* Modal: Lesson */}
+            <Modal isOpen={showLessonModal} onClose={() => setShowLessonModal(false)} title={editingLessonId ? "Edit Lesson" : "New Lesson"} size="lg">
                 <form onSubmit={handleLessonSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div className="md:col-span-3">
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Título da Aula</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Lesson Title</label>
                             <input type="text" className="input" value={lessonForm.title} onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })} required />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Ordem</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Order</label>
                             <input type="number" className="input" value={lessonForm.order} onChange={e => setLessonForm({ ...lessonForm, order: parseInt(e.target.value) })} required />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">URL do Vídeo (YouTube)</label>
+                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Video URL (YouTube)</label>
                         <div className="relative">
                             <Video className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                             <input type="url" className="input !pl-10" placeholder="https://www.youtube.com/watch?v=..." value={lessonForm.videoUrl} onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })} required />
@@ -463,20 +463,20 @@ export default function CoursesManagement() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Descrição / Conteúdo</label>
-                        <textarea className="input min-h-[80px]" value={lessonForm.description} onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })} placeholder="Detalhes e instruções da aula..." />
+                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Description / Content</label>
+                        <textarea className="input min-h-[80px]" value={lessonForm.description} onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })} placeholder="Lesson details and instructions..." />
                     </div>
 
-                    {/* Material de Apoio */}
+                    {/* Supporting material */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
                                 <FileText size={14} className="text-brand-primary" />
-                                Material de Apoio
+                                Supporting Material
                             </label>
-                            <label className="cursor-pointer text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 bg-brand-primary-light px-2 py-1 rounded transition-colors">
+                            <label className="courser-pointer text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 bg-brand-primary-light px-2 py-1 rounded transition-colors">
                                 <Upload size={12} />
-                                Enviar Arquivo
+                                Upload File
                                 <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} disabled={uploading} />
                             </label>
                         </div>
@@ -485,11 +485,11 @@ export default function CoursesManagement() {
                             {uploading && (
                                 <div className="flex items-center gap-2 p-2.5 bg-surface-subtle rounded border border-dashed border-border-default">
                                     <Spinner size="sm" />
-                                    <span className="text-xs text-text-secondary">Enviando arquivo...</span>
+                                    <span className="text-xs text-text-secondary">Uploading file...</span>
                                 </div>
                             )}
                             {lessonForm.attachments.length === 0 && !uploading && (
-                                <p className="text-xs text-text-muted italic">Nenhum material adicionado.</p>
+                                <p className="text-xs text-text-muted italic">No material added.</p>
                             )}
                             {lessonForm.attachments.map((att, idx) => (
                                 <div key={idx} className="flex items-center gap-2 p-2.5 bg-surface-subtle rounded border border-border-subtle">
@@ -516,9 +516,9 @@ export default function CoursesManagement() {
                     </div>
 
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setShowLessonModal(false)} className="flex-1 btn-secondary">Cancelar</button>
+                        <button type="button" onClick={() => setShowLessonModal(false)} className="flex-1 btn-secondary">Cancel</button>
                         <button type="submit" disabled={saving || uploading} className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
-                            {saving ? <Spinner size="sm" /> : "Salvar Aula"}
+                            {saving ? <Spinner size="sm" /> : "Save Lesson"}
                         </button>
                     </div>
                 </form>

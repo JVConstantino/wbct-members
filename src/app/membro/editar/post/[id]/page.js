@@ -63,10 +63,10 @@ export default function EditPost() {
                     setContent(data.post.content);
                     setImage(data.post.image || "");
                 } else {
-                    setError("Não foi possível carregar a postagem.");
+                    setError("Could not load the post.");
                 }
             } catch {
-                setError("Erro de conexão.");
+                setError("Connection error.");
             } finally {
                 setFetching(false);
             }
@@ -86,7 +86,7 @@ export default function EditPost() {
             if (data.success) setImage(data.url);
         } catch (error) {
             console.error("Upload falhou:", error);
-            setError("Erro ao enviar imagem.");
+            setError("Could not upload image.");
         } finally {
             setUploading(false);
         }
@@ -102,7 +102,7 @@ export default function EditPost() {
                 .map((t) => t.trim())
                 .filter(Boolean)
                 .slice(0, 8);
-            const metadataBlock = `\n<hr><p><strong>Categoria:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
+            const metadataBlock = `\n<hr><p><strong>Category:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
             const res = await fetch(`/api/posts/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -111,12 +111,12 @@ export default function EditPost() {
             const data = await res.json();
             if (data.success) {
                 setSuccess(true);
-                setTimeout(() => router.push("/membro/minhas-postagens"), 2000);
+                setTimeout(() => router.push("/member/my-posts"), 2000);
             } else {
-                setError(data.error || "Erro ao atualizar postagem.");
+                setError(data.error || "Could not update post.");
             }
         } catch {
-            setError("Falha na conexão com o servidor.");
+            setError("Server connection failed.");
         } finally {
             setLoading(false);
         }
@@ -126,7 +126,7 @@ export default function EditPost() {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Recuperando dados da publicação...</p>
+                <p className="text-text-muted text-sm">Loading publication data...</p>
             </div>
         );
     }
@@ -137,12 +137,12 @@ export default function EditPost() {
                 <div className="w-20 h-20 bg-status-success-bg text-status-success rounded-full flex items-center justify-center mb-5">
                     <CheckCircle2 size={44} />
                 </div>
-                <h2 className="text-2xl font-display font-bold text-text-primary mb-3">Postagem Atualizada!</h2>
+                <h2 className="text-2xl font-display font-bold text-text-primary mb-3">Post Updated!</h2>
                 <p className="text-text-secondary text-sm max-w-sm mx-auto leading-relaxed">
-                    Suas alterações foram salvas. O post retornou para a fila de revisão dos administradores.
+                    Your changes were saved. The post returned to the administrator review queue.
                 </p>
-                <Link href="/membro/minhas-postagens" className="btn-primary mt-7 px-8">
-                    Ir para Minhas Postagens
+                <Link href="/member/my-posts" className="btn-primary mt-7 px-8">
+                    Go to My Posts
                 </Link>
             </div>
         );
@@ -153,14 +153,14 @@ export default function EditPost() {
             {/* Cabeçalho */}
             <div>
                 <Link
-                    href="/membro/minhas-postagens"
+                    href="/member/my-posts"
                     className="flex items-center gap-1.5 text-text-muted text-xs font-semibold hover:text-brand-primary transition-colors group mb-3"
                 >
                     <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                    Voltar para Minhas Postagens
+                    Back to My Posts
                 </Link>
                 <h1 className="text-xl font-display font-bold text-text-primary">
-                    Editar <span className="text-brand-primary">Publicação</span>
+                    Edit <span className="text-brand-primary">Publication</span>
                 </h1>
             </div>
 
@@ -176,7 +176,7 @@ export default function EditPost() {
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Título da Postagem</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Post Title</label>
                             <input
                                 type="text"
                                 className="input text-base font-semibold"
@@ -189,7 +189,7 @@ export default function EditPost() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                                    <FolderKanban size={13} /> Categoria
+                                    <FolderKanban size={13} /> Category
                                 </label>
                                 <select value={category} onChange={(e) => setCategory(e.target.value)} className="input">
                                     {categories.map((c) => <option key={c} value={c}>{c.replaceAll("_", " ")}</option>)}
@@ -210,9 +210,9 @@ export default function EditPost() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Imagem de Capa</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Cover Image</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <label className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-md cursor-pointer transition-all ${image ? "border-brand-primary/30 bg-brand-primary-light/20" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
+                                <label className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-md courser-pointer transition-all ${image ? "border-brand-primary/30 bg-brand-primary-light/20" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
                                     {uploading ? (
                                         <Spinner size="md" />
                                     ) : (
@@ -239,7 +239,7 @@ export default function EditPost() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Conteúdo da Publicação</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Content da Publication</label>
                             <TextEditor initialContent={content} onChange={setContent} />
                         </div>
 
@@ -248,7 +248,7 @@ export default function EditPost() {
                             disabled={loading}
                             className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? <Spinner size="sm" /> : <><Save size={15} /> Salvar Alterações</>}
+                            {loading ? <Spinner size="sm" /> : <><Save size={15} /> Save Changes</>}
                         </button>
                     </form>
                 </div>
@@ -259,9 +259,9 @@ export default function EditPost() {
                         <div className="p-2 bg-brand-primary/20 rounded-md w-fit">
                             <Sparkles className="text-brand-primary" size={18} />
                         </div>
-                        <h3 className="text-sm font-bold">Aviso de Revisão</h3>
+                        <h3 className="text-sm font-bold">Review Notice</h3>
                         <p className="text-xs text-white/50 leading-relaxed">
-                            Ao editar uma postagem, ela voltará automaticamente para o status de <strong className="text-white/80">Pendência</strong> para que os administradores possam revisar o novo conteúdo antes de ser publicado novamente.
+                            When you edit a post, it automatically returns to <strong className="text-white/80">Pending</strong> status so administrators can review the new content before it is published again.
                         </p>
                     </div>
                 </div>

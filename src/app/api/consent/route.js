@@ -1,29 +1,24 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
 export async function POST(request) {
     try {
         const session = await auth();
         const body = await request.json();
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-
-        await query(`
-            CREATE TABLE IF NOT EXISTS ConsentLog (
-                id VARCHAR(191) PRIMARY KEY,
-                userId VARCHAR(191) NULL,
-                ip VARCHAR(64) NULL,
-                mode VARCHAR(30) NOT NULL,
-                preferencesJson TEXT NOT NULL,
-                createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+            || request.headers.get('x-real-ip')
+            || 'unknown';
 
         const id = `consent_${Date.now().toString(36)}`;
-        await query(
-            'INSERT INTO ConsentLog (id, userId, ip, mode, preferencesJson) VALUES (?, ?, ?, ?, ?)',
-            [id, session?.user?.id || null, ip, body.mode || 'custom', JSON.stringify(body)]
-        );
+
+        await db.createDocument(DB_ID, COLS.consentLog, id, {
+            userId: session?.user?.id || null,
+            ip,
+            mode: body.mode || 'custom',
+            preferencesJson: JSON.stringify(body),
+            createdAt: new Date().toISOString(),
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

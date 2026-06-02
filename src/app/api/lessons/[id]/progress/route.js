@@ -1,61 +1,57 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
-// POST - Marcar aula como assistida/não assistida
 export async function POST(request, { params }) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { id: lessonId } = await params;
         const { completed } = await request.json();
         const userId = session.user.id;
+        const docId = `prog_${userId}_${lessonId}`;
+        const now = new Date().toISOString();
 
-        const id = `prog_${userId}_${lessonId}`;
+        try {
+            await db.updateDocument(DB_ID, COLS.lessonProgress, docId, {
+                completed,
+                completedAt: completed ? now : null,
+                updatedAt: now,
+            });
+        } catch {
+            await db.createDocument(DB_ID, COLS.lessonProgress, docId, {
+                userId, lessonId, completed,
+                completedAt: completed ? now : null,
+                createdAt: now, updatedAt: now,
+            });
+        }
 
-        // Usar UPSERT logic (INSERT ... ON DUPLICATE KEY UPDATE)
-        await query(`
-            INSERT INTO LessonProgress (id, userId, lessonId, completed, completedAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, NOW())
-            ON DUPLICATE KEY UPDATE 
-            completed = VALUES(completed),
-            completedAt = IF(VALUES(completed), NOW(), NULL),
-            updatedAt = NOW()
-        `, [id, userId, lessonId, completed, completed ? new Date() : null]);
-
-        return NextResponse.json({
-            success: true,
-            completed
-        });
+        return NextResponse.json({ success: true, completed });
     } catch (error) {
         console.error('Error updating lesson progress:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
-// GET - Verificar progresso da aula para o usuário atual
 export async function GET(request, { params }) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { id: lessonId } = await params;
-        const userId = session.user.id;
+        const docId = `prog_${session.user.id}_${lessonId}`;
 
-        const progress = await query(`
-            SELECT completed FROM LessonProgress 
-            WHERE userId = ? AND lessonId = ?
-        `, [userId, lessonId]);
-
-        return NextResponse.json({
-            success: true,
-            completed: progress.length > 0 ? !!progress[0].completed : false
-        });
+        try {
+            const doc = await db.getDocument(DB_ID, COLS.lessonProgress, docId);
+            return NextResponse.json({ success: true, completed: !!doc.completed });
+        } catch {
+            return NextResponse.json({ success: true, completed: false });
+        }
     } catch (error) {
         console.error('Error fetching lesson progress:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

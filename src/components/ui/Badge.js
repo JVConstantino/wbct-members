@@ -18,11 +18,11 @@ const sizeClass = {
 export const statusToVariant = {
   APPROVED: 'success',
   ACTIVE:   'success',
-  APPROVED_text: 'Aprovado',
+  APPROVED_text: 'Approved',
   PENDING:  'pending',
-  PENDING_text: 'Pendente',
+  PENDING_text: 'Pending',
   REJECTED: 'error',
-  REJECTED_text: 'Rejeitado',
+  REJECTED_text: 'Rejected',
   MEMBER:   'info',
   ADMIN:    'brand',
 };
@@ -44,9 +44,9 @@ export function Badge({ children, variant = 'neutral', size = 'md', dot = false,
 /** Atalho para status de postagens */
 export function PostStatusBadge({ status }) {
   const map = {
-    APPROVED: { variant: 'success', label: 'Aprovado' },
-    PENDING:  { variant: 'pending', label: 'Pendente' },
-    REJECTED: { variant: 'error',   label: 'Rejeitado' },
+    APPROVED: { variant: 'success', label: 'Approved' },
+    PENDING:  { variant: 'pending', label: 'Pending' },
+    REJECTED: { variant: 'error',   label: 'Rejected' },
   };
   const cfg = map[status] ?? { variant: 'neutral', label: status };
   return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>;
@@ -56,7 +56,7 @@ export function PostStatusBadge({ status }) {
 export function RoleBadge({ role }) {
   const map = {
     ADMIN:  { variant: 'brand', label: 'Admin' },
-    MEMBER: { variant: 'info',  label: 'Membro' },
+    MEMBER: { variant: 'info',  label: 'Member' },
   };
   const cfg = map[role] ?? { variant: 'neutral', label: role };
   return <Badge variant={cfg.variant}>{cfg.label}</Badge>;

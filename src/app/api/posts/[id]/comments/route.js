@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
 export async function POST(request, { params }) {
     try {
@@ -9,30 +9,22 @@ export async function POST(request, { params }) {
 
         const session = await auth();
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const authorId = session.user.id;
-
         if (!content) {
-            return NextResponse.json({ success: false, error: 'Conteúdo é obrigatório' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Content is required' }, { status: 400 });
         }
 
         const commentId = 'comment_' + Date.now().toString(36);
 
-        await query('ALTER TABLE Comment ADD COLUMN parentId VARCHAR(191) NULL').catch(() => {});
-
-        try {
-            await query(`
-                INSERT INTO Comment (id, content, postId, authorId, parentId, createdAt) 
-                VALUES (?, ?, ?, ?, ?, NOW())
-            `, [commentId, content, id, authorId, parentId || null]);
-        } catch {
-            await query(`
-                INSERT INTO Comment (id, content, postId, authorId, createdAt) 
-                VALUES (?, ?, ?, ?, NOW())
-            `, [commentId, content, id, authorId]);
-        }
+        await db.createDocument(DB_ID, COLS.comments, commentId, {
+            content,
+            postId: id,
+            authorId: session.user.id,
+            parentId: parentId || null,
+            createdAt: new Date().toISOString(),
+        });
 
         return NextResponse.json({ success: true, id: commentId });
     } catch (error) {

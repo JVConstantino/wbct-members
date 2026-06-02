@@ -43,10 +43,10 @@ function FormField({ icon: Icon, children, focusColor = true }) {
     );
 }
 
-/* ── Mensagem de erro ── */
+/* ── Message de erro ── */
 function ErrorMessage({ message, type = "error" }) {
     if (!message) return null;
-    const isWarning = type === "warning" || message.toLowerCase().includes("aprovação") || message.toLowerCase().includes("aguarda");
+    const isWarning = type === "warning" || message.toLowerCase().includes("approval") || message.toLowerCase().includes("pending");
     return (
         <div className={`flex items-start gap-2 p-3 rounded-lg text-xs font-medium border ${
             isWarning
@@ -85,18 +85,18 @@ function LoginForm() {
     const router       = useRouter();
     const searchParams = useSearchParams();
 
-    // Ler erros que o NextAuth injeta via query string (?error=...)
+    // Read errors that NextAuth injects through the query string (?error=...)
     useEffect(() => {
         const urlError = searchParams.get("error");
         if (urlError) {
             if (urlError === "PENDING") {
-                setError("Conta aguardando aprovação da equipe WBCT.");
+                setError("Your account is awaiting WBCT team approval.");
             } else if (urlError === "REJECTED") {
-                setError("Cadastro recusado. Entre em contato com o suporte.");
+                setError("Registration rejected. Please contact support.");
             } else if (urlError === "CredentialsSignin") {
-                setError("E-mail ou senha incorretos.");
+                setError("Incorrect email or password.");
             } else if (urlError) {
-                setError("Erro ao entrar. Verifique suas credenciais.");
+                setError("Could not sign in. Check your credentials.");
             }
         }
     }, [searchParams]);
@@ -111,7 +111,7 @@ function LoginForm() {
         setError("");
         setPendingApprovalView(false);
         if (!loginEmail.trim() || !loginPassword.trim()) {
-            setError("Preencha todos os campos.");
+            setError("Fill in all fields.");
             return;
         }
         setLoading(true);
@@ -130,24 +130,24 @@ function LoginForm() {
                     const verifyData = await verifyRes.json().catch(() => ({}));
                     const verifyError = String(verifyData.error || "").toLowerCase();
 
-                    if (verifyRes.status === 403 && verifyError.includes("aprova")) {
+                    if (verifyRes.status === 403 && (verifyError.includes("approv") || verifyError.includes("aprova"))) {
                         setIsRegisterMode(true);
                         setRegisterStep(1);
                         setPendingApprovalView(true);
                         return;
                     }
 
-                    if (verifyRes.status === 403 && verifyError.includes("recus")) {
-                        setError("Cadastro recusado. Entre em contato com o suporte.");
+                    if (verifyRes.status === 403 && (verifyError.includes("reject") || verifyError.includes("recus"))) {
+                        setError("Registration rejected. Please contact support.");
                         return;
                     }
 
                     if (verifyRes.status === 401) {
-                        setError("E-mail ou senha incorretos.");
+                        setError("Incorrect email or password.");
                         return;
                     }
 
-                    setError("Erro ao validar acesso. Tente novamente.");
+                    setError("Could not validate access. Try again.");
                     return;
                 }
             } catch {
@@ -167,22 +167,22 @@ function LoginForm() {
                     setRegisterStep(1);
                     setPendingApprovalView(true);
                 } else if (err === "REJECTED" || err.toLowerCase().includes("rejected") || err.toLowerCase().includes("recusad")) {
-                    setError("Cadastro recusado. Entre em contato com o suporte.");
+                    setError("Registration rejected. Please contact support.");
                 } else {
-                    setError("E-mail ou senha incorretos.");
+                    setError("Incorrect email or password.");
                 }
                 return;
             }
 
             const session = await getSession();
             if (session?.user) {
-                router.push(session.user.role === "ADMIN" ? "/admin" : "/membro");
+                router.push(session.user.role === "ADMIN" ? "/admin" : "/member");
             } else {
-                setError("E-mail ou senha incorretos.");
+                setError("Incorrect email or password.");
             }
         } catch (err) {
             console.error("Login error:", err);
-            setError("Erro de conexão. Tente novamente.");
+            setError("Connection error. Try again.");
         } finally {
             setLoading(false);
         }
@@ -192,11 +192,11 @@ function LoginForm() {
         e.preventDefault();
         setError("");
         if (!registerName.trim() || !registerEmail.trim() || !registerPassword.trim()) {
-            setError("Preencha todos os campos obrigatórios.");
+            setError("Fill in all required fields.");
             return;
         }
         if (registerPassword.length < 6) {
-            setError("A senha deve ter pelo menos 6 caracteres.");
+            setError("Password must be at least 6 characters long.");
             return;
         }
         setRegisterStep(2);
@@ -217,12 +217,12 @@ function LoginForm() {
         const allowedExt = new Set(["jpg", "jpeg", "png", "heic", "heif"]);
 
         if (!allowedTypes.has(file.type) && !allowedExt.has(ext || "")) {
-            setError("Formato inválido. Use HEIC, PNG, JPG ou JPEG.");
+            setError("Invalid format. Use HEIC, PNG, JPG, or JPEG.");
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            setError("A imagem deve ter no máximo 2 MB.");
+            setError("The image must be 2 MB or smaller.");
             return;
         }
 
@@ -242,14 +242,14 @@ function LoginForm() {
 
             const data = await res.json();
             if (!res.ok || !data.success) {
-                setError(data.error || "Erro ao enviar imagem.");
+                setError(data.error || "Could not upload image.");
                 setRegisterImagePreview("");
                 return;
             }
 
             setRegisterImage(data.url);
         } catch (error) {
-            setError("Erro ao enviar imagem. Tente novamente.");
+            setError("Could not upload image. Try again.");
             setRegisterImagePreview("");
         } finally {
             setUploadingImage(false);
@@ -273,12 +273,12 @@ function LoginForm() {
             });
             const data = await res.json();
             if (!res.ok) {
-                setError(data.error || "Erro ao criar conta.");
+                setError(data.error || "Could not create account.");
             } else {
                 setRegistrationSuccess(true);
             }
         } catch {
-            setError("Erro ao registrar. Tente novamente.");
+            setError("Could not register. Try again.");
         } finally {
             setLoading(false);
         }
@@ -310,15 +310,15 @@ function LoginForm() {
 
                         <div className="text-center">
                             <img src="/logo.png" alt="WBCT" className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 object-contain" />
-                            <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Acessar plataforma</h2>
-                            <p className="text-xs text-text-muted mt-1">Bem-vindo de volta à comunidade WBCT</p>
+                            <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Access Platform</h2>
+                            <p className="text-xs text-text-muted mt-1">Welcome back to the WBCT community</p>
                         </div>
 
                         <div className="flex flex-col gap-3">
                             <FormField icon={Mail}>
                                 <input
                                     type="email"
-                                    placeholder="Seu e-mail"
+                                    placeholder="Your email"
                                     className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                     value={loginEmail}
                                     onChange={(e) => setLoginEmail(e.target.value)}
@@ -329,7 +329,7 @@ function LoginForm() {
                             <FormField icon={Lock}>
                                 <input
                                     type={showLoginPassword ? "text" : "password"}
-                                    placeholder="Senha"
+                                    placeholder="Password"
                                     className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                     value={loginPassword}
                                     onChange={(e) => setLoginPassword(e.target.value)}
@@ -339,7 +339,7 @@ function LoginForm() {
                                     type="button"
                                     onClick={() => setShowLoginPassword(v => !v)}
                                     className="text-text-muted hover:text-text-primary transition-colors shrink-0"
-                                    aria-label={showLoginPassword ? "Ocultar senha" : "Mostrar senha"}
+                                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
                                 >
                                     {showLoginPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                 </button>
@@ -353,13 +353,13 @@ function LoginForm() {
                             disabled={loading}
                             className="btn-primary w-full justify-center py-2.5 rounded-lg text-sm font-bold tracking-wide"
                         >
-                            {loading ? <Spinner size="sm" /> : "Entrar"}
+                            {loading ? <Spinner size="sm" /> : "Sign in"}
                         </button>
 
                         <div className="text-center md:hidden pt-2">
-                            <p className="text-text-muted text-xs mb-1.5">Ainda não tem conta?</p>
+                            <p className="text-text-muted text-xs mb-1.5">Do not have an account yet?</p>
                             <button type="button" onClick={toggleMode} className="text-brand-primary font-semibold text-sm hover:text-brand-primary-hover">
-                                Criar conta
+                                Create account
                             </button>
                         </div>
                     </form>
@@ -374,17 +374,17 @@ function LoginForm() {
                             <div className="w-16 h-16 rounded-2xl bg-status-success-bg flex items-center justify-center mb-5">
                                 <CheckCircle size={32} className="text-status-success" />
                             </div>
-                            <h2 className="font-display text-xl font-bold text-text-primary mb-2">Cadastro recebido!</h2>
+                            <h2 className="font-display text-xl font-bold text-text-primary mb-2">Registration received!</h2>
                             <p className="text-sm text-text-secondary leading-relaxed mb-6 max-w-xs">
-                                Seus dados foram enviados para análise.<br />
-                                <strong className="text-brand-primary">Aguarde a aprovação da equipe WBCT.</strong>{" "}
-                                Você receberá acesso assim que seu perfil for validado.
+                                Your data has been submitted for review.<br />
+                                <strong className="text-brand-primary">Please wait for WBCT team approval.</strong>{" "}
+                                You will receive access as soon as your profile is validated.
                             </p>
                             <button
                                 onClick={toggleMode}
                                 className="btn-secondary px-6 py-2 rounded-lg text-sm font-semibold"
                             >
-                                Voltar ao login
+                                Back to login
                             </button>
                         </div>
                     ) : (
@@ -396,13 +396,13 @@ function LoginForm() {
 
                             {/* Header com steps */}
                             <div className="text-center">
-                                <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Criar conta</h2>
+                                <h2 className="font-display text-xl sm:text-2xl font-bold text-text-primary">Create account</h2>
                                 <div className="flex items-center justify-center gap-1.5 mt-3">
                                     <div className={`h-1 rounded-full transition-all duration-300 ${registerStep === 1 ? 'w-8 bg-brand-primary' : 'w-3 bg-brand-primary-light'}`} />
                                     <div className={`h-1 rounded-full transition-all duration-300 ${registerStep === 2 ? 'w-8 bg-brand-primary' : 'w-3 bg-surface-subtle'}`} />
                                 </div>
                                 <p className="text-xs text-text-muted mt-1.5">
-                                    {registerStep === 1 ? "Passo 1 de 2 — Credenciais de acesso" : "Passo 2 de 2 — Perfil profissional"}
+                                    {registerStep === 1 ? "Step 1 of 2 - Access credentials" : "Step 2 of 2 - Professional profile"}
                                 </p>
                             </div>
 
@@ -412,7 +412,7 @@ function LoginForm() {
                                     <FormField icon={User}>
                                         <input
                                             type="text"
-                                            placeholder="Nome completo"
+                                            placeholder="Full name"
                                             className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                             value={registerName}
                                             onChange={(e) => setRegisterName(e.target.value)}
@@ -431,7 +431,7 @@ function LoginForm() {
                                     <FormField icon={Lock}>
                                         <input
                                             type={showRegisterPassword ? "text" : "password"}
-                                            placeholder="Senha (mín. 6 caracteres)"
+                                            placeholder="Password (min. 6 characters)"
                                             className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                             value={registerPassword}
                                             onChange={(e) => setRegisterPassword(e.target.value)}
@@ -440,7 +440,7 @@ function LoginForm() {
                                             type="button"
                                             onClick={() => setShowRegisterPassword(v => !v)}
                                             className="text-text-muted hover:text-text-primary transition-colors shrink-0"
-                                            aria-label={showRegisterPassword ? "Ocultar senha" : "Mostrar senha"}
+                                            aria-label={showRegisterPassword ? "Hide password" : "Show password"}
                                         >
                                             {showRegisterPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
@@ -453,7 +453,7 @@ function LoginForm() {
                                         onClick={handleNextStep}
                                         className="btn-primary w-full justify-center py-2.5 rounded-lg text-sm font-bold gap-2"
                                     >
-                                        Próximo <ArrowRight size={15} />
+                                        Next <ArrowRight size={15} />
                                     </button>
                                 </div>
                             )}
@@ -466,7 +466,7 @@ function LoginForm() {
                                         <label className="relative cursor-pointer group">
                                             <div className="w-18 h-18 w-[72px] h-[72px] rounded-xl bg-surface-subtle border-2 border-border-default group-hover:border-brand-primary flex items-center justify-center overflow-hidden transition-colors duration-150">
                                                 {(registerImagePreview || registerImage)
-                                                    ? <img src={registerImagePreview || registerImage} alt="Foto de perfil" className="w-full h-full object-cover" />
+                                                    ? <img src={registerImagePreview || registerImage} alt="Profile photo" className="w-full h-full object-cover" />
                                                     : <Camera size={24} className="text-text-muted" />
                                                 }
                                             </div>
@@ -478,16 +478,16 @@ function LoginForm() {
                                                 accept=".heic,.heif,.png,.jpg,.jpeg,image/heic,image/heif,image/png,image/jpeg"
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                                 onChange={handleImageChange}
-                                                aria-label="Foto de perfil (opcional)"
+                                                aria-label="Profile photo (optional)"
                                             />
                                         </label>
                                     </div>
-                                    {uploadingImage && <p className="text-[11px] text-text-muted text-center">Enviando imagem...</p>}
+                                    {uploadingImage && <p className="text-[11px] text-text-muted text-center">Uploading image...</p>}
 
                                     <FormField icon={Briefcase}>
                                         <input
                                             type="text"
-                                            placeholder="CRM (opcional)"
+                                            placeholder="Medical license (optional)"
                                             className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                             value={registerCRM}
                                             onChange={(e) => setRegisterCRM(e.target.value)}
@@ -496,7 +496,7 @@ function LoginForm() {
                                     <FormField icon={Stethoscope}>
                                         <input
                                             type="text"
-                                            placeholder="Especialidade"
+                                            placeholder="Specialty"
                                             className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted"
                                             value={registerSpecialty}
                                             onChange={(e) => setRegisterSpecialty(e.target.value)}
@@ -505,7 +505,7 @@ function LoginForm() {
                                     <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-surface-subtle border border-border-default focus-within:border-brand-primary transition-colors">
                                         <FileText size={17} className="text-text-muted shrink-0 mt-0.5" />
                                         <textarea
-                                            placeholder="Breve bio (opcional)"
+                                            placeholder="Short bio (optional)"
                                             className="bg-transparent border-none outline-none text-sm w-full text-text-primary placeholder:text-text-muted resize-none h-14"
                                             value={registerBio}
                                             onChange={(e) => setRegisterBio(e.target.value)}
@@ -519,7 +519,7 @@ function LoginForm() {
                                             type="button"
                                             onClick={() => { setRegisterStep(1); setError(""); }}
                                             className="btn-secondary w-10 h-10 sm:w-11 sm:h-11 p-0 justify-center rounded-lg shrink-0"
-                                            aria-label="Voltar"
+                                            aria-label="Back"
                                         >
                                             <ArrowLeft size={17} />
                                         </button>
@@ -528,16 +528,16 @@ function LoginForm() {
                                             disabled={loading}
                                             className="btn-primary flex-1 justify-center py-2.5 rounded-lg text-sm font-bold gap-2"
                                         >
-                                            {loading ? <Spinner size="sm" /> : "Concluir cadastro"}
+                                            {loading ? <Spinner size="sm" /> : "Finish registration"}
                                         </button>
                                     </div>
                                 </div>
                             )}
 
                             <div className="text-center md:hidden">
-                                <p className="text-text-muted text-xs mb-1.5">Já possui conta?</p>
+                                <p className="text-text-muted text-xs mb-1.5">Already have an account?</p>
                                 <button type="button" onClick={toggleMode} className="text-brand-primary font-semibold text-sm hover:text-brand-primary-hover">
-                                    Fazer login
+                                    Sign in
                                 </button>
                             </div>
                         </form>
@@ -563,17 +563,17 @@ function LoginForm() {
                                     <img src="/logo.png" alt="WBCT" className="w-16 h-16 rounded-md object-contain" />
                                 </div>
                                 <h2 className="font-display text-3xl font-bold !text-white leading-tight">
-                                    Olá, Doutor!
+                                    Hello, Doctor!
                                 </h2>
                                 <p className="!text-white text-sm mt-3 leading-relaxed max-w-[220px]">
-                                    Entre com seus dados profissionais e acesse a comunidade médica exclusiva WBCT.
+                                    Enter your professional credentials and access the exclusive WBCT medical community.
                                 </p>
                             </div>
                             <button
                                 onClick={toggleMode}
                                 className="border-2 border-white text-white px-8 py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-white hover:text-brand-primary-active transition-all duration-150"
                             >
-                                Criar conta
+                                Create account
                             </button>
                         </div>
 
@@ -584,20 +584,20 @@ function LoginForm() {
                                     <img src="/logo.png" alt="WBCT" className="w-16 h-16 rounded-md object-contain" />
                                 </div>
                                 <div className="text-xs text-white/60 uppercase tracking-widest mb-5">
-                                    Plataforma Médica
+                                    Medical Platform
                                 </div>
                                 <h2 className="font-display text-2xl font-bold !text-white leading-tight">
-                                    Bem-vindo de volta!
+                                    Welcome back!
                                 </h2>
                                 <p className="!text-white text-sm mt-3 leading-relaxed max-w-[220px]">
-                                    Já faz parte da comunidade? Acesse sua conta e continue conectado.
+                                    Already part of the community? Access your account and stay connected.
                                 </p>
                             </div>
                             <button
                                 onClick={toggleMode}
                                 className="border-2 border-white text-white px-8 py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-white hover:text-brand-primary-active transition-all duration-150"
                             >
-                                Fazer login
+                                Sign in
                             </button>
                         </div>
                     </div>
@@ -605,7 +605,7 @@ function LoginForm() {
             </div>
 
             <p className="fixed bottom-3 sm:bottom-4 text-[10px] sm:text-xs text-text-muted select-none px-3 text-center">
-                © {new Date().getFullYear()} WBCT · Feito por Criativa Digital + Constantino.dev
+                © {new Date().getFullYear()} WBCT · Built by Criativa Digital + Constantino.dev
             </p>
         </div>
     );

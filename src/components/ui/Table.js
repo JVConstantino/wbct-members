@@ -3,7 +3,7 @@ import { EmptyState } from './EmptyState';
 import { FileText } from 'lucide-react';
 
 /**
- * Componente de tabela padronizada.
+ * Standard table component.
  *
  * columns: Array<{ key, label, render?: (value, row) => ReactNode, className?: string }>
  * data:    Array<object>
@@ -12,7 +12,7 @@ export function Table({
   columns = [],
   data = [],
   loading = false,
-  emptyTitle = 'Nenhum registro encontrado',
+  emptyTitle = 'No records found',
   emptyDescription,
   keyField = 'id',
   className = '',

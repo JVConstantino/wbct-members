@@ -42,7 +42,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         id:    String(user.id),
                         name:  user.name,
                         email: user.email,
-                        image: user.image,
                         role:  user.role,
                     };
                 } catch (err) {
@@ -61,14 +60,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.role = user.role;
                 token.id   = user.id;
-                token.image = user.image;
             }
             return token;
         },
         async session({ session, token }) {
             if (token?.role) session.user.role = token.role;
             if (token?.sub)  session.user.id   = token.sub;
-            if (token?.image) session.user.image = token.image;
             return session;
         },
     },

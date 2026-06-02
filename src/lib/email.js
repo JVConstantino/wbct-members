@@ -1,16 +1,25 @@
 import { Resend } from 'resend';
-import { query } from '@/lib/db';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
+
+async function getSetting(key) {
+    try {
+        const doc = await db.getDocument(DB_ID, COLS.appSettings, key);
+        return doc.settingValue || '';
+    } catch {
+        return '';
+    }
+}
 
 async function getEmailConfig() {
-    const rows = await query(`
-        SELECT settingKey, settingValue FROM AppSetting
-        WHERE settingKey IN ('email.resendApiKey', 'email.fromEmail', 'email.fromName')
-    `);
-    const map = Object.fromEntries(rows.map((r) => [r.settingKey, r.settingValue || '']));
+    const [resendApiKey, fromEmail, fromName] = await Promise.all([
+        getSetting('email.resendApiKey'),
+        getSetting('email.fromEmail'),
+        getSetting('email.fromName'),
+    ]);
     return {
-        apiKey: process.env.RESEND_API_KEY || map['email.resendApiKey'] || '',
-        fromEmail: process.env.RESEND_FROM_EMAIL || map['email.fromEmail'] || '',
-        fromName: process.env.RESEND_FROM_NAME || map['email.fromName'] || 'WBCT',
+        apiKey: process.env.RESEND_API_KEY || resendApiKey,
+        fromEmail: process.env.RESEND_FROM_EMAIL || fromEmail,
+        fromName: process.env.RESEND_FROM_NAME || fromName || 'WBCT',
     };
 }
 

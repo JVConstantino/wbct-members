@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Avatar } from "@/components/ui/Avatar";
 import { Spinner } from "@/components/ui/Skeleton";
 
@@ -34,10 +34,10 @@ export default function PostDetailPage() {
                 const res = await fetch(`/api/posts/${id}`);
                 const data = await res.json();
                 if (data.success) setPost(data.post);
-                else router.push("/membro");
+                else router.push("/member");
             } catch (error) {
-                console.error("Erro ao carregar post:", error);
-                router.push("/membro");
+                console.error("Failed to load post:", error);
+                router.push("/member");
             } finally {
                 setLoading(false);
             }
@@ -65,7 +65,7 @@ export default function PostDetailPage() {
                 if (parentId) setReplyByComment((prev) => ({ ...prev, [parentId]: "" }));
             }
         } catch (error) {
-            console.error("Erro ao comentar:", error);
+            console.error("Failed to comment:", error);
         } finally {
             setSubmitting(false);
         }
@@ -75,7 +75,7 @@ export default function PostDetailPage() {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Carregando artigo...</p>
+                <p className="text-text-muted text-sm">Loading article...</p>
             </div>
         );
     }
@@ -95,14 +95,14 @@ export default function PostDetailPage() {
             {/* Navegação */}
             <div className="flex items-center justify-between border-b border-border-default pb-4">
                 <Link
-                    href="/membro/blog"
+                    href="/member/articles"
                     className="flex items-center gap-1.5 text-brand-primary font-semibold text-xs hover:underline uppercase tracking-wider"
                 >
                     <ChevronLeft size={15} />
-                    Voltar para Artigos
+                    Back to Articles
                 </Link>
                 <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest hidden md:block">
-                    WBCT Comunidade
+                    WBCT Community
                 </span>
             </div>
 
@@ -121,7 +121,7 @@ export default function PostDetailPage() {
                                 <p className="text-sm font-semibold text-text-primary">{post.author?.name}</p>
                                 <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                                     <Calendar size={10} />
-                                    <time>{new Date(post.createdAt).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}</time>
+                                    <time>{new Date(post.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}</time>
                                 </div>
                             </div>
                         </div>
@@ -143,7 +143,7 @@ export default function PostDetailPage() {
                     </figure>
                 )}
 
-                {/* Conteúdo */}
+                {/* Content */}
                 <div
                     className="prose prose-sm sm:prose max-w-none text-text-primary prose-headings:text-text-primary prose-a:text-brand-primary prose-blockquote:border-brand-primary"
                     dangerouslySetInnerHTML={{ __html: post.content }}
@@ -152,10 +152,10 @@ export default function PostDetailPage() {
 
             <hr className="border-border-default" />
 
-            {/* Comentários */}
+            {/* Comments */}
             <section className="space-y-6">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-text-primary">Comentários</h2>
+                    <h2 className="text-base font-bold text-text-primary">Comments</h2>
                     <span className="bg-surface-subtle text-text-muted px-2 py-0.5 rounded text-xs font-semibold">
                         {post.comments?.length || 0}
                     </span>
@@ -166,28 +166,28 @@ export default function PostDetailPage() {
                     <form onSubmit={handleComment} className="flex flex-col gap-3">
                         <textarea
                             className="input min-h-[80px] resize-none"
-                            placeholder="Participe da discussão..."
+                            placeholder="Join the discussion..."
                             value={comment}
                             onChange={e => setComment(e.target.value)}
                             disabled={submitting}
                         />
                         <div className="flex justify-between items-center">
-                            <span className="text-[11px] text-text-muted">Respeite as regras da comunidade.</span>
+                            <span className="text-[11px] text-text-muted">Respect the community guidelines.</span>
                             <button
                                 type="submit"
                                 disabled={submitting || !comment.trim()}
                                 className="btn-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
                             >
-                                {submitting ? <Spinner size="sm" /> : <><Send size={13} /> Enviar</>}
+                                {submitting ? <Spinner size="sm" /> : <><Send size={13} /> Send</>}
                             </button>
                         </div>
                     </form>
                 </div>
 
-                {/* Lista de comentários */}
+                {/* Lista de comments */}
                 <div className="space-y-4">
                     {post.comments?.length === 0 ? (
-                        <p className="text-text-muted text-sm text-center italic">Nenhum comentário ainda.</p>
+                        <p className="text-text-muted text-sm text-center italic">No comments yet.</p>
                     ) : (
                         topLevelComments.map(c => (
                             <div key={c.id} className="space-y-2 p-3 rounded-md hover:bg-surface-subtle transition-colors">
@@ -196,7 +196,7 @@ export default function PostDetailPage() {
                                 <div className="space-y-0.5">
                                     <div className="flex items-center gap-2">
                                         <span className="font-semibold text-text-primary text-sm">{c.authorName}</span>
-                                        <span className="text-[11px] text-text-muted">• {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: ptBR })}</span>
+                                        <span className="text-[11px] text-text-muted">• {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: enUS })}</span>
                                     </div>
                                     <p className="text-text-secondary text-sm leading-relaxed">{c.content}</p>
                                     <button
@@ -220,7 +220,7 @@ export default function PostDetailPage() {
                                             value={replyByComment[c.id]}
                                             onChange={(e) => setReplyByComment((prev) => ({ ...prev, [c.id]: e.target.value }))}
                                         />
-                                        <button className="btn-primary text-xs" disabled={submitting}>Enviar</button>
+                                        <button className="btn-primary text-xs" disabled={submitting}>Send</button>
                                     </form>
                                 )}
 

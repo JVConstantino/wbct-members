@@ -4,7 +4,7 @@ import { AlertTriangle, RotateCcw } from 'lucide-react';
 
 export default function AdminError({ error, reset }) {
   useEffect(() => {
-    console.error('[Admin] Erro capturado:', error);
+    console.error('[Admin] Captured error:', error);
   }, [error]);
 
   return (
@@ -16,7 +16,7 @@ export default function AdminError({ error, reset }) {
         Algo deu errado
       </h2>
       <p className="text-sm text-text-muted max-w-sm mb-6">
-        {error?.message || 'Ocorreu um erro inesperado nesta página.'}
+        {error?.message || 'An unexpected error occurred on this page.'}
       </p>
       <button onClick={reset} className="btn-primary gap-2">
         <RotateCcw size={15} />

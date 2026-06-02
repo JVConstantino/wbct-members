@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
 export async function GET(request, { params }) {
     try {
@@ -8,22 +8,25 @@ export async function GET(request, { params }) {
         const session = await auth();
 
         if (!session?.user || session.user.id !== id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        let users = [];
-        try {
-            users = await query('SELECT id, name, email, image, bio, crm, specialty, role, allowMessagesFrom FROM User WHERE id = ?', [id]);
-        } catch {
-            users = await query('SELECT id, name, email, image, bio, crm, specialty, role FROM User WHERE id = ?', [id]);
-            users = users.map((u) => ({ ...u, allowMessagesFrom: 'followers' }));
-        }
+        const doc = await db.getDocument(DB_ID, COLS.users, id);
 
-        if (users.length === 0) {
-            return NextResponse.json({ success: false, error: 'Usuário não encontrado' }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, user: users[0] });
+        return NextResponse.json({
+            success: true,
+            user: {
+                id: doc.$id,
+                name: doc.name,
+                email: doc.email,
+                image: doc.image,
+                bio: doc.bio,
+                crm: doc.crm,
+                specialty: doc.specialty,
+                role: doc.role,
+                allowMessagesFrom: doc.allowMessagesFrom || 'followers',
+            },
+        });
     } catch (error) {
         console.error('Fetch Profile Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

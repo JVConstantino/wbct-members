@@ -29,20 +29,21 @@ export function Avatar({ src, name = '', size = 'md', online, className = '' }) 
   const sz  = sizeClass[size]    ?? sizeClass.md;
   const dsz = dotSizeClass[size] ?? dotSizeClass.md;
   const initials = getInitials(name);
+  const hasImage = typeof src === 'string' && src.trim().length > 0;
 
   return (
     <span className={`relative inline-flex shrink-0 ${className}`}>
-      {src ? (
+      {hasImage ? (
         <img
           src={src}
           alt={name || 'Avatar'}
           className={`${sz} rounded-full object-cover bg-surface-subtle`}
-          onError={e => { e.target.style.display = 'none'; e.target.nextSibling?.removeAttribute('style'); }}
+          onError={e => { e.currentTarget.style.display = 'none'; }}
         />
       ) : null}
       <span
-        className={`${sz} rounded-full bg-brand-primary-light text-brand-primary-active font-semibold flex items-center justify-center select-none ${src ? 'hidden' : ''}`}
-        aria-hidden={!!src}
+        className={`${sz} rounded-full bg-brand-primary-light text-brand-primary-active font-semibold flex items-center justify-center select-none ${hasImage ? 'hidden' : ''}`}
+        aria-hidden={hasImage}
       >
         {initials || '?'}
       </span>

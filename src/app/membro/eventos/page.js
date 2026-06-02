@@ -26,7 +26,7 @@ import {
     eachDayOfInterval,
     parseISO
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Spinner } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -52,11 +52,11 @@ function EventModal({ event, onClose, onFollow }) {
                     <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="bg-brand-primary-light text-brand-primary px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
-                                Evento Exclusivo
+                                Exclusive Event
                             </span>
                             <span className="flex items-center gap-1 text-text-muted text-xs">
                                 <Clock size={12} className="text-brand-primary" />
-                                {new Date(event.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })} às {new Date(event.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                {new Date(event.date).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" })} at {new Date(event.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                             </span>
                         </div>
                         <h2 className="text-2xl font-display font-bold text-text-primary leading-tight">
@@ -65,9 +65,9 @@ function EventModal({ event, onClose, onFollow }) {
                     </div>
 
                     <div className="p-4 bg-surface-subtle rounded-md border border-border-subtle">
-                        <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">Sobre este Evento</h4>
+                        <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">About this Event</h4>
                         <p className="text-text-secondary text-sm leading-relaxed">
-                            {event.description || "Este evento é uma oportunidade exclusiva para membros da comunidade WBCT."}
+                            {event.description || "This event is an exclusive opportunity for WBCT community members."}
                         </p>
                     </div>
 
@@ -92,7 +92,7 @@ function EventModal({ event, onClose, onFollow }) {
                                     : "btn-primary"}`}
                         >
                             {event.isFollowing ? (
-                                <><CheckCircle2 size={16} /> Presença Confirmada</>
+                                <><CheckCircle2 size={16} /> Attendance Confirmed</>
                             ) : (
                                 <><Bookmark size={16} /> Quero Participar</>
                             )}
@@ -128,7 +128,7 @@ export default function MemberEvents() {
                 const data = await res.json();
                 if (data.success) setEvents(data.events);
             } catch (error) {
-                console.error("Erro ao carregar eventos:", error);
+                console.error("Failed to load events:", error);
             } finally {
                 setLoading(false);
             }
@@ -148,7 +148,7 @@ export default function MemberEvents() {
         if (dayEvents.length > 0) setSelectedEvent(dayEvents[0]);
     };
 
-    const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     const renderCalendarCells = () => {
         const monthStart = startOfMonth(currentMonth);
@@ -167,7 +167,7 @@ export default function MemberEvents() {
             days.push(
                 <div
                     key={day.toString()}
-                    className={`flex-1 border-r border-b border-border-subtle p-1.5 cursor-pointer hover:bg-surface-subtle transition-colors overflow-hidden ${!isCurrentMonth ? "opacity-30" : ""}`}
+                    className={`flex-1 border-r border-b border-border-subtle p-1.5 courser-pointer hover:bg-surface-subtle transition-colors overflow-hidden ${!isCurrentMonth ? "opacity-30" : ""}`}
                     onClick={() => handleDayClick(day)}
                 >
                     <div className="mb-1">
@@ -214,10 +214,10 @@ export default function MemberEvents() {
                 setEvents(events.map(e => e.id === eventId ? { ...e, isFollowing: data.following } : e));
                 if (selectedEvent?.id === eventId) setSelectedEvent(prev => ({ ...prev, isFollowing: data.following }));
             } else {
-                console.error("Erro ao marcar interesse:", data.error);
+                console.error("Failed to mark interest:", data.error);
             }
         } catch (error) {
-            console.error("Erro ao confirmar participação:", error);
+            console.error("Failed to confirm participation:", error);
         }
     };
 
@@ -225,7 +225,7 @@ export default function MemberEvents() {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Sincronizando agenda médica...</p>
+                <p className="text-text-muted text-sm">Syncing medical calendar...</p>
             </div>
         );
     }
@@ -235,8 +235,8 @@ export default function MemberEvents() {
             {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onFollow={handleFollow} />}
 
             <PageHeader
-                title="Agenda"
-                subtitle="Eventos e encontros da comunidade"
+                title="Calendar"
+                subtitle="Community events and meetings"
             />
 
             {/* Calendário */}
@@ -248,7 +248,7 @@ export default function MemberEvents() {
                             <ChevronLeft size={18} className="text-text-secondary" />
                         </button>
                         <h3 className="text-base font-bold text-text-primary min-w-[160px] text-center capitalize">
-                            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                            {format(currentMonth, "MMMM yyyy", { locale: enUS })}
                         </h3>
                         <button onClick={handleNextMonth} className="p-1.5 hover:bg-surface-subtle rounded-md transition-colors">
                             <ChevronRight size={18} className="text-text-secondary" />
@@ -259,14 +259,14 @@ export default function MemberEvents() {
                             onClick={() => setCurrentMonth(new Date())}
                             className="text-xs font-semibold text-brand-primary hover:text-brand-primary-hover px-2.5 py-1 rounded border border-brand-primary/30 hover:bg-brand-primary-light transition-colors"
                         >
-                            Hoje
+                            Today
                         </button>
                     </div>
                 </div>
 
                 {/* Dias da semana */}
                 <div className="grid grid-cols-7 bg-surface-subtle border-b border-border-subtle">
-                    {DIAS_SEMANA.map(d => (
+                    {WEEKDAYS.map(d => (
                         <div key={d} className="py-2 text-center text-[10px] font-bold text-text-muted uppercase tracking-wider">
                             {d}
                         </div>
@@ -284,7 +284,7 @@ export default function MemberEvents() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input
                     type="text"
-                    placeholder="Pesquisar eventos..."
+                    placeholder="Search events..."
                     className="input !pl-10"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -295,8 +295,8 @@ export default function MemberEvents() {
             {filteredEvents.length === 0 ? (
                 <EmptyState
                     icon={CalendarIcon}
-                    title="Nenhum evento encontrado"
-                    description={searchTerm ? "Tente buscar com outros termos." : "Os eventos da comunidade aparecerão aqui em breve."}
+                    title="No events found"
+                    description={searchTerm ? "Try searching with other terms." : "Community events will appear here soon."}
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -315,12 +315,12 @@ export default function MemberEvents() {
                                     >
                                         <span className="text-base font-bold leading-none">{new Date(event.date).getDate()}</span>
                                         <span className="text-[9px] font-bold uppercase opacity-90">
-                                            {new Date(event.date).toLocaleDateString("pt-BR", { month: "short" })}
+                                            {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
                                         </span>
                                     </div>
                                     {event.isFollowing && (
                                         <span className="flex items-center gap-1 text-[10px] font-bold text-status-success bg-status-success-bg px-2 py-1 rounded">
-                                            <CheckCircle2 size={11} /> Confirmado
+                                            <CheckCircle2 size={11} /> Confirmed
                                         </span>
                                     )}
                                 </div>
@@ -330,13 +330,13 @@ export default function MemberEvents() {
                                         {event.title}
                                     </h3>
                                     <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
-                                        {event.description || "Evento exclusivo para membros WBCT."}
+                                        {event.description || "Exclusive event for WBCT members."}
                                     </p>
                                 </div>
 
                                 <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                                     <Clock size={11} />
-                                    {new Date(event.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    {new Date(event.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                                 </div>
 
                                 <div className="flex gap-2 pt-1">

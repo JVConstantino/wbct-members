@@ -2,11 +2,11 @@
 
 > **Purpose**: Single source of truth for any AI assistant (Claude, Gemini, opencode, Cursor, Copilot, etc.) to understand the project quickly and produce consistent code.
 >
-> **Stack**: Next.js 16 (App Router) · React 19 · Tailwind CSS v4 · NextAuth v5 · MySQL via `mysql2` (primary) · Prisma 7 (partially used) · Appwrite REST (auth mirror, optional) · TipTap · Resend
+> **Stack**: Next.js 16 (App Router) · React 19 · Tailwind CSS v4 · NextAuth v5 · **Appwrite** via `node-appwrite` SDK (primary, all routes) · TipTap · Resend
 >
-> **Database mode**: **MySQL-first**. The `mysql2` driver powers all 36+ API routes. `user-store.js` is the only file with Appwrite-first behavior (used as a fast index for user lookup, with MySQL as fallback). The `db.js` pool is lazy and only activates if `DATABASE_URL` is set AND a raw `query()` is called — but in this project, every route except the ones in `user-store.js` uses MySQL, so MySQL is effectively required.
+> **Database mode**: **Appwrite-only**. The `node-appwrite` SDK powers all 39 API routes via `src/lib/appwrite.js`. MySQL and Prisma have been fully removed. There is no `DATABASE_URL` env var.
 >
-> **Language**: UI and copy are in **Portuguese (pt-BR)**. Comments and identifiers are in **English**.
+> **Language**: UI and copy are in **English** (pt-BR strings have been fully translated). Comments and identifiers are in **English**. Public URLs use English slugs (`/admin`, `/member`, `/blog`, `/events`, `/courses`, `/directory`, `/posts`, `/profile`) with legacy Portuguese URLs preserved as `307` redirects via `next.config.js`. Database content (e.g. user names, bios, post bodies) is rendered as-is.
 
 ---
 
@@ -15,9 +15,9 @@
 - **Name**: WBCT Members Platform
 - **Domain**: Exclusive medical community for Brazilian doctors
 - **Path**: `/Users/constantino/Desktop/CLIENTES/PROGRAMACAO/CRIATIVA DIGITAL/WBCT/PROJETO-TESTE-02`
-- **Two protected areas**:
-  - `/admin` — requires `role = ADMIN`
-  - `/membro` — requires `status = APPROVED` (any role)
+- **Two protected areas** (English slugs in the URL, Portuguese folders on disk):
+  - `/admin` — requires `role = ADMIN` (folder: `src/app/admin/`)
+  - `/member` — requires `status = APPROVED` (any role) (folder: `src/app/membro/`)
 - **User lifecycle**: `register → PENDING → admin approves → APPROVED → can login`
 - **Git remotes**:
   - `origin` → `https://github.com/JVConstantino/WBCT-SISTEMA-NOVO.git` (primary, used by Easy Panel)
@@ -34,19 +34,13 @@ npm install
 
 # Configure env
 cp .env.example .env
-# Edit DATABASE_URL, AUTH_SECRET, Appwrite vars
-
-# Setup DB + seed
-node scripts/setup-db.mjs
-node scripts/seed-admin.mjs
-node scripts/seed-posts.mjs
-node scripts/seed-webinars.mjs
-node scripts/seed-activity.mjs
+# Edit AUTH_SECRET and Appwrite vars (no DATABASE_URL needed)
 
 # Dev
 npm run dev          # http://localhost:3000 (or next free port)
-PORT=3001 npm run dev
 ```
+
+> **No database setup scripts needed** — Appwrite collections are managed in the Appwrite console at `database.wbctmember.org`.
 
 ---
 
@@ -57,8 +51,7 @@ PORT=3001 npm run dev
 | Framework | `next` | 16.1.3 | App Router, SSR, API Routes |
 | UI | `react` / `react-dom` | 19.2.3 | Components |
 | Auth | `next-auth` | 5.0.0-beta.30 | JWT + Credentials |
-| DB driver | `mysql2` | 3.16.1 | Connection pool (10 conns, keep-alive) — PRIMARY |
-| ORM | `@prisma/client` / `prisma` | 7.2.0 | Partially used, schema is outdated |
+| DB SDK | `node-appwrite` | 16.0.0 | Appwrite SDK — PRIMARY (all 39 routes) |
 | Hashing | `bcryptjs` | 3.0.3 | Passwords |
 | Styles | `tailwindcss` | 4.1.18 | Utility-first + custom CSS vars |
 | Typography | `@tailwindcss/typography` | 0.5.19 | Prose styling |
@@ -70,7 +63,7 @@ PORT=3001 npm run dev
 | Email | `resend` | 6.12.4 | Transactional email |
 | Class utils | `clsx` / `tailwind-merge` | 2.1.1 / 3.4.0 | `cn()` helper |
 
-> **Note**: `framer-motion` and `gsap` are installed but `framer-motion` is the one actually used (admin layout).
+> **Removed**: `mysql2`, `@prisma/client`, `prisma` — fully replaced by `node-appwrite`.
 
 ---
 
@@ -93,32 +86,32 @@ PROJETO-TESTE-02/
 │   │   │   ├── layout.js           # Sidebar + Header (forces light theme)
 │   │   │   ├── page.js             # Dashboard (stats + charts)
 │   │   │   ├── error.js / loading.js
-│   │   │   ├── membros/            # CRUD members + approve
-│   │   │   ├── postagens/          # Moderation
-│   │   │   ├── analytics/          # Advanced charts
-│   │   │   ├── eventos/            # Calendar + management
-│   │   │   ├── webinars/           # Course catalog
-│   │   │   ├── chat/               # Admin messages
-│   │   │   ├── docs/               # Internal docs
-│   │   │   ├── perfil/             # Admin profile
-│   │   │   └── configuracoes/email/
+│   │   │   ├── membros/            # CRUD members + approve  (URL: /admin/members)
+│   │   │   ├── postagens/          # Moderation               (URL: /admin/posts)
+│   │   │   ├── analytics/          # Advanced charts          (URL: /admin/analytics)
+│   │   │   ├── eventos/            # Calendar + management    (URL: /admin/events)
+│   │   │   ├── webinars/           # Course catalog           (URL: /admin/courses)
+│   │   │   ├── chat/               # Admin messages           (URL: /admin/chat)
+│   │   │   ├── docs/               # Internal docs            (URL: /admin/docs)
+│   │   │   ├── perfil/             # Admin profile            (URL: /admin/profile)
+│   │   │   └── configuracoes/email/(URL: /admin/settings/email)
 │   │   │
-│   │   ├── membro/                 # Member portal
+│   │   ├── membro/                 # Member portal (URLs under /member/...)
 │   │   │   ├── layout.js           # Sidebar + Header
-│   │   │   ├── page.js             # Feed
-│   │   │   ├── blog/               # Articles HUB
-│   │   │   ├── criar/              # New post (TipTap)
-│   │   │   ├── minhas-postagens/   # User's own posts
-│   │   │   ├── postagens/[id]/     # Read post + comments
-│   │   │   ├── editar/post/[id]/   # Edit post
-│   │   │   ├── diretorio/          # Doctor directory
-│   │   │   ├── medico/[id]/        # Public doctor profile
-│   │   │   ├── eventos/            # Calendar view
-│   │   │   ├── webinars/ + [id]/   # Courses + lessons
-│   │   │   ├── chat/               # Private messages
-│   │   │   └── perfil/
+│   │   │   ├── page.js             # Feed                    (URL: /member)
+│   │   │   ├── blog/               # Articles HUB            (URL: /member/blog)
+│   │   │   ├── criar/              # New post (TipTap)       (URL: /member/create)
+│   │   │   ├── minhas-postagens/   # User's own posts        (URL: /member/my-posts)
+│   │   │   ├── postagens/[id]/     # Read post + comments    (URL: /member/posts/[id])
+│   │   │   ├── editar/post/[id]/   # Edit post               (URL: /member/edit/post/[id])
+│   │   │   ├── diretorio/          # Doctor directory        (URL: /member/directory)
+│   │   │   ├── medico/[id]/        # Public doctor profile   (URL: /member/doctor/[id])
+│   │   │   ├── eventos/            # Calendar view           (URL: /member/events)
+│   │   │   ├── webinars/ + [id]/   # Courses + lessons       (URL: /member/courses, /member/courses/[id])
+│   │   │   ├── chat/               # Private messages        (URL: /member/chat)
+│   │   │   └── perfil/             # Member profile          (URL: /member/profile)
 │   │   │
-│   │   └── api/                    # 30+ API Routes (all use MySQL via query())
+│   │   └── api/                    # 39 API Routes (all use Appwrite via appwrite.js)
 │   │
 │   ├── components/
 │   │   ├── Providers.js            # SessionProvider + UserProvider
@@ -128,60 +121,46 @@ PROJETO-TESTE-02/
 │   │   ├── CookieConsent.js        # LGPD banner
 │   │   └── ui/                     # Design system primitives
 │   │       ├── index.js            # Central re-export
-│   │       ├── Avatar.js           # Photo + initials + online dot
-│   │       ├── Badge.js            # + PostStatusBadge + RoleBadge
-│   │       ├── Button.js           # 5 variants × 3 sizes
-│   │       ├── Card.js             # 4 variants, polymorphic (as=)
+│   │       ├── Avatar.js
+│   │       ├── Badge.js
+│   │       ├── Button.js
+│   │       ├── Card.js
 │   │       ├── EmptyState.js
-│   │       ├── Input.js            # + Textarea + Select
-│   │       ├── Modal.js            # Esc, scroll-lock, 5 sizes
-│   │       ├── PageHeader.js       # title + breadcrumb + actions
+│   │       ├── Input.js
+│   │       ├── Modal.js
+│   │       ├── PageHeader.js
 │   │       ├── Skeleton.js         # + Spinner
-│   │       └── Table.js            # columns[], loading, EmptyState
+│   │       └── Table.js
 │   │
 │   ├── contexts/
 │   │   └── UserContext.js          # useUser() + updateUser() + refreshUser()
 │   │
 │   ├── lib/
 │   │   ├── auth.js                 # NextAuth v5 config (Credentials, JWT, callbacks)
-│   │   ├── db.js                   # mysql2 pool — LAZY: only used if DATABASE_URL set + query() called
-│   │   ├── prisma.js               # Singleton PrismaClient (legacy)
-│   │   ├── user-store.js           # Auth: Appwrite-first when configured, MySQL fallback
-│   │   ├── appwrite-db.js          # Optional Appwrite REST adapter (auth path only)
-│   │   └── email.js                # Resend wrapper (env + AppSetting fallback)
+│   │   ├── appwrite.js             # node-appwrite SDK client + COLS map + listAll helper
+│   │   ├── user-store.js           # Auth: Appwrite-only (getUserByEmail, createPendingUser, etc.)
+│   │   └── email.js                # Resend wrapper (env + AppSetting fallback via Appwrite)
 │   │
-│   ├── hooks/                      # Custom hooks
-│   ├── styles/                     # Additional styles
+│   ├── hooks/
+│   ├── styles/
 │   ├── utils/                      # cn() and helpers
 │   └── middleware.js               # Route protection
-│
-├── prisma/
-│   └── schema.prisma               # ⚠️ Partially outdated — see §7
 │
 ├── public/
 │   ├── uploads/                    # Files from /api/upload
 │   └── manifest.json               # PWA manifest
 │
-├── scripts/                        # DB + migration utilities
-│   ├── setup-db.mjs                # Create schema
-│   ├── seed-*.mjs                  # admin / posts / webinars / activity
-│   ├── create-tables.sql           # Canonical SQL schema
-│   ├── add-*.sql                   # Incremental migrations
-│   ├── create-notifications.js     # Notification table
-│   ├── create-social-tables.js     # Follows + Messages
-│   ├── migrate-*.{js,mjs}          # Column updates
-│   ├── fix_db_image.js             # Image column patch
-│   ├── update-*.mjs                # Data patches
+├── scripts/                        # Migration utilities (legacy, MySQL→Appwrite)
 │   ├── provision-appwrite-from-mysql.mjs
 │   └── migrate-mysql-to-appwrite.mjs
 │
-├── docs/                           # Internal + product docs
-├── .env / .env.example             # DATABASE_URL, AUTH_SECRET, Resend, Appwrite
-├── next.config.js                  # Minimal config (allowedDevOrigins + 1 redirect)
+├── docs/
+├── .env / .env.example             # AUTH_SECRET, Appwrite vars (no DATABASE_URL)
+├── next.config.js
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── jsconfig.json                   # Path aliases (@/*)
-└── package.json                    # + engines.node >=20.19.0
+└── package.json                    # engines.node >=20.19.0
 ```
 
 ---
@@ -190,25 +169,22 @@ PROJETO-TESTE-02/
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DATABASE_URL` | **Yes** | — | `mysql://user:pass@host:3306/dbname` (mysql2 driver is used by all 36+ API routes) |
-| `AUTH_SECRET` | **Yes** (prod) | — | 32+ random chars, signs JWTs |
-| `AUTH_URL` | No | `http://localhost:3000` | Base URL |
-| `NEXTAUTH_URL` | No | — | Legacy alias for AUTH_URL |
+| `AUTH_SECRET` | **Yes** | — | 32+ random chars, signs JWTs |
+| `AUTH_URL` | **Yes** (local dev) | — | Must match the server port, e.g. `http://localhost:3000` |
 | `AUTH_TRUST_HOST` | No | `false` | `true` for non-Vercel deployments |
-| `RESEND_API_KEY` | No | — | Email (also stored in `AppSetting` table) |
+| `APPWRITE_ENDPOINT` | **Yes** | — | e.g. `https://database.wbctmember.org/v1` |
+| `APPWRITE_PROJECT_ID` | **Yes** | — | Appwrite project id |
+| `APPWRITE_API_KEY` | **Yes** | — | **Server API key — NEVER commit, rotate if exposed** |
+| `APPWRITE_DATABASE_ID` | **Yes** | — | Database id (e.g. `staging`) |
+| `RESEND_API_KEY` | No | — | Email (also stored in `app_settings` Appwrite collection) |
 | `RESEND_FROM_EMAIL` | No | — | Default sender |
 | `RESEND_FROM_NAME` | No | `WBCT` | Default sender name |
-| `USE_APPWRITE_DB` | No | `0` | Set `1` to use Appwrite as primary for auth (user-store.js) |
-| `APPWRITE_ENDPOINT` | If Appwrite | — | e.g. `https://database.wbctmember.org/v1` |
-| `APPWRITE_PROJECT_ID` | If Appwrite | — | Appwrite project id |
-| `APPWRITE_API_KEY` | If Appwrite | — | **Server API key — NEVER commit, rotate if exposed** |
-| `APPWRITE_DATABASE_ID` | If Appwrite | — | Database id |
-| `MIGRATION_BATCH_SIZE` | No | `300` | Appwrite migration batch |
-| `APPWRITE_COLLECTIONS_JSON` | No | (map) | Table → collection mapping (legacy migration) |
 
-> **Priority order** for email config: `process.env` → `AppSetting` table → default.
+> **⚠️ AUTH_URL must match the port**: if server runs on 3000, set `AUTH_URL=http://localhost:3000`. Mismatch causes `ClientFetchError: NetworkError` in the browser.
 >
-> **Security**: the Appwrite API key has full read/write access. Never commit it. Never paste in chat. Rotate immediately if exposed.
+> **No DATABASE_URL**: MySQL has been fully removed.
+>
+> **Security**: Appwrite API key has full read/write. Never commit. Rotate if exposed.
 
 ---
 
@@ -218,12 +194,12 @@ PROJETO-TESTE-02/
 ```
 1. POST /login → signIn("credentials")
 2. authorize() in src/lib/auth.js:
-   - getUserByEmail from user-store (Appwrite-first → MySQL fallback)
+   - getUserByEmail from user-store (Appwrite-only)
    - If status === PENDING  → throw "PENDING"
    - If status === REJECTED → throw "REJECTED"
    - bcrypt.compare(password, user.password)
-   - createLoginActivity (Appwrite-first → MySQL fallback)
-   - updateLastActiveAt (Appwrite-first → MySQL fallback)
+   - createLoginActivity (Appwrite)
+   - updateLastActiveAt (Appwrite)
    - Return { id, name, email, image, role }
 3. JWT callback: token.role, token.id, token.image
 4. Session callback: session.user.role, session.user.id, session.user.image
@@ -233,10 +209,19 @@ PROJETO-TESTE-02/
 ### Route Protection (`src/middleware.js`)
 ```js
 // matcher excludes: /api, /_next/static, /_next/image, /favicon.ico
-/admin/*  → require session + role === "ADMIN"  (else → /membro)
-/membro/* → require session                     (else → /login)
-/login    → if logged in, redirect to dashboard
+/admin/*   → require session + role === "ADMIN"  (else → /member)
+/member/*  → require session                     (else → /login)
+/membro/*  → alias of /member/* (legacy path, still protected)
+/login     → if logged in, redirect to dashboard
 ```
+
+### English URL Routes
+`next.config.js` exposes the app under English slugs while keeping the App-Router folders in Portuguese (single source of truth):
+
+- `redirects()` map legacy Portuguese URLs to English ones with `307`:
+  `/membro → /member`, `/membro/blog → /member/blog`, `/membro/diretorio → /member/directory`, `/membro/medico/[id] → /member/doctor/[id]`, `/membro/postagens/[id] → /member/posts/[id]`, `/membro/criar → /member/create`, `/membro/editar/post/[id] → /member/edit/post/[id]`, `/membro/perfil → /member/profile`, `/membro/eventos → /member/events`, `/membro/chat → /member/chat`, `/admin/membros → /admin/members`, etc.
+- `rewrites()` map English URLs back to the physical Portuguese folders internally (so existing imports keep working).
+- API paths (e.g. `/api/membro/posts`) are unchanged.
 
 ### API Guard Pattern
 ```js
@@ -250,81 +235,138 @@ export async function GET() {
 }
 ```
 
-### ⚠️ Appwrite Auth Path Status (verified 2026-06-01)
-The Appwrite instance at `database.wbctmember.org` is **broken for query parameters**:
-- `queries[]=...` → HTTP 400 "Invalid query: Syntax error"
-- `limit=N` / `offset=N` → silently ignored, always returns 25 docs default
-- The user-store Appwrite-first path still works for `getUserByEmail` (uses `Query.equal` + `Query.limit(1)`, falls back to full scan via `listDocuments` if that fails)
-
-**Current state**: MySQL is the reliable primary for all auth and data. Appwrite is best-effort mirror.
-
 ---
 
-## 7. Database
+## 7. Database — Appwrite
 
-### ⚠️ Prisma Schema is Outdated
-The `prisma/schema.prisma` does **not** include these columns that exist in the real MySQL:
-- `User.status` (PENDING / APPROVED / REJECTED)
-- `User.stack`
-- `User.lastActiveAt`
-
-Prisma is only used for some operations. The app primarily uses **raw SQL via `mysql2`**.
-
-### Connection (`src/lib/db.js`)
+### Client (`src/lib/appwrite.js`)
 ```js
-import { query } from "@/lib/db";
-const rows = await query("SELECT * FROM User WHERE id = ?", [id]);
-// Pool: 10 conns, keep-alive, undefined → null auto-conversion
-// LAZY: throws only when query() is called AND DATABASE_URL is missing
+import { db, DB_ID, COLS, ID, Query, listAll } from "@/lib/appwrite";
+
+// List with filters
+const res = await db.listDocuments(DB_ID, COLS.posts, [
+    Query.equal("status", "APPROVED"),
+    Query.orderDesc("createdAt"),
+    Query.limit(100),
+]);
+const posts = res.documents;  // each doc has $id, $createdAt, $updatedAt + custom fields
+
+// Get by ID
+const post = await db.getDocument(DB_ID, COLS.posts, id);
+
+// Create
+await db.createDocument(DB_ID, COLS.posts, "post_abc123", { title, content, ... });
+
+// Update
+await db.updateDocument(DB_ID, COLS.posts, id, { title, updatedAt: new Date().toISOString() });
+
+// Delete
+await db.deleteDocument(DB_ID, COLS.posts, id);
+
+// Fetch all pages (pagination helper)
+const allDocs = await listAll(COLS.users, [Query.equal("status", "PENDING")]);
 ```
 
-### Tables
+### Collections Map (`COLS`)
+```js
+COLS = {
+  users: "users",
+  posts: "posts",
+  comments: "comments",
+  events: "events",
+  webinars: "webinars",
+  courses: "courses",
+  lessons: "lessons",
+  lessonAttachments: "lesson_attachments",
+  lessonProgress: "lesson_progress",
+  messages: "messages",
+  notifications: "notifications",
+  userActivities: "user_activities",
+  follows: "follows",
+  userEvents: "user_events",
+  connections: "connections",
+  consentLog: "consent_log",
+  appSettings: "app_settings",
+  eventParticipants: "event_participant_status",
+}
+```
 
-#### `User`
-| Field | Type | Notes |
-|---|---|---|
-| `id` | string (cuid) | PK |
-| `name` | string? | |
-| `email` | string? | **unique** |
-| `password` | string? | bcrypt hash |
-| `image` | string? | URL or base64 |
-| `bio` | text? | |
-| `crm` | string? | Medical license |
-| `specialty` | string? | |
-| `stack` | string? | Practice area (NOT in Prisma) |
-| `role` | enum | `ADMIN` \| `MEMBER` (default MEMBER) |
-| `status` | string | `PENDING` \| `APPROVED` \| `REJECTED` (NOT in Prisma) |
-| `allowMessagesFrom` | string | `followers` \| `connections` \| `everyone` \| `nobody` |
-| `lastActiveAt` | DateTime? | Online tracking (NOT in Prisma) |
-| `createdAt` / `updatedAt` | DateTime | |
+### Composite ID Conventions
+Appwrite requires unique document IDs. For relations that had composite PKs in MySQL:
 
-#### `Post`
-`id` · `title` · `content` (LongText, HTML) · `image` · `status` (PENDING/APPROVED) · `views` (incremented on GET) · `authorId` · `createdAt` · `updatedAt`
+| Relation | Document ID pattern |
+|---|---|
+| Follows (followerId, followingId) | `flw_{followerId}_{followingId}` |
+| UserEvents (eventId, userId) | `ue_{eventId}_{userId}` |
+| EventParticipantStatus (eventId, userId) | `eps_{eventId}_{userId}` |
+| LessonProgress (userId, lessonId) | `prog_{userId}_{lessonId}` |
+| Connections (requesterId, receiverId) | `conn_{requesterId}_{receiverId}` |
 
-#### `Comment`
-`id` · `content` · `postId` (Cascade) · `authorId` · `parentId` (nullable) · `createdAt`
+### JOINs → Application-level
+Appwrite has no SQL JOINs. Pattern used across routes:
+```js
+// Fetch primary docs
+const posts = (await db.listDocuments(DB_ID, COLS.posts, [...])).documents;
 
-#### `Event`
-`id` · `title` · `description` · `date` · `color` (#3b82f6) · `link` · M:N with `User` via `_UserEvents`
+// Fetch related docs in parallel
+const authorIds = [...new Set(posts.map(p => p.authorId))];
+const authorMap = {};
+await Promise.all(authorIds.map(async id => {
+    const u = await db.getDocument(DB_ID, COLS.users, id);
+    authorMap[id] = { name: u.name, email: u.email };
+}));
+```
 
-#### `Webinar`
-`id` · `title` · `description` · `videoUrl` · `order` · timestamps
+### Collections Schema (key fields)
 
-#### `Course` → `Lesson` → `LessonAttachment`
-- `Course.image`, `Lesson.videoUrl`, `Lesson.order`
-- `LessonAttachment`: `title` · `url` · `type` ('pdf' | 'image')
+#### `users`
+`$id` · `name` · `email` · `password` (bcrypt) · `image` · `bio` · `crm` · `specialty` · `role` (ADMIN|MEMBER) · `status` (PENDING|APPROVED|REJECTED) · `allowMessagesFrom` · `lastActiveAt` · `createdAt` · `updatedAt`
 
-#### `LessonProgress`
-- `userId` · `lessonId` · `completed` · `completedAt`
-- **UNIQUE [userId, lessonId]**
+#### `posts`
+`$id` · `title` · `content` (HTML) · `image` · `status` (PENDING|APPROVED) · `views` · `authorId` · `createdAt` · `updatedAt`
 
-#### Raw SQL Tables (no Prisma model)
-- `Follows` — `followerId`, `followingId`, PK composite
-- `Message` — `id` (UUID), `senderId`, `receiverId`, `content`
-- `Notification` — `id` (UUID), `userId`, `type` (MESSAGE|POST_APPROVED|POST_REJECTED), `content`, `relatedId`, `isRead`
-- `UserActivity` — `id` (`login_{userId8}_{ts36}`), `userId`, `type` (LOGIN)
-- `AppSetting` — `settingKey` (unique), `settingValue`
-- `EventParticipantStatus` — `eventId`, `userId`, `status` (PENDING/CONFIRMED/REJECTED)
+#### `comments`
+`$id` · `content` · `postId` · `authorId` · `parentId` (nullable) · `createdAt`
+
+#### `events`
+`$id` · `title` · `description` · `date` · `color` · `link` · `createdAt` · `updatedAt`
+
+#### `webinars`
+`$id` · `title` · `description` · `videoUrl` · `order` · `createdAt` · `updatedAt`
+
+#### `courses` → `lessons` → `lesson_attachments`
+- `lessons`: `title` · `description` · `videoUrl` · `order` · `courseId`
+- `lesson_attachments`: `title` · `url` · `type` · `lessonId`
+
+#### `lesson_progress`
+`$id` = `prog_{userId}_{lessonId}` · `userId` · `lessonId` · `completed` · `completedAt` · `updatedAt`
+
+#### `follows`
+`$id` = `flw_{followerId}_{followingId}` · `followerId` · `followingId` · `createdAt`
+
+#### `messages`
+`$id` · `senderId` · `receiverId` · `content` · `createdAt`
+
+#### `notifications`
+`$id` · `userId` · `type` (MESSAGE|POST_APPROVED|POST_REJECTED) · `content` · `relatedId` · `isRead` · `createdAt`
+
+#### `user_activities`
+`$id` = `login_{userId8}_{ts36}` · `userId` · `type` (LOGIN) · `createdAt`
+
+#### `connections`
+`$id` = `conn_{requesterId}_{receiverId}` · `requesterId` · `receiverId` · `status` (PENDING|ACCEPTED) · `createdAt`
+
+#### `user_events`
+`$id` = `ue_{eventId}_{userId}` · `eventId` · `userId` · `createdAt`
+
+#### `event_participant_status`
+`$id` = `eps_{eventId}_{userId}` · `eventId` · `userId` · `status` (PENDING|CONFIRMED|REJECTED) · `updatedAt`
+
+#### `app_settings`
+`$id` = setting key (e.g. `email.resendApiKey`) · `settingKey` · `settingValue` · `updatedAt`
+
+#### `consent_log`
+`$id` · `userId` · `ip` · `mode` · `preferencesJson` · `createdAt`
 
 ---
 
@@ -355,22 +397,9 @@ const rows = await query("SELECT * FROM User WHERE id = ?", [id]);
 ### Typography
 - **Display**: Outfit (400–800) → headings
 - **Body**: Inter (400–700) → base
-- CSS var: `--font-body: "Inter", system-ui`
 
 ### Border Radius
 `xs=2px · sm=4px · md=6px · lg=8px · xl=12px · full=9999px`
-
-### Global Classes
-```css
-.btn-primary, .btn-secondary, .btn-ghost, .btn-accent, .btn-danger
-.card, .card-subtle
-.input, .badge
-```
-
-### Dark Mode
-- Toggle class `.dark` on `<html>` + `data-theme="dark"`
-- Persist in `localStorage("theme")`
-- Admin layout **forces light theme** (see `src/app/admin/layout.js:32-35`)
 
 ### UI Primitives Cheatsheet
 ```jsx
@@ -379,7 +408,7 @@ import { Avatar, Badge, PostStatusBadge, RoleBadge, Button, Card, EmptyState, In
 
 ---
 
-## 9. API Routes (30+, all MySQL via `query()`)
+## 9. API Routes (39, all Appwrite via `appwrite.js`)
 
 ### Auth
 | Method | Route | Auth | Purpose |
@@ -392,20 +421,26 @@ import { Avatar, Badge, PostStatusBadge, RoleBadge, Button, Card, EmptyState, In
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | PUT | `/api/users/profile` | Logged | Update own profile |
+| DELETE | `/api/users/profile` | Logged | Delete account (cascades all collections) |
 | GET | `/api/users/profile/[id]` | Self | Full profile |
-| GET | `/api/users/public/[id]` | Logged | Public profile of another |
-| GET | `/api/users/directory` | Logged | Doctor directory |
-| POST | `/api/users/follow` | Logged | Toggle follow |
-| GET | `/api/users/contacts` | Logged | Following list |
+| GET | `/api/users/public/[id]` | Logged | Public profile + isFollowing |
+| GET | `/api/users/directory` | Logged | Doctor directory + postCount |
+| GET/POST | `/api/users/follow` | Logged | Check / toggle follow |
+| GET | `/api/users/contacts` | Logged | Message contacts + followed users |
+| GET | `/api/users/connections` | Logged | Accepted connections |
+| POST | `/api/users/connect` | Logged | Send / cancel connection request |
+| GET | `/api/users/connect/requests` | Logged | Pending connection requests |
+| POST | `/api/users/connect/respond` | Logged | Accept / reject connection |
+| GET | `/api/users/profile/export` | Self | GDPR export (all user data) |
 
 ### Members (Admin)
-`/api/members` — GET list (search) · POST create · PUT update · DELETE
+`/api/members` — GET list (search in JS) · POST create · PUT update (bulk) · DELETE
 
 ### Posts
-`/api/posts` GET·POST·PATCH·DELETE · `/api/posts/[id]` GET·PATCH (inc. views) · `/api/posts/[id]/comments` POST · `/api/membro/posts` (own)
+`/api/posts` GET·POST·PATCH (moderate)·DELETE · `/api/posts/[id]` GET (inc. views + comments)·PATCH · `/api/posts/[id]/comments` POST · `/api/comments/[id]` DELETE · `/api/membro/posts` GET (own posts + commentCount)
 
 ### Events
-`/api/events` GET (filter `?month=`)·POST·DELETE · `/api/events/[id]/follow` POST toggle · `/api/admin/events/[id]/participants` GET
+`/api/events` GET (filter `?month=`)·POST·PATCH·DELETE · `/api/events/me` GET (user's events + status) · `/api/events/[id]/follow` POST toggle · `/api/admin/events/[id]/participants` GET·PATCH
 
 ### Courses & Lessons
 `/api/courses` GET·POST · `/api/courses/[id]` PATCH·DELETE · `/api/courses/[id]/lessons` GET·POST · `/api/lessons/[id]` PATCH·DELETE · `/api/lessons/[id]/progress` GET·POST
@@ -416,11 +451,11 @@ import { Avatar, Badge, PostStatusBadge, RoleBadge, Button, Card, EmptyState, In
 ### Messages
 `/api/messages` POST (creates Notification) · `/api/messages/[userId]` GET thread · `/api/admin/chat/contacts` GET
 
-### Notifications & Activity
-`/api/notifications` GET·PUT (mark read) · `/api/activity` POST (presence ping) · GET (online count, last 5min)
+### Notifications, Activity & Consent
+`/api/notifications` GET·PUT (mark read) · `/api/activity` POST (presence ping)·GET (online count) · `/api/consent` POST
 
 ### Upload & Stats
-`/api/upload` POST (image/PDF, max 5MB, MIME whitelist) · `/api/admin/stats` GET dashboard data
+`/api/upload` POST (image/PDF, max 5MB) · `/api/admin/stats` GET dashboard · `/api/admin/settings/email` GET·POST
 
 ---
 
@@ -431,40 +466,40 @@ import { Avatar, Badge, PostStatusBadge, RoleBadge, Button, Card, EmptyState, In
 @/components/*  @/lib/*  @/contexts/*  @/hooks/*  @/utils/*  @/styles/*
 ```
 
-### Component Patterns
-- **Client components**: `"use client"` directive at top
-- **Server components**: default (no directive)
-- **API responses**: `{ success: boolean, ... }` shape; `Response.json()`
-- **Loading/Error boundaries**: every route segment has `loading.js` and `error.js`
-
-### Data Fetching (Client)
+### Appwrite Document Access
 ```js
-// Always handle success flag
-const res = await fetch("/api/posts?status=APPROVED");
-const result = await res.json();
-if (result.success) setData(result.data);
+// Document ID is $id (not id)
+doc.$id       // document ID
+doc.$createdAt  // system creation timestamp (ISO string)
+doc.$updatedAt  // system update timestamp
+
+// Custom fields are direct properties
+doc.title, doc.status, doc.authorId, ...
+
+// Always map $id → id when returning to client
+return { id: doc.$id, ...doc }
 ```
 
-### Form Pattern
-- React state for inputs
-- Submit → `fetch("/api/...", { method, headers, body })`
-- Show error from `result.error`
-- Refetch list after success
+### API Response Shape
+```js
+{ success: boolean, ... }   // all routes
+Response.json({ success: true, posts })
+```
 
-### Theme Pattern
-- Read `localStorage("theme")` in layout `useEffect`
-- Apply `.dark` class + `data-theme` attribute
-- Admin forces light via `forceLightTheme()`
-
-### Polling
-- Notifications: 30s
-- Activity (admin dashboard): 30s
-- Analytics: 60s
+### Upsert Pattern (for documents with deterministic IDs)
+```js
+try {
+    await db.updateDocument(DB_ID, col, docId, data);
+} catch {
+    await db.createDocument(DB_ID, col, docId, data);
+}
+```
 
 ### IDs
-- DB: cuid (default) or `user_${Date.now().toString(36)}`
-- Activity: `login_${userId8}_${timestamp36}`
-- Messages/Notifications: `uuid`
+- Users: `user_${Date.now().toString(36)}`
+- Posts: `post_${Date.now().toString(36)}`
+- Activities: `login_${userId8}_${ts36}`
+- Composite relations: see §7 Composite ID Conventions
 
 ### Naming
 - **Files**: `PascalCase.js` for components, `kebab-case.js` for routes, `camelCase.js` for lib
@@ -473,11 +508,11 @@ if (result.success) setData(result.data);
 - **Role**: UPPERCASE strings (`ADMIN`, `MEMBER`)
 
 ### What NOT to do
+- ❌ Don't import `mysql2`, `@prisma/client`, or `src/lib/db.js` — they don't exist
+- ❌ Don't use raw SQL — use `db.listDocuments`, `db.getDocument`, etc.
 - ❌ Don't add comments to code (project convention)
 - ❌ Don't use emojis in files
-- ❌ Don't trust Prisma schema as source of truth (use raw SQL via `query()`)
 - ❌ Don't add new dependencies without checking `package.json` first
-- ❌ Don't change MySQL columns without updating `prisma/schema.prisma` AND the relevant scripts
 - ❌ Don't paste the Appwrite API key in chat/commits — rotate immediately if exposed
 
 ---
@@ -490,15 +525,12 @@ building  ──► release/*  ──► main
 ```
 
 - **Work and validation** in `building`
-- **Pre-production cleanup** in `release/main-hardening` (or similar)
 - **Merge** `building → main` only after validation
-- **Backup** branch/tag before prod: `backup/pre-main-YYYY-MM-DD` + `pre-main-YYYY-MM-DD`
-- **Rollback**: `git revert <commit>` or redeploy previous release/tag
 
 ### Easy Panel deploy
-- Webhook trigger: `POST http://<host>:3000/api/deploy/<token>` (token in path)
-- Build provider: **Nixpacks** (uses `.nixpacks.toml` to pin Node 20 + npm 10)
-- If using `Dockerfile`, set source type accordingly in Easy Panel UI
+- Webhook trigger: `POST http://<host>:3000/api/deploy/<token>`
+- Build provider: **Nixpacks** (`.nixpacks.toml` pins Node 20 + npm 10)
+- Required env vars in Easy Panel: `AUTH_SECRET`, `AUTH_URL` (production domain), `AUTH_TRUST_HOST=true`, all `APPWRITE_*` vars
 
 ### Production Build
 ```bash
@@ -507,33 +539,40 @@ npm run start
 ```
 
 ### Troubleshooting
-- `not a git repository` → `cd` into project root
 - `.next/dev/lock` → kill previous `next dev`
-- Port conflict → `PORT=3001 npm run dev`
-- MySQL errors → verify `DATABASE_URL` and network access
-- `EBADENGINE` warnings → already solved by `.nixpacks.toml` (Node 20)
-- Appwrite `Invalid query: Syntax error` → known bug on the staging instance, use MySQL instead
+- Port conflict → use different PORT or kill existing process
+- `ClientFetchError: NetworkError` → `AUTH_URL` in `.env` doesn't match the server port; update it and clear browser cookies
+- Stale `authjs.callback-url` cookie → clear all browser cookies for localhost in DevTools → Application → Cookies
+- Node version < 20 → already fixed in `.nixpacks.toml` with `NODE_VERSION = "20"`
 
 ---
 
-## 12. Appwrite Mirror (Optional, Auth Only)
+## 12. Appwrite Instance Notes
 
-When `USE_APPWRITE_DB=1` (or all Appwrite env vars set), the `user-store.js` writes are mirrored to Appwrite collections. The mirror is best-effort — failures are logged but don't block the main MySQL write.
+- **Endpoint**: `https://database.wbctmember.org/v1`
+- **Database ID**: `staging`
+- **SDK**: `node-appwrite` v16.0.0
+- **All 18 collections** are provisioned and contain migrated data from the original MySQL database
 
-- **Collections used**: `users` and `user_activities`
-- **Provisioning**: `npm run provision:appwrite:staging`
-- **Migration**: `npm run migrate:appwrite:staging`
-- **Doc ID strategy**: use MySQL `id` directly (e.g. `user_xxx`, `login_xxx_yyy`)
+### Query Patterns That Work
+```js
+Query.equal("field", "value")     // exact match
+Query.equal("field", ["v1","v2"]) // IN query
+Query.orderDesc("createdAt")
+Query.orderAsc("name")
+Query.limit(100)
+Query.greaterThanEqual("createdAt", isoString)
+Query.lessThan("date", isoString)
+Query.cursorAfter(lastDocId)       // pagination
+```
 
-### ⚠️ Appwrite API Bugs (verified)
-The staging instance at `database.wbctmember.org` (v1.8.1, `database.type = "legacy"`) does **not** honor:
-- `queries[]` array parameter → 400 "Invalid query: Syntax error"
-- `limit` / `offset` query params → silently ignored
-- `equal[]` filter params → silently ignored
-
-Only `getUserByEmail` works (via `Query.equal` + `Query.limit(1)`) because it falls back to a full scan via `listDocuments` when the query fails.
-
-**Recommendation**: keep MySQL as primary. Use Appwrite as backup/mirror. Do NOT depend on Appwrite for pagination or complex queries until the instance is upgraded to Appwrite 1.6+ with the new TablesDB API.
+### Pagination with listAll
+For routes that need all records (stats, exports, cascades):
+```js
+import { listAll } from "@/lib/appwrite";
+const allUsers = await listAll(COLS.users, [Query.equal("status", "PENDING")]);
+// listAll handles cursor pagination automatically, returns flat array
+```
 
 ---
 
@@ -541,37 +580,32 @@ Only `getUserByEmail` works (via `Query.equal` + `Query.limit(1)`) because it fa
 
 ### Add a new admin page
 1. Create `src/app/admin/{slug}/page.js` ("use client")
-2. Add menu item in `src/app/admin/layout.js:18-30`
+2. Add menu item in `src/app/admin/layout.js`
 3. Reuse `PageHeader`, `Card`, `Table`, `EmptyState`
 4. Create API route in `src/app/api/admin/{slug}/route.js` with ADMIN guard
+5. Use `db.listDocuments` / `db.createDocument` etc. from `@/lib/appwrite`
 
 ### Add a new member page
 1. Create `src/app/membro/{slug}/page.js`
 2. Add to `src/app/membro/layout.js` sidebar
-3. API route with logged-in guard (any role)
+3. API route with logged-in guard
+4. Access Appwrite via `@/lib/appwrite`
 
-### Add a new model/table
-1. Add SQL migration to `scripts/` (`.sql` or `.js`)
-2. Update `prisma/schema.prisma` for consistency
-3. Add CRUD helpers in `src/lib/user-store.js` pattern (or new `src/lib/{entity}-store.js`)
-4. Wire to Appwrite collection if mirror is enabled
+### Add a new collection/entity
+1. Create collection in Appwrite console (`database.wbctmember.org`)
+2. Add entry to `COLS` in `src/lib/appwrite.js`
+3. Add CRUD to a new API route
+4. No migration scripts needed (Appwrite is schema-flexible)
 
 ### Add a new UI primitive
 1. Create `src/components/ui/{Name}.js`
 2. Export from `src/components/ui/index.js`
-3. Use CSS vars from `globals.css`, **not** hardcoded colors
+3. Use CSS vars from `globals.css`, not hardcoded colors
 
 ### Modify the dashboard
 - File: `src/app/admin/page.js`
 - Stats endpoint: `src/app/api/admin/stats/route.js`
-- Time ranges: 24h / 48h / 7d / 30d / 90d
-
-### Modify the feed
-- File: `src/app/membro/page.js`
-- Posts API: `src/app/api/posts/route.js` (filter `?status=APPROVED`)
-
-### Migrate from MySQL to Appwrite REST
-Don't do this without fixing the Appwrite instance first. The staging Appwrite can't handle the query patterns the app needs (pagination, filtering, joins). See §12 for the known limitations.
+- Stats use `listDocuments` with `total` for counts + `listAll` for time-series grouping in JS
 
 ---
 
@@ -579,11 +613,11 @@ Don't do this without fixing the Appwrite instance first. The staging Appwrite c
 
 - [ ] Every API route that requires auth calls `auth()` and checks `session?.user`
 - [ ] Admin-only routes verify `session.user.role === "ADMIN"`
-- [ ] User input is validated/sanitized before SQL queries (use parameterized queries — never string interpolation)
-- [ ] Passwords are hashed with `bcrypt` (never stored as plain text)
+- [ ] User input is validated before passing to Appwrite (no injection risk, but validate required fields)
+- [ ] Passwords are hashed with `bcrypt` (never stored plain text)
 - [ ] File uploads check MIME type and size (max 5MB)
 - [ ] No secrets, API keys, or passwords are committed to the repo
-- [ ] SQL `LIMIT` clauses on user-facing list endpoints
+- [ ] `Query.limit()` on user-facing list endpoints
 - [ ] User can only edit/delete **their own** resources (or ADMIN)
 - [ ] `middleware.js` matcher is preserved when adding new protected routes
 - [ ] Appwrite API key is only in env vars, never in source
@@ -595,9 +629,8 @@ Don't do this without fixing the Appwrite instance first. The staging Appwrite c
 | Topic | File |
 |---|---|
 | Auth config | `src/lib/auth.js` |
-| DB pool (lazy) | `src/lib/db.js` |
-| User auth store (Appwrite-first, MySQL fallback) | `src/lib/user-store.js` |
-| Appwrite adapter | `src/lib/appwrite-db.js` |
+| Appwrite client + collections | `src/lib/appwrite.js` |
+| User auth store (Appwrite-only) | `src/lib/user-store.js` |
 | Email sender | `src/lib/email.js` |
 | Middleware | `src/middleware.js` |
 | Root layout | `src/app/layout.js` |
@@ -605,25 +638,56 @@ Don't do this without fixing the Appwrite instance first. The staging Appwrite c
 | Member layout | `src/app/membro/layout.js` |
 | Design tokens | `src/app/globals.css` |
 | Tailwind config | `tailwind.config.js` |
-| Prisma schema | `prisma/schema.prisma` |
-| Canonical SQL | `scripts/create-tables.sql` |
-| Full reference (PT-BR) | `docs/WBCT-REFERENCIA.md` |
-| Appwrite migration | `docs/MIGRACAO-APPWRITE-STAGING.md` |
+| Nixpacks config | `.nixpacks.toml` |
 | UI primitives | `src/components/ui/index.js` |
 | User context | `src/contexts/UserContext.js` |
 | Providers | `src/components/Providers.js` |
-| Nixpacks config | `.nixpacks.toml` |
 
 ---
 
-## 16. Known Issues (as of 2026-06-01)
+## 16. Recent Changes (2026-06-01)
 
-1. **Appwrite REST API on staging is broken** for `queries[]`, `limit`, `offset`, `equal[]` params. Use MySQL.
-2. **MySQL credentials in `.env`** may be stale — the password `N4#vUS+dzl*@` is rejected by `wbctso41_membros_wbct@162.241.60.102`. Reset the password in the hosting panel and update `.env`.
-3. **Prisma schema is outdated** — `status`, `stack`, `lastActiveAt`, `allowMessagesFrom` columns exist in MySQL but not in `prisma/schema.prisma`. Code uses raw SQL, so this is cosmetic.
-4. **Middleware deprecation** — Next 16 warns `"middleware" file convention is deprecated. Please use "proxy" instead`. Cosmetic warning, no impact yet.
-5. **N+1 queries in `/api/admin/stats` and other list endpoints** — every JOIN was done in SQL, no denormalization. Performance will degrade with >10k posts/users.
+### Localization: UI in English
+- All user-facing strings (sidebar, dashboard, profile, posts, comments, courses, events, calendar, directory, chat, webinars, admin docs) translated to English.
+- Date formatting switched from `ptBR` to `enUS` (`date-fns/locale`, `toLocaleDateString("en-US", ...)` and `toLocaleTimeString("en-US", ...)`) on every page that previously rendered Portuguese months like `junho 2026`.
+- Public URLs now use English slugs via `next.config.js`:
+  - `/member`, `/member/blog`, `/member/directory`, `/member/doctor/[id]`, `/member/posts/[id]`, `/member/create`, `/member/edit/post/[id]`, `/member/profile`, `/member/events`, `/member/chat`, `/member/courses`
+  - `/admin/members`, `/admin/posts`, `/admin/events`, `/admin/courses`
+  - Legacy Portuguese URLs are kept as `307` redirects (preserves bookmarks, old notifications, history).
+- The App-Router folders remain in Portuguese (`src/app/membro`, `src/app/admin/membros`, etc.) because English URLs are mapped to them with `rewrites()`. This keeps one source of truth and avoids duplicating pages.
+- `middleware.js` protects both `/member/*` and the legacy `/membro/*` aliases; admin login still redirects to `/member`; non-admins on `/admin/*` go to `/member`.
+- Internal links in the UI were updated to point at the English URLs.
+- Database content (names, bios, post bodies) is rendered as-is; only static UI copy was translated.
+
+### Auth + Avatar hardening
+- `src/lib/auth.js`: removed `image` from the JWT and session payload so the NextAuth cookie no longer splits across 10+ cookies (`authjs.session-token.0..N`).
+- `package.json`: `dev` and `start` scripts now use `NODE_OPTIONS=--max-http-header-size=262144` to survive any legacy oversized cookies.
+- `src/app/admin/layout.js` and `src/app/membro/layout.js` derive the header/sidebar avatar from `useUser()` (`user.image`).
+- `src/app/admin/perfil/page.js` and `src/app/membro/perfil/page.js` use `/api/upload` (multipart) instead of `FileReader.readAsDataURL`, so profile images are stored as `/uploads/...` URLs (no base64 in DB or cookies).
+- `src/app/admin/membros/page.js` (edit-member modal) also routes the photo through `/api/upload`.
+- `src/components/ui/Avatar.js` validates that `src` is a non-empty string before deciding to render the image; if the image fails to load (`onError`), it hides the `<img>` and reveals the initials fallback.
+- `src/app/admin/perfil/page.js` now calls `updateUser()` + `refreshUser()` after save, so the header/sidebar avatar updates immediately.
+
+### Tooling
+- `scripts/check-portuguese.py` scans `src` for common Portuguese tokens (date locale, accented words, common UI phrases). Reaches `Total suspicious lines: 0` after the localization pass.
+- Easy Panel deploy webhook: `POST http://185.217.125.183:3000/api/deploy/48ce309e12925a192fd16e16930a475c12c5c3a5c965d4f3`.
 
 ---
 
-*Last updated: 2026-06-01 · Stack pinned to versions in `package.json` · Deploy target: Easy Panel (Nixpacks, Node 20)*
+## 17. Known Issues (as of 2026-06-01)
+
+1. **Stale browser cookies** — If the browser was previously used with the app on a different port (e.g. 3001), the `authjs.callback-url` cookie may point to the wrong port. Fix: clear all cookies for `localhost` in DevTools → Application → Cookies → Delete All, then reload.
+
+2. **AUTH_URL must match server port** — `AUTH_URL` in `.env` must exactly match the port `npm run dev` binds to. Mismatch causes a silent `ClientFetchError: NetworkError` in the browser (the page loads HTML but React fails to hydrate the session). Default is `http://localhost:3000`.
+
+3. **Author name fallback** — Some migrated posts reference `authorId` values that do not exist in the Appwrite `users` collection (incomplete data migration). The code handles this gracefully with an "Unknown author" fallback (rendered in English).
+
+4. **Middleware deprecation** — Next 16 warns `"middleware" file convention is deprecated. Please use "proxy" instead`. Cosmetic warning, no impact.
+
+5. **N+1 queries in list endpoints** — Routes like `/api/users/directory` and `/api/posts` fetch authors individually per document (no JOINs in Appwrite). Performance degrades with >500 records. Acceptable for current scale.
+
+6. **Profile photo display** — The header/sidebar avatar shows the photo only after the Appwrite document has `image` saved. The default is initials while the user loads (or if the user has no photo on file). To set one, the user goes to `/admin/profile` or `/member/profile`, uploads an image (stored under `/public/uploads/...`), and saves; the `useUser` context refetches and the avatar updates without a full reload.
+
+---
+
+*Last updated: 2026-06-01 · Database: Appwrite (node-appwrite v16.0.0) · Deploy target: Easy Panel (Nixpacks, Node 20) · UI language: English (pt-BR redirects still served)*

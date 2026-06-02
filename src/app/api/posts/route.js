@@ -1,82 +1,81 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 import { sendEmail } from '@/lib/email';
 
-// GET - Listar postagens
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
 
-        let sql = `
-            SELECT p.*, u.name as authorName, u.email as authorEmail 
-            FROM Post p 
-            JOIN User u ON p.authorId = u.id
-        `;
-        let params = [];
+        const queries = [Query.orderDesc('createdAt'), Query.limit(100)];
+        if (status) queries.push(Query.equal('status', status));
 
-        if (status) {
-            sql += ' WHERE p.status = ?';
-            params = [status];
-        }
+        const res = await db.listDocuments(DB_ID, COLS.posts, queries);
 
-        sql += ' ORDER BY p.createdAt DESC';
+        // Fetch authors in parallel
+        const authorIds = [...new Set(res.documents.map(p => p.authorId).filter(Boolean))];
+        const authorMap = {};
+        await Promise.all(
+            authorIds.map(async (aid) => {
+                try {
+                    const u = await db.getDocument(DB_ID, COLS.users, aid);
+                    authorMap[aid] = { name: u.name, email: u.email };
+                } catch {}
+            })
+        );
 
-        const posts = await query(sql, params);
+        const posts = res.documents.map(p => ({
+            id: p.$id,
+            title: p.title,
+            content: p.content,
+            image: p.image,
+            status: p.status,
+            views: p.views || 0,
+            author: authorMap[p.authorId] || { name: 'Desconhecido', email: '' },
+            createdAt: p.createdAt,
+        }));
 
-        return NextResponse.json({
-            success: true,
-            posts: posts.map(p => ({
-                id: p.id,
-                title: p.title,
-                content: p.content,
-                image: p.image,
-                status: p.status,
-                views: p.views || 0,
-                author: {
-                    name: p.authorName,
-                    email: p.authorEmail
-                },
-                createdAt: p.createdAt
-            }))
-        });
+        return NextResponse.json({ success: true, posts });
     } catch (error) {
         console.error('Error fetching posts:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
-// PATCH - Atualizar status da postagem (Aprovar/Reprovar)
 export async function PATCH(request) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Apenas administradores podem moderar postagens' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Only administrators can moderate posts' }, { status: 403 });
         }
 
         const { id, ids, status } = await request.json();
-
         if ((!id && (!Array.isArray(ids) || !ids.length)) || !status) {
-            return NextResponse.json({ success: false, error: 'ID(s) e Status são obrigatórios' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'ID(s) and status are required' }, { status: 400 });
         }
 
         const targetIds = Array.isArray(ids) && ids.length ? ids : [id];
-        const placeholders = targetIds.map(() => '?').join(',');
-        await query(`UPDATE Post SET status = ? WHERE id IN (${placeholders})`, [status, ...targetIds]);
+
+        await Promise.all(
+            targetIds.map(pid => db.updateDocument(DB_ID, COLS.posts, pid, {
+                status,
+                updatedAt: new Date().toISOString(),
+            }))
+        );
 
         try {
-            const authors = await query(
-                `SELECT p.title, u.email FROM Post p JOIN User u ON u.id = p.authorId WHERE p.id IN (${placeholders})`,
-                targetIds
-            );
-            const subject = status === 'APPROVED' ? 'Sua postagem foi aprovada' : 'Atualização sobre sua postagem';
-            for (const row of authors) {
-                await sendEmail({
-                    to: row.email,
-                    subject,
-                    html: `<p>Olá! A postagem <strong>${row.title}</strong> foi atualizada para o status <strong>${status}</strong>.</p>`
-                });
+            const posts = await Promise.all(targetIds.map(pid => db.getDocument(DB_ID, COLS.posts, pid)));
+            const subject = status === 'APPROVED' ? 'Your post was approved' : 'Post update';
+            for (const post of posts) {
+                try {
+                    const author = await db.getDocument(DB_ID, COLS.users, post.authorId);
+                    await sendEmail({
+                        to: author.email,
+                        subject,
+                        html: `<p>Hello! The post <strong>${post.title}</strong> was updated to status <strong>${status}</strong>.</p>`,
+                    });
+                } catch {}
             }
         } catch (e) {
             console.error('Email notification error:', e);
@@ -89,12 +88,11 @@ export async function PATCH(request) {
     }
 }
 
-// DELETE - Remover postagem
 export async function DELETE(request) {
     try {
         const session = await auth();
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -103,51 +101,51 @@ export async function DELETE(request) {
         const ids = idsParam ? idsParam.split(',').map(v => v.trim()).filter(Boolean) : [];
 
         if (!id && !ids.length) {
-            return NextResponse.json({ success: false, error: 'ID é obrigatório' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
         }
 
         const targetIds = ids.length ? ids : [id];
-        const placeholders = targetIds.map(() => '?').join(',');
 
-        // Se não for ADMIN, verificar se é o autor (opcional, mas bom pra segurança)
         if (session.user.role !== 'ADMIN') {
-            const rows = await query(`SELECT id, authorId FROM Post WHERE id IN (${placeholders})`, targetIds);
-            const forbidden = rows.some((post) => post.authorId !== session.user.id);
-            if (forbidden || rows.length !== targetIds.length) {
-                return NextResponse.json({ success: false, error: 'Sem permissão para excluir esta postagem' }, { status: 403 });
+            const posts = await Promise.all(targetIds.map(pid => db.getDocument(DB_ID, COLS.posts, pid)));
+            const forbidden = posts.some(post => post.authorId !== session.user.id);
+            if (forbidden) {
+                return NextResponse.json({ success: false, error: 'Forbidden to delete this post' }, { status: 403 });
             }
         }
 
-        await query(`DELETE FROM Post WHERE id IN (${placeholders})`, targetIds);
-
+        await Promise.all(targetIds.map(pid => db.deleteDocument(DB_ID, COLS.posts, pid)));
         return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
         console.error('Error deleting post:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-// POST - Criar nova postagem
+
 export async function POST(request) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { title, content, image } = await request.json();
-
         if (!title || !content) {
-            return NextResponse.json({ success: false, error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Title and content are required' }, { status: 400 });
         }
 
         const id = 'post_' + Date.now().toString(36);
-        const authorId = session.user.id;
+        const now = new Date().toISOString();
         const status = session.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING';
 
-        await query(`
-            INSERT INTO Post (id, title, content, image, status, authorId, createdAt, updatedAt) 
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [id, title, content, image || null, status, authorId]);
+        await db.createDocument(DB_ID, COLS.posts, id, {
+            title, content,
+            image: image || null,
+            status,
+            authorId: session.user.id,
+            views: 0,
+            createdAt: now, updatedAt: now,
+        });
 
         return NextResponse.json({ success: true, id });
     } catch (error) {

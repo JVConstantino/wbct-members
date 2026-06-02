@@ -1,6 +1,6 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
 export async function POST(request, { params }) {
     try {
@@ -8,42 +8,41 @@ export async function POST(request, { params }) {
         const session = await auth();
 
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const userId = session.user.id;
+        const ueId = `ue_${id}_${userId}`;
+        const epsId = `eps_${id}_${userId}`;
 
-        await query(`
-            CREATE TABLE IF NOT EXISTS EventParticipantStatus (
-                eventId VARCHAR(191) NOT NULL,
-                userId VARCHAR(191) NOT NULL,
-                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-                updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                PRIMARY KEY (eventId, userId)
-            )
-        `);
-
-        // Verificar se já segue
-        // Como é uma relação m:n no Prisma, na query direta MySQL precisamos da tabela de junção.
-        // O Prisma cria automaticamente _UserEvents (A = EventId, B = UserId)
-        const existing = await query('SELECT * FROM _UserEvents WHERE A = ? AND B = ?', [id, userId]);
-
-        if (existing.length > 0) {
-            // Unfollow
-            await query('DELETE FROM _UserEvents WHERE A = ? AND B = ?', [id, userId]);
-            await query('DELETE FROM EventParticipantStatus WHERE eventId = ? AND userId = ?', [id, userId]);
+        try {
+            await db.getDocument(DB_ID, COLS.userEvents, ueId);
+            // Already following → unfollow
+            await db.deleteDocument(DB_ID, COLS.userEvents, ueId);
+            try { await db.deleteDocument(DB_ID, COLS.eventParticipants, epsId); } catch {}
             return NextResponse.json({ success: true, following: false });
-        } else {
-            // Follow
-            await query('INSERT INTO _UserEvents (A, B) VALUES (?, ?)', [id, userId]);
-            await query(`
-                INSERT INTO EventParticipantStatus (eventId, userId, status)
-                VALUES (?, ?, 'PENDING')
-                ON DUPLICATE KEY UPDATE status = VALUES(status)
-            `, [id, userId]);
+        } catch {
+            // Not following → follow
+            const now = new Date().toISOString();
+            await db.createDocument(DB_ID, COLS.userEvents, ueId, {
+                eventId: id,
+                userId,
+                createdAt: now,
+            });
+
+            try {
+                await db.updateDocument(DB_ID, COLS.eventParticipants, epsId, { status: 'PENDING' });
+            } catch {
+                await db.createDocument(DB_ID, COLS.eventParticipants, epsId, {
+                    eventId: id,
+                    userId,
+                    status: 'PENDING',
+                    updatedAt: now,
+                });
+            }
+
             return NextResponse.json({ success: true, following: true });
         }
-
     } catch (error) {
         console.error('Follow Event Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

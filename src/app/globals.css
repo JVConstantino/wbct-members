@@ -6,12 +6,12 @@
 
 /* ─────────────────────────────────────────────
    DESIGN SYSTEM — WBCT  (Clinical Blue)
-   Paleta: Blue profundo + Slate + Cyan acento
-   Geometria: Sharp (2–6px) — clínico e preciso
+   Palette: Deep Blue + Slate + Cyan accent
+   Geometry: Sharp (2-6px) - clinical and precise
 ───────────────────────────────────────────── */
 @theme {
 
-  /* ── Brand: Blue (autoridade médica) ── */
+  /* ── Brand: Blue (medical authority) ── */
   --color-brand-primary:        #2563eb;
   --color-brand-primary-hover:  #1d4ed8;
   --color-brand-primary-active: #1e40af;

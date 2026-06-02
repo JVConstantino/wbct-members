@@ -1,19 +1,17 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query } from '@/lib/appwrite';
 
-// POST: Atualizar lastActiveAt do usuário (ping de atividade)
-export async function POST(request) {
+export async function POST() {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        await query(
-            'UPDATE User SET lastActiveAt = NOW() WHERE id = ?',
-            [session.user.id]
-        );
+        await db.updateDocument(DB_ID, COLS.users, session.user.id, {
+            lastActiveAt: new Date().toISOString(),
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -22,21 +20,16 @@ export async function POST(request) {
     }
 }
 
-// GET: Contar usuários online (ativos nos últimos 5 minutos)
 export async function GET() {
     try {
-        const [result] = await query(`
-            SELECT COUNT(*) as count 
-            FROM User 
-            WHERE lastActiveAt >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
-        `);
-
-        return NextResponse.json({
-            success: true,
-            online: result.count || 0
-        });
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const res = await db.listDocuments(DB_ID, COLS.users, [
+            Query.greaterThanEqual('lastActiveAt', fiveMinutesAgo),
+            Query.limit(1),
+        ]);
+        return NextResponse.json({ success: true, online: res.total });
     } catch (error) {
         console.error('Error fetching online users:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ success: true, online: 0 });
     }
 }

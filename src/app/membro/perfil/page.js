@@ -19,10 +19,10 @@ import { Spinner } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
 
 const TABS = [
-    { id: "dados", icon: User, label: "Dados Pessoais" },
-    { id: "seguranca", icon: Lock, label: "Segurança & Senha" },
-    { id: "notificacoes", icon: Bell, label: "Notificações" },
-    { id: "especialidades", icon: Stethoscope, label: "Especialidades" },
+    { id: "dados", icon: User, label: "Personal Details" },
+    { id: "seguranca", icon: Lock, label: "Security & Password" },
+    { id: "notificacoes", icon: Bell, label: "Notifications" },
+    { id: "especialidades", icon: Stethoscope, label: "Specialties" },
 ];
 
 const ESPECIALIDADES = [
@@ -82,7 +82,7 @@ export default function MemberProfile() {
                     if (connData.success) setConnections(connData.connections || []);
                 }
             } catch (err) {
-                console.error("Erro ao carregar perfil:", err);
+                console.error("Failed to load profile:", err);
             } finally {
                 setLoading(false);
             }
@@ -104,7 +104,7 @@ export default function MemberProfile() {
                 setImageFailed(false);
             }
         } catch (error) {
-            console.error("Upload falhou:", error);
+            console.error("Upload failed:", error);
         } finally {
             setUploading(false);
         }
@@ -126,10 +126,10 @@ export default function MemberProfile() {
             const data = await res.json();
             if (data.success) {
                 updateUser(payload);
-                alert("Perfil atualizado com sucesso!");
+                alert("Profile updated successfully!");
             }
         } catch (err) {
-            console.error("Erro ao salvar:", err);
+            console.error("Failed to save:", err);
         } finally {
             setSaving(false);
         }
@@ -150,19 +150,19 @@ export default function MemberProfile() {
     const handleExportData = async () => {
         const res = await fetch("/api/users/profile/export");
         const data = await res.json();
-        if (!data.success) return alert(data.error || "Falha ao exportar dados");
+        if (!data.success) return alert(data.error || "Could not export data");
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `wbct-dados-${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `wbct-data-${new Date().toISOString().slice(0,10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
     };
 
     const handleDeleteAccount = async () => {
-        if (!deletePassword) return alert("Informe sua senha para excluir a conta.");
-        if (!confirm("Esta ação é irreversível. Deseja realmente excluir sua conta permanentemente?")) return;
+        if (!deletePassword) return alert("Enter your password to delete your account.");
+        if (!confirm("This action is irreversible. Do you really want to permanently delete your account?")) return;
         const res = await fetch("/api/users/profile", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
@@ -170,10 +170,10 @@ export default function MemberProfile() {
         });
         const data = await res.json();
         if (data.success) {
-            alert("Conta excluída com sucesso.");
+            alert("Account deleted successfully.");
             window.location.href = "/login";
         } else {
-            alert(data.error || "Não foi possível excluir a conta.");
+            alert(data.error || "Could not delete the account.");
         }
     };
 
@@ -181,7 +181,7 @@ export default function MemberProfile() {
         return (
             <div className="flex flex-col items-center justify-center py-20 min-h-[60vh] gap-3">
                 <Spinner size="lg" />
-                <p className="text-text-muted text-sm">Sincronizando seus dados...</p>
+                <p className="text-text-muted text-sm">Syncing your data...</p>
             </div>
         );
     }
@@ -212,7 +212,7 @@ export default function MemberProfile() {
                                 </div>
                             )}
                         </div>
-                        <label className="absolute -bottom-1 -right-1 p-2 bg-brand-primary text-white rounded-md shadow-sm hover:scale-105 transition-transform cursor-pointer">
+                        <label className="absolute -bottom-1 -right-1 p-2 bg-brand-primary text-white rounded-md shadow-sm hover:scale-105 transition-transform courser-pointer">
                             <Camera size={14} />
                             <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                         </label>
@@ -220,10 +220,10 @@ export default function MemberProfile() {
 
                     {/* Nome e Info */}
                     <div className="flex-1 text-center sm:text-left pb-1">
-                        <h1 className="text-xl sm:text-2xl font-display font-bold !text-white break-words">{formData.name || "Seu Nome"}</h1>
+                        <h1 className="text-xl sm:text-2xl font-display font-bold !text-white break-words">{formData.name || "Your Name"}</h1>
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1">
                             <span className="flex items-center gap-1 bg-brand-primary/20 text-white px-2.5 py-1 rounded text-xs font-bold uppercase">
-                                <Stethoscope size={11} /> Médico
+                                <Stethoscope size={11} /> Doctor
                             </span>
                             {formData.specialty && (
                                 <span className="!text-white text-xs">{formData.specialty}</span>
@@ -251,48 +251,48 @@ export default function MemberProfile() {
                         ))}
                     </div>
                     <div className="p-5 bg-brand-strong rounded-lg !text-white">
-                        <p className="text-[10px] font-bold uppercase tracking-widest !text-white mb-1.5">Sua Contribuição</p>
-                        <h4 className="text-sm font-bold leading-tight mb-2 !text-white">Mantenha seu perfil completo.</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-widest !text-white mb-1.5">Your Contribution</p>
+                        <h4 className="text-sm font-bold leading-tight mb-2 !text-white">Keep your profile complete.</h4>
                         <p className="text-xs !text-white leading-relaxed">
-                            Um perfil detalhado aumenta sua visibilidade na comunidade e facilita o networking.
+                            A detailed profile increases your visibility in the community and makes networking easier.
                         </p>
                     </div>
                 </div>
 
-                {/* Área de Conteúdo */}
+                {/* Área de Content */}
                 <div className="lg:col-span-2">
                     {/* Tab: Dados Pessoais */}
                     {activeTab === "dados" && (
                         <form onSubmit={handleSave} className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
                             <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                                 <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
-                                Informações Profissionais
+                                Professional Information
                             </h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Nome de Exibição</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Display Name</label>
                                     <div className="relative">
                                         <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
                                         <input name="name" className="input !pl-10" value={formData.name} onChange={handleChange} />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">E-mail de Contato</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Contact Email</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
-                                        <input name="email" className="input !pl-10 opacity-60 cursor-not-allowed" value={formData.email} readOnly />
+                                        <input name="email" className="input !pl-10 opacity-60 courser-not-allowed" value={formData.email} readOnly />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Especialidade Médica</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Medical Specialty</label>
                                     <div className="relative">
                                         <Heart className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
-                                        <input name="specialty" className="input !pl-10" placeholder="Ex: Cardiologia, Pediatria..." value={formData.specialty} onChange={handleChange} />
+                                        <input name="specialty" className="input !pl-10" placeholder="E.g. Cardiology, Pediatrics..." value={formData.specialty} onChange={handleChange} />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">CRM / Registro</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">CRM / Registration</label>
                                     <div className="relative">
                                         <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
                                         <input name="crm" className="input !pl-10" placeholder="Ex: CRM/SP 123456" value={formData.crm} onChange={handleChange} />
@@ -301,15 +301,15 @@ export default function MemberProfile() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Minha Biografia</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">My Biography</label>
                                 <div className="relative">
                                     <FileText className="absolute left-3 top-3 text-text-muted" size={15} />
-                                    <textarea name="bio" className="input !pl-10 min-h-[100px] resize-none" value={formData.bio} onChange={handleChange} placeholder="Conte sobre sua formação e experiência..." />
+                                    <textarea name="bio" className="input !pl-10 min-h-[100px] resize-none" value={formData.bio} onChange={handleChange} placeholder="Tell the community about your education and experience..." />
                                 </div>
                             </div>
 
                             <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2 disabled:opacity-50">
-                                {saving ? <Spinner size="sm" /> : <><Save size={15} /> Salvar Alterações</>}
+                                {saving ? <Spinner size="sm" /> : <><Save size={15} /> Save Changes</>}
                             </button>
                         </form>
                     )}
@@ -319,14 +319,14 @@ export default function MemberProfile() {
                         <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
                             <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                                 <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
-                                Segurança & Senha
+                                Security & Password
                             </h3>
 
                             <div className="space-y-4">
                                 {[
-                                    { key: "currentPassword", label: "Senha Atual", placeholder: "Digite sua senha atual" },
-                                    { key: "newPassword", label: "Nova Senha", placeholder: "Digite uma nova senha" },
-                                    { key: "confirmPassword", label: "Confirmar Nova Senha", placeholder: "Confirme a nova senha" },
+                                    { key: "currentPassword", label: "Current Password", placeholder: "Enter your current password" },
+                                    { key: "newPassword", label: "New Password", placeholder: "Enter a new password" },
+                                    { key: "confirmPassword", label: "Confirm New Password", placeholder: "Confirm the new password" },
                                 ].map(field => (
                                     <div key={field.key} className="space-y-1.5">
                                         <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{field.label}</label>
@@ -345,7 +345,7 @@ export default function MemberProfile() {
                             </div>
 
                             <button className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2">
-                                <Save size={15} /> Alterar Senha
+                                <Save size={15} /> Change Password
                             </button>
                         </div>
                     )}
@@ -355,15 +355,15 @@ export default function MemberProfile() {
                         <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
                             <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                                 <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
-                                Preferências de Notificação
+                                Notification Preferences
                             </h3>
 
                             <div className="space-y-3">
                                 {[
-                                    { key: "emailPosts", label: "Novas Postagens", desc: "Receba e-mail quando houver novas publicações" },
-                                    { key: "emailEvents", label: "Eventos & Webinars", desc: "Notificações sobre eventos e aulas ao vivo" },
-                                    { key: "emailNewsletter", label: "Newsletter Semanal", desc: "Resumo semanal das melhores publicações" },
-                                    { key: "pushMessages", label: "Mensagens Diretas", desc: "Alertas quando alguém enviar uma mensagem" },
+                                    { key: "emailPosts", label: "New Posts", desc: "Receive email when new posts are published" },
+                                    { key: "emailEvents", label: "Events & Webinars", desc: "Notifications about events and live classes" },
+                                    { key: "emailNewsletter", label: "Weekly Newsletter", desc: "Weekly summary of the best publications" },
+                                    { key: "pushMessages", label: "Direct Messages", desc: "Alerts when someone sends you a message" },
                                 ].map(item => (
                                     <div key={item.key} className="flex items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-surface-subtle rounded-md border border-border-subtle">
                                         <div>
@@ -382,23 +382,23 @@ export default function MemberProfile() {
                             </div>
 
                             <div className="space-y-1.5 pt-2 border-t border-border-subtle">
-                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Quem pode me enviar mensagens</label>
+                                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Who can send me messages</label>
                                 <select
                                     className="input"
                                     value={formData.allowMessagesFrom}
                                     onChange={(e) => setFormData((p) => ({ ...p, allowMessagesFrom: e.target.value }))}
                                 >
-                                    <option value="everyone">Todos</option>
-                                    <option value="followers">Apenas seguidores</option>
-                                    <option value="connections">Apenas conexões</option>
-                                    <option value="nobody">Ninguém</option>
+                                    <option value="everyone">Everyone</option>
+                                    <option value="followers">Followers only</option>
+                                    <option value="connections">Connections only</option>
+                                    <option value="nobody">Nobody</option>
                                 </select>
                             </div>
 
                             <div className="space-y-2 pt-2 border-t border-border-subtle">
-                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Solicitações de conexão</p>
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Connection requests</p>
                                 {connectionRequests.length === 0 ? (
-                                    <p className="text-xs text-text-muted">Nenhuma solicitação pendente.</p>
+                                    <p className="text-xs text-text-muted">No pending requests.</p>
                                 ) : connectionRequests.map((req) => (
                                     <div key={req.requesterId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-surface-subtle rounded-md border border-border-subtle">
                                         <div>
@@ -406,17 +406,17 @@ export default function MemberProfile() {
                                             <p className="text-xs text-text-muted">{req.email}</p>
                                         </div>
                                         <div className="flex w-full sm:w-auto gap-2">
-                                            <button type="button" onClick={() => respondRequest(req.requesterId, "reject")} className="btn-secondary text-xs flex-1 sm:flex-none">Recusar</button>
-                                            <button type="button" onClick={() => respondRequest(req.requesterId, "accept")} className="btn-primary text-xs flex-1 sm:flex-none">Aceitar</button>
+                                            <button type="button" onClick={() => respondRequest(req.requesterId, "reject")} className="btn-secondary text-xs flex-1 sm:flex-none">Decline</button>
+                                            <button type="button" onClick={() => respondRequest(req.requesterId, "accept")} className="btn-primary text-xs flex-1 sm:flex-none">Accept</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="space-y-2 pt-2 border-t border-border-subtle">
-                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Minhas conexões</p>
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">My connections</p>
                                 {connections.length === 0 ? (
-                                    <p className="text-xs text-text-muted">Você ainda não possui conexões.</p>
+                                    <p className="text-xs text-text-muted">You do not have connections yet.</p>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         {connections.map((conn) => (
@@ -430,37 +430,37 @@ export default function MemberProfile() {
                             </div>
 
                             <button onClick={handleSave} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2" type="button">
-                                <Save size={15} /> Salvar Preferências
+                                <Save size={15} /> Save Preferences
                             </button>
 
                             <div className="pt-3 border-t border-border-subtle space-y-3">
                                 <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">LGPD / GDPR</p>
                                 <div className="flex flex-wrap gap-2">
-                                    <button type="button" onClick={handleExportData} className="btn-secondary text-xs">Baixar meus dados (JSON)</button>
+                                    <button type="button" onClick={handleExportData} className="btn-secondary text-xs">Download my data (JSON)</button>
                                 </div>
                                 <div className="space-y-2 w-full sm:max-w-sm">
                                     <input
                                         type="password"
                                         className="input"
-                                        placeholder="Digite sua senha para excluir conta"
+                                        placeholder="Enter your password to delete your account"
                                         value={deletePassword}
                                         onChange={(e) => setDeletePassword(e.target.value)}
                                     />
-                                    <button type="button" onClick={handleDeleteAccount} className="btn-danger text-xs">Excluir minha conta (Hard Delete)</button>
+                                    <button type="button" onClick={handleDeleteAccount} className="btn-danger text-xs">Delete my account (Hard Delete)</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Tab: Especialidades */}
+                    {/* Tab: Specialties */}
                     {activeTab === "especialidades" && (
                         <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
                             <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                                 <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
-                                Minhas Especialidades
+                                My Specialties
                             </h3>
 
-                            <p className="text-xs text-text-secondary">Selecione as áreas de especialização que você atua ou tem interesse:</p>
+                            <p className="text-xs text-text-secondary">Select the specialty areas you practice or are interested in:</p>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                 {ESPECIALIDADES.map(spec => (
@@ -475,7 +475,7 @@ export default function MemberProfile() {
                             </div>
 
                             <button className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2">
-                                <Save size={15} /> Salvar Especialidades
+                                <Save size={15} /> Save Specialties
                             </button>
                         </div>
                     )}

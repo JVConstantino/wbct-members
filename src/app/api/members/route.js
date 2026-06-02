@@ -1,36 +1,40 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { COLLECTIONS, Query, deleteDocument, hasAppwriteConfig, listDocuments } from '@/lib/appwrite-db';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 
-// GET - Listar todos os membros (apenas ADMIN)
 export async function GET(request) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get('search') || '';
 
-        let sql = 'SELECT id, name, email, image, role, status, crm, specialty, bio, createdAt FROM User';
-        let params = [];
-
+        let docs;
         if (search) {
-            sql += ' WHERE name LIKE ? OR email LIKE ?';
-            params = [`%${search}%`, `%${search}%`];
+            // Appwrite doesn't support OR search across multiple fields natively;
+            // fetch all and filter in JS for small datasets
+            const all = await listAll(COLS.users, [Query.orderDesc('createdAt')]);
+            const term = search.toLowerCase();
+            docs = all.filter(u =>
+                (u.name || '').toLowerCase().includes(term) ||
+                (u.email || '').toLowerCase().includes(term)
+            );
+        } else {
+            const res = await db.listDocuments(DB_ID, COLS.users, [
+                Query.orderDesc('createdAt'),
+                Query.limit(500),
+            ]);
+            docs = res.documents;
         }
-
-        sql += ' ORDER BY createdAt DESC';
-
-        const members = await query(sql, params);
 
         return NextResponse.json({
             success: true,
-            members: members.map(m => ({
-                id: m.id,
-                name: m.name || 'Sem nome',
+            members: docs.map(m => ({
+                id: m.$id,
+                name: m.name || 'Unnamed',
                 email: m.email,
                 image: m.image,
                 role: m.role,
@@ -38,8 +42,8 @@ export async function GET(request) {
                 crm: m.crm,
                 specialty: m.specialty,
                 bio: m.bio,
-                createdAt: m.createdAt
-            }))
+                createdAt: m.createdAt,
+            })),
         });
     } catch (error) {
         console.error('Error fetching members:', error);
@@ -47,12 +51,11 @@ export async function GET(request) {
     }
 }
 
-// PUT - Atualizar status/role/dados do membro (apenas ADMIN)
 export async function PUT(request) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
         }
 
         const body = await request.json();
@@ -60,33 +63,23 @@ export async function PUT(request) {
         const targetIds = Array.isArray(ids) && ids.length ? ids : (id ? [id] : []);
 
         if (!targetIds.length) {
-            return NextResponse.json({ success: false, error: 'ID(s) é obrigatório' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'ID(s) are required' }, { status: 400 });
         }
 
-        const updates = [];
-        const values = [];
-
-        // Campos diretos
         const allowedFields = ['name', 'email', 'role', 'status', 'crm', 'specialty', 'bio', 'image'];
-
+        const updates = {};
         for (const field of allowedFields) {
-            if (otherFields[field] !== undefined) {
-                updates.push(`${field} = ?`);
-                values.push(otherFields[field]);
-            }
+            if (otherFields[field] !== undefined) updates[field] = otherFields[field];
         }
 
-        // Senha (Hash se fornecida)
         if (password && password.trim()) {
             const bcrypt = await import('bcryptjs');
-            const hashedPassword = await bcrypt.hash(password, 10);
-            updates.push('password = ?');
-            values.push(hashedPassword);
+            updates.password = await bcrypt.hash(password, 10);
         }
 
-        if (updates.length > 0) {
-            const placeholders = targetIds.map(() => '?').join(',');
-            await query(`UPDATE User SET ${updates.join(', ')} WHERE id IN (${placeholders})`, [...values, ...targetIds]);
+        if (Object.keys(updates).length > 0) {
+            updates.updatedAt = new Date().toISOString();
+            await Promise.all(targetIds.map(uid => db.updateDocument(DB_ID, COLS.users, uid, updates)));
         }
 
         return NextResponse.json({ success: true, affected: targetIds.length });
@@ -96,12 +89,11 @@ export async function PUT(request) {
     }
 }
 
-// POST - Criar novo membro (apenas ADMIN)
 export async function POST(request) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
         }
 
         const { name, email, password, role } = await request.json();
@@ -109,11 +101,15 @@ export async function POST(request) {
 
         const id = 'user_' + Date.now().toString(36);
         const hashedPassword = await bcrypt.hash(password, 10);
+        const now = new Date().toISOString();
 
-        await query(`
-            INSERT INTO User (id, name, email, password, role)
-            VALUES (?, ?, ?, ?, ?)
-        `, [id, name, email, hashedPassword, role || 'MEMBER']);
+        await db.createDocument(DB_ID, COLS.users, id, {
+            name, email,
+            password: hashedPassword,
+            role: role || 'MEMBER',
+            status: 'APPROVED',
+            createdAt: now, updatedAt: now,
+        });
 
         return NextResponse.json({ success: true, id });
     } catch (error) {
@@ -122,12 +118,11 @@ export async function POST(request) {
     }
 }
 
-// DELETE - Remover membro (apenas ADMIN)
 export async function DELETE(request) {
     try {
         const session = await auth();
         if (session?.user?.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -137,35 +132,11 @@ export async function DELETE(request) {
         const targetIds = ids.length ? ids : (id ? [id] : []);
 
         if (!targetIds.length) {
-            return NextResponse.json({ success: false, error: 'ID(s) é obrigatório' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'ID(s) are required' }, { status: 400 });
         }
 
-        const membersToDelete = await query(
-            `SELECT id, email FROM User WHERE id IN (${targetIds.map(() => '?').join(',')})`,
-            targetIds
-        );
-
-        const placeholders = targetIds.map(() => '?').join(',');
-        await query(`DELETE FROM User WHERE id IN (${placeholders})`, targetIds);
-
-        if (hasAppwriteConfig && membersToDelete.length > 0) {
-            try {
-                const usersCollection = await listDocuments(COLLECTIONS.users, [Query.limit(5000)]);
-                const idSet = new Set(membersToDelete.map((m) => m.id));
-                const emailSet = new Set(membersToDelete.map((m) => String(m.email || '').toLowerCase()));
-
-                const appwriteMatches = (usersCollection.documents || []).filter((doc) => {
-                    const docEmail = String(doc.email || '').toLowerCase();
-                    return idSet.has(doc.$id) || emailSet.has(docEmail);
-                });
-
-                for (const doc of appwriteMatches) {
-                    await deleteDocument(COLLECTIONS.users, doc.$id);
-                }
-            } catch (appwriteError) {
-                console.error('Error deleting member(s) from Appwrite:', appwriteError);
-            }
-        }
+        // Delete users and their Appwrite documents
+        await Promise.all(targetIds.map(uid => db.deleteDocument(DB_ID, COLS.users, uid).catch(() => {})));
 
         return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {

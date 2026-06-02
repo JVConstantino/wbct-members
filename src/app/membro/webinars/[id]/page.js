@@ -124,8 +124,8 @@ export default function CoursePlayer() {
     if (!course) {
         return (
             <div className="p-10 text-center">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Curso não encontrado.</h2>
-                <button onClick={() => router.push("/membro/webinars")} className="btn-primary mt-4">Voltar</button>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Course not found.</h2>
+                <button onClick={() => router.push("/member/webinars")} className="btn-primary mt-4">Back</button>
             </div>
         );
     }
@@ -135,11 +135,11 @@ export default function CoursePlayer() {
             {/* Left Column: Player & Info */}
             <div className="flex-1 space-y-6">
                 <button
-                    onClick={() => router.push("/membro/webinars")}
+                    onClick={() => router.push("/member/webinars")}
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                 >
                     <ArrowLeft size={20} />
-                    Voltar para Cursos
+                    Back to Courses
                 </button>
 
                 {currentLesson ? (
@@ -155,7 +155,7 @@ export default function CoursePlayer() {
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-white p-10 text-center">
                                     <Video size={64} className="opacity-20 mb-4" />
-                                    <p className="text-xl font-bold">Vídeo não disponível ou formato inválido.</p>
+                                    <p className="text-xl font-bold">Video unavailable or invalid format.</p>
                                     <a href={currentLesson.videoUrl} target="_blank" className="btn-primary mt-4">Ver link direto</a>
                                 </div>
                             )}
@@ -164,7 +164,7 @@ export default function CoursePlayer() {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{currentLesson.title}</h1>
-                                <p className="text-slate-500 font-medium">Aula {currentLesson.order} • {course.title}</p>
+                                <p className="text-slate-500 font-medium">Lesson {currentLesson.order} • {course.title}</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button
@@ -178,13 +178,13 @@ export default function CoursePlayer() {
                                     {markingProgress ? <Loader2 className="animate-spin" size={20} /> : (
                                         currentLesson.completed ? <CheckCircle2 size={20} /> : <PlayCircle size={20} />
                                     )}
-                                    {currentLesson.completed ? "Aula Concluída" : "Marcar como Assistida"}
+                                    {currentLesson.completed ? "Lesson Completed" : "Mark as Watched"}
                                 </button>
                                 {lessons.findIndex(l => l.id === currentLesson.id) < lessons.length - 1 && (
                                     <button
                                         onClick={handleNextLesson}
                                         className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                        title="Próxima Aula"
+                                        title="Next Lesson"
                                     >
                                         <ChevronRight size={24} />
                                     </button>
@@ -193,7 +193,7 @@ export default function CoursePlayer() {
                         </div>
 
                         <div className="bg-white dark:bg-slate-900 rounded-xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Sobre esta aula</h3>
+                            <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">About this lesson</h3>
                             <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
                                 {currentLesson.description || "No additional description for this lesson."}
                             </p>
@@ -233,7 +233,7 @@ export default function CoursePlayer() {
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100">
                         <Video size={48} className="mx-auto text-slate-300 mb-4" />
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Inicie sua jornada!</h2>
-                        <p className="text-slate-500">Selecione uma aula na lateral para começar a assistir.</p>
+                        <p className="text-slate-500">Select a lesson in the sidebar to start watching.</p>
                     </div>
                 )}
             </div>
@@ -243,7 +243,7 @@ export default function CoursePlayer() {
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col sticky top-6">
                     <div className="p-8 border-b border-slate-50 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-black text-xl text-slate-900 dark:text-white">Conteúdo</h3>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-white">Content</h3>
                             <span className="px-3 py-1 bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
                                 {calculateProgress()}%
                             </span>
@@ -290,7 +290,7 @@ export default function CoursePlayer() {
                                     </h4>
                                     <div className="flex items-center gap-2 mt-1">
                                         <Play size={10} className={currentLesson?.id === lesson.id ? "text-primary-400" : "text-slate-400"} />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aula {lesson.order}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lesson {lesson.order}</span>
                                     </div>
                                 </div>
                             </button>

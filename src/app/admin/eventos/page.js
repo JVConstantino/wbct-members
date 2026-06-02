@@ -23,13 +23,13 @@ import {
     eachDayOfInterval,
     parseISO
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Skeleton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Modal } from "@/components/ui/Modal";
 
-export default function EventosManagement() {
+export default function EventsManagement() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ export default function EventosManagement() {
             const data = await res.json();
             if (data.success) setEvents(data.events);
         } catch (error) {
-            console.error("Erro ao carregar eventos:", error);
+            console.error("Failed to load events:", error);
         } finally {
             setLoading(false);
         }
@@ -73,7 +73,7 @@ export default function EventosManagement() {
             const data = await res.json();
             if (data.success) setParticipantsList(data.participants);
         } catch (error) {
-            console.error("Erro ao carregar inscritos:", error);
+            console.error("Failed to load participants:", error);
         } finally {
             setLoadingParticipants(false);
         }
@@ -92,7 +92,7 @@ export default function EventosManagement() {
                 setParticipantsList((prev) => prev.map((p) => p.id === userId ? { ...p, status } : p));
             }
         } catch (error) {
-            console.error("Erro ao atualizar status do inscrito:", error);
+            console.error("Failed to update participant status:", error);
         }
     };
 
@@ -128,25 +128,25 @@ export default function EventosManagement() {
                 fetchEvents();
             }
         } catch (error) {
-            console.error("Erro ao criar evento:", error);
+            console.error("Failed to create event:", error);
         } finally {
             setCreating(false);
         }
     };
 
     const handleDeleteEvent = async (id) => {
-        if (!confirm("Deseja realmente excluir este evento?")) return;
+        if (!confirm("Do you really want to delete this event?")) return;
         try {
             const res = await fetch(`/api/events?id=${id}`, { method: "DELETE" });
             const data = await res.json();
             if (data.success) fetchEvents();
         } catch (error) {
-            console.error("Erro ao excluir evento:", error);
+            console.error("Failed to delete evento:", error);
         }
     };
 
     const COLORS = ["#2563eb", "#ef4444", "#059669", "#d97706", "#8b5cf6"];
-    const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     const renderCells = () => {
         const monthStart = startOfMonth(currentMonth);
@@ -165,7 +165,7 @@ export default function EventosManagement() {
             days.push(
                 <div
                     key={day.toString()}
-                    className={`flex-1 border-r border-b border-border-subtle p-1.5 cursor-pointer hover:bg-surface-subtle transition-colors overflow-hidden ${!isCurrentMonth ? "opacity-30" : ""}`}
+                    className={`flex-1 border-r border-b border-border-subtle p-1.5 courser-pointer hover:bg-surface-subtle transition-colors overflow-hidden ${!isCurrentMonth ? "opacity-30" : ""}`}
                     onClick={() => handleDayClick(day)}
                 >
                     <div className="mb-1">
@@ -194,7 +194,7 @@ export default function EventosManagement() {
                                         <button
                                             onClick={e => { e.stopPropagation(); handleDeleteEvent(event.id); }}
                                             className="hover:text-red-200"
-                                            title="Excluir"
+                                            title="Delete"
                                         >
                                             <Trash2 size={10} />
                                         </button>
@@ -224,8 +224,8 @@ export default function EventosManagement() {
     return (
         <div className="h-[calc(100vh-8rem)] flex flex-col gap-4">
             <PageHeader
-                title="Agenda de Eventos"
-                subtitle="Crie e gerencie os eventos da comunidade"
+                title="Event Calendar"
+                subtitle="Create and manage community events"
                 actions={
                     <button
                         onClick={() => {
@@ -235,7 +235,7 @@ export default function EventosManagement() {
                         className="btn-primary flex items-center gap-1.5 text-xs"
                     >
                         <Plus size={14} />
-                        Novo Evento
+                        New Event
                     </button>
                 }
             />
@@ -248,7 +248,7 @@ export default function EventosManagement() {
                             <ChevronLeft size={18} className="text-text-secondary" />
                         </button>
                         <h3 className="text-base font-bold text-text-primary min-w-[160px] text-center capitalize">
-                            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                            {format(currentMonth, "MMMM yyyy", { locale: enUS })}
                         </h3>
                         <button onClick={handleNextMonth} className="p-1.5 hover:bg-surface-subtle rounded-md transition-colors">
                             <ChevronRight size={18} className="text-text-secondary" />
@@ -260,14 +260,14 @@ export default function EventosManagement() {
                             onClick={() => setCurrentMonth(new Date())}
                             className="text-xs font-semibold text-brand-primary hover:text-brand-primary-hover px-2.5 py-1 rounded border border-brand-primary/30 hover:bg-brand-primary-light transition-colors"
                         >
-                            Hoje
+                            Today
                         </button>
                     </div>
                 </div>
 
                 {/* Dias da semana */}
                 <div className="grid grid-cols-7 bg-surface-subtle border-b border-border-subtle">
-                    {DIAS_SEMANA.map(d => (
+                    {WEEKDAYS.map(d => (
                         <div key={d} className="py-2 text-center text-[10px] font-bold text-text-muted uppercase tracking-wider">
                             {d}
                         </div>
@@ -284,16 +284,16 @@ export default function EventosManagement() {
             <Modal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
-                title="Criar Novo Evento"
+                title="Create New Event"
                 size="md"
             >
                 <form onSubmit={handleCreateEvent} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Título do Evento</label>
+                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Event Title</label>
                         <input
                             type="text"
                             className="input"
-                            placeholder="Ex: Webinar de Cardiologia Clínica"
+                            placeholder="E.g. Clinical Cardiology Webinar"
                             value={newEvent.title}
                             onChange={e => setNewEvent({ ...newEvent, title: e.target.value })}
                             required
@@ -312,7 +312,7 @@ export default function EventosManagement() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Horário</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Time</label>
                             <input
                                 type="time"
                                 className="input"
@@ -324,10 +324,10 @@ export default function EventosManagement() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Descrição (opcional)</label>
+                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Description (opcional)</label>
                         <textarea
                             className="input min-h-[80px]"
-                            placeholder="Detalhes sobre o evento..."
+                            placeholder="Event details..."
                             value={newEvent.description}
                             onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
                         />
@@ -335,7 +335,7 @@ export default function EventosManagement() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Cor no Calendário</label>
+                            <label className="block text-xs font-semibold text-text-secondary mb-1.5">Calendar Color</label>
                             <div className="flex gap-2 p-2 bg-surface-subtle rounded-md">
                                 {COLORS.map(c => (
                                     <button
@@ -366,14 +366,14 @@ export default function EventosManagement() {
                             onClick={() => setShowModal(false)}
                             className="flex-1 btn-secondary"
                         >
-                            Cancelar
+                            Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={creating}
                             className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {creating ? <Spinner size="sm" /> : "Publicar Evento"}
+                            {creating ? <Spinner size="sm" /> : "Publish Event"}
                         </button>
                     </div>
                 </form>
@@ -383,7 +383,7 @@ export default function EventosManagement() {
             <Modal
                 isOpen={!!viewingParticipants}
                 onClose={() => setViewingParticipants(null)}
-                title="Inscritos no Evento"
+                title="Event Participants"
                 size="sm"
             >
                 {viewingParticipants && (
@@ -394,12 +394,12 @@ export default function EventosManagement() {
                             {loadingParticipants ? (
                                 <div className="flex flex-col items-center py-8 gap-2">
                                     <Spinner size="md" />
-                                    <p className="text-sm text-text-muted">Carregando inscritos...</p>
+                                    <p className="text-sm text-text-muted">Loading participants...</p>
                                 </div>
                             ) : participantsList.length === 0 ? (
                                 <div className="text-center py-8 bg-surface-subtle rounded-md">
                                     <Users className="mx-auto text-text-muted mb-2" size={32} />
-                                    <p className="text-sm text-text-muted">Nenhum inscrito ainda.</p>
+                                    <p className="text-sm text-text-muted">No participants yet.</p>
                                 </div>
                             ) : (
                                 participantsList.map(user => (
@@ -419,7 +419,7 @@ export default function EventosManagement() {
                                                             ? "bg-status-error-bg text-status-error"
                                                             : "bg-status-warning-bg text-status-warning"
                                                 }`}>
-                                                    {user.status === "CONFIRMED" ? "Confirmado" : user.status === "REJECTED" ? "Recusado" : "Pendente"}
+                                                    {user.status === "CONFIRMED" ? "Confirmed" : user.status === "REJECTED" ? "Rejected" : "Pending"}
                                                 </span>
                                             </div>
                                         </div>
@@ -428,13 +428,13 @@ export default function EventosManagement() {
                                                 onClick={() => updateParticipantStatus(user.id, "CONFIRMED")}
                                                 className="text-[10px] px-2 py-1 rounded bg-status-success-bg text-status-success hover:bg-status-success hover:text-white transition-colors"
                                             >
-                                                Confirmar
+                                                Confirm
                                             </button>
                                             <button
                                                 onClick={() => updateParticipantStatus(user.id, "REJECTED")}
                                                 className="text-[10px] px-2 py-1 rounded bg-status-error-bg text-status-error hover:bg-status-error hover:text-white transition-colors"
                                             >
-                                                Recusar
+                                                Reject
                                             </button>
                                         </div>
                                     </div>

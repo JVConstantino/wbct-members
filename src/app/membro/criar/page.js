@@ -22,7 +22,7 @@ const TextEditor = dynamic(() => import("@/components/TextEditor"), {
         <div className="border border-border-default rounded-md bg-surface-subtle h-[320px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
                 <Spinner size="md" />
-                <span className="text-xs text-text-muted">Carregando editor...</span>
+                <span className="text-xs text-text-muted">Loading editor...</span>
             </div>
         </div>
     )
@@ -63,7 +63,7 @@ export default function CreatePost() {
             if (data.success) setImage(data.url);
         } catch (error) {
             console.error("Upload falhou:", error);
-            setError("Erro ao enviar imagem.");
+            setError("Could not upload image.");
         } finally {
             setUploading(false);
         }
@@ -80,7 +80,7 @@ export default function CreatePost() {
                 .filter(Boolean)
                 .slice(0, 8);
 
-            const metadataBlock = `\n<hr><p><strong>Categoria:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
+            const metadataBlock = `\n<hr><p><strong>Category:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
             const res = await fetch("/api/posts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -89,12 +89,12 @@ export default function CreatePost() {
             const data = await res.json();
             if (data.success) {
                 setSuccess(true);
-                setTimeout(() => router.push("/membro"), 3000);
+                setTimeout(() => router.push("/member"), 3000);
             } else {
-                setError(data.error || "Erro ao enviar postagem.");
+                setError(data.error || "Could not submit post.");
             }
         } catch {
-            setError("Falha na conexão com o servidor.");
+            setError("Server connection failed.");
         } finally {
             setLoading(false);
         }
@@ -106,12 +106,12 @@ export default function CreatePost() {
                 <div className="w-20 h-20 bg-status-success-bg text-status-success rounded-full flex items-center justify-center mb-6">
                     <CheckCircle2 size={44} />
                 </div>
-                <h2 className="text-2xl font-display font-bold text-text-primary mb-3">Postagem Enviada!</h2>
+                <h2 className="text-2xl font-display font-bold text-text-primary mb-3">Post Submitted!</h2>
                 <p className="text-text-secondary text-sm max-w-sm mx-auto leading-relaxed">
-                    Ótima contribuição! Seu artigo foi enviado para revisão e em breve estará disponível no feed da comunidade.
+                    Great contribution! Your article was submitted for review and will soon be available in the community feed.
                 </p>
-                <Link href="/membro" className="btn-primary mt-8 px-8">
-                    Voltar ao Feed
+                <Link href="/member" className="btn-primary mt-8 px-8">
+                    Back to Feed
                 </Link>
             </div>
         );
@@ -123,19 +123,19 @@ export default function CreatePost() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <Link
-                        href="/membro"
+                        href="/member"
                         className="flex items-center gap-1.5 text-text-muted text-xs font-semibold hover:text-brand-primary transition-colors group mb-3"
                     >
                         <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                        Voltar ao Feed
+                        Back to Feed
                     </Link>
                     <h1 className="text-xl font-display font-bold text-text-primary">
-                        Compartilhe seu <span className="text-brand-primary">Conhecimento</span>
+                        Share Your <span className="text-brand-primary">Knowledge</span>
                     </h1>
-                    <p className="text-xs text-text-secondary mt-0.5">Publique artigos médicos para a comunidade WBCT</p>
+                    <p className="text-xs text-text-secondary mt-0.5">Publish medical articles for the WBCT community</p>
                 </div>
-                <button onClick={() => router.push("/membro")} className="btn-secondary text-sm">
-                    Cancelar
+                <button onClick={() => router.push("/member")} className="btn-secondary text-sm">
+                    Cancel
                 </button>
             </div>
 
@@ -151,11 +151,11 @@ export default function CreatePost() {
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Título da Postagem</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Post Title</label>
                             <input
                                 type="text"
                                 className="input text-base font-semibold"
-                                placeholder="Qual é o tema do seu artigo?"
+                                placeholder="What is your article about?"
                                 value={title}
                                 onChange={e => setTitle(e.target.value)}
                                 required
@@ -165,7 +165,7 @@ export default function CreatePost() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                                    <FolderKanban size={13} /> Categoria
+                                    <FolderKanban size={13} /> Category
                                 </label>
                                 <select
                                     value={category}
@@ -193,7 +193,7 @@ export default function CreatePost() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Conteúdo da Publicação</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Content da Publication</label>
                             <TextEditor
                                 initialContent={content}
                                 onChange={(html) => setContent(html)}
@@ -209,7 +209,7 @@ export default function CreatePost() {
                                 <Spinner size="sm" />
                             ) : (
                                 <>
-                                    Enviar para Revisão
+                                    Send for Review
                                     <Send size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                 </>
                             )}
@@ -225,7 +225,7 @@ export default function CreatePost() {
                             <div className="p-1.5 bg-brand-primary-light rounded-md">
                                 <ImageIcon className="text-brand-primary" size={15} />
                             </div>
-                            <h4 className="text-sm font-semibold text-text-primary">Imagem de Capa</h4>
+                            <h4 className="text-sm font-semibold text-text-primary">Cover Image</h4>
                         </div>
 
                         {image ? (
@@ -242,20 +242,20 @@ export default function CreatePost() {
                                 </div>
                             </div>
                         ) : (
-                            <label className={`flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-md cursor-pointer transition-all ${uploading ? "border-brand-primary/40 bg-brand-primary-light/30" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
+                            <label className={`flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-md courser-pointer transition-all ${uploading ? "border-brand-primary/40 bg-brand-primary-light/30" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
                                 {uploading ? (
                                     <Spinner size="md" />
                                 ) : (
                                     <>
                                         <ImageIcon className="text-text-muted mb-1.5" size={28} />
-                                        <span className="text-xs font-semibold text-text-muted">Clique para enviar</span>
-                                        <span className="text-[10px] text-text-muted mt-0.5">PNG, JPG até 5MB</span>
+                                        <span className="text-xs font-semibold text-text-muted">Click to upload</span>
+                                        <span className="text-[10px] text-text-muted mt-0.5">PNG, JPG up to 5MB</span>
                                     </>
                                 )}
                                 <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                             </label>
                         )}
-                        <p className="text-[10px] text-text-muted text-center">Imagens aumentam o engajamento em 2×</p>
+                        <p className="text-[10px] text-text-muted text-center">Images increase engagement by 2x</p>
                     </div>
 
                     {/* Dicas */}
@@ -264,13 +264,13 @@ export default function CreatePost() {
                             <div className="p-1.5 bg-brand-primary-light rounded-md">
                                 <Sparkles className="text-brand-primary" size={15} />
                             </div>
-                            <h3 className="text-sm font-semibold text-text-primary">Dicas de Postagem</h3>
+                            <h3 className="text-sm font-semibold text-text-primary">Post Tips</h3>
                         </div>
                         <ul className="space-y-2">
                             {[
-                                "Use um título claro e direto.",
-                                "Seja ético e preserve a imagem dos pacientes.",
-                                "Adicione referências bibliográficas quando aplicável."
+                                "Use a clear and direct title.",
+                                "Be ethical and preserve patient image rights.",
+                                "Add bibliographic references when applicable."
                             ].map((tip, idx) => (
                                 <li key={idx} className="flex gap-2 text-xs text-text-secondary leading-relaxed">
                                     <span className="text-brand-primary font-bold shrink-0">•</span>
@@ -280,7 +280,7 @@ export default function CreatePost() {
                         </ul>
                         <div className="pt-2 border-t border-border-subtle">
                             <p className="text-[10px] text-text-muted">
-                                Dica: use de 3 a 5 tags para melhorar descoberta no feed.
+                                Tip: use 3 to 5 tags to improve discovery in the feed.
                             </p>
                         </div>
                     </div>

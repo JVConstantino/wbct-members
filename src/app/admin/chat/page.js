@@ -159,13 +159,13 @@ export default function AdminChatPage() {
             } else {
                 setMessages((prev) => prev.filter((m) => m.id !== tempId));
                 setNewMessage(content);
-                setSendError(data.error || "Erro ao enviar mensagem.");
+                setSendError(data.error || "Failed to send message.");
             }
         } catch (error) {
             console.error("Error sending:", error);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
             setNewMessage(content);
-            setSendError("Erro de conexão ao enviar mensagem.");
+            setSendError("Connection error while sending message.");
         } finally {
             setSending(false);
         }
@@ -235,7 +235,7 @@ export default function AdminChatPage() {
                             <div
                                 key={contact.id}
                                 onClick={() => setSelectedContact(contact)}
-                                className={`flex items-center gap-3 p-4 cursor-pointer transition-colors border-b border-border-subtle ${selectedContact?.id === contact.id
+                                className={`flex items-center gap-3 p-4 courser-pointer transition-colors border-b border-border-subtle ${selectedContact?.id === contact.id
                                     ? 'bg-brand-primary/5 border-l-4 border-l-brand-primary'
                                     : 'hover:bg-surface-active border-l-4 border-l-transparent'
                                     }`}
@@ -359,7 +359,7 @@ export default function AdminChatPage() {
                             <button
                                 type="submit"
                                 disabled={!newMessage.trim() || sending}
-                                className="p-3 bg-brand-primary text-white rounded-xl hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-95"
+                                className="p-3 bg-brand-primary text-white rounded-xl hover:bg-brand-primary-hover disabled:opacity-50 disabled:courser-not-allowed shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-95"
                             >
                                 {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                             </button>

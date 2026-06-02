@@ -1,38 +1,25 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 
 export async function PUT(request) {
     try {
         const session = await auth();
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { name, crm, specialty, bio, image, allowMessagesFrom } = await request.json();
 
-        await query(`
-            ALTER TABLE User
-            ADD COLUMN IF NOT EXISTS allowMessagesFrom VARCHAR(20) NOT NULL DEFAULT 'followers'
-        `).catch(() => {});
+        const updates = {
+            name, crm, specialty, bio, image,
+            updatedAt: new Date().toISOString(),
+        };
+        if (allowMessagesFrom) updates.allowMessagesFrom = allowMessagesFrom;
 
-        await query(`
-            ALTER TABLE User
-            ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) NULL
-        `).catch(() => {});
+        await db.updateDocument(DB_ID, COLS.users, session.user.id, updates);
 
-        await query(`
-            ALTER TABLE User
-            ADD COLUMN IF NOT EXISTS crm VARCHAR(255) NULL
-        `).catch(() => {});
-
-        await query(`
-            UPDATE User 
-            SET name = ?, crm = ?, specialty = ?, bio = ?, image = ?, allowMessagesFrom = COALESCE(?, allowMessagesFrom), updatedAt = NOW()
-            WHERE id = ?
-        `, [name, crm, specialty, bio, image, allowMessagesFrom || null, session.user.id]);
-
-        return NextResponse.json({ success: true, message: 'Perfil atualizado!' });
+        return NextResponse.json({ success: true, message: 'Profile updated!' });
     } catch (error) {
         console.error('Profile Update Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -43,42 +30,45 @@ export async function DELETE(request) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { password } = await request.json();
         if (!password) {
-            return NextResponse.json({ success: false, error: 'Senha é obrigatória' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Password is required' }, { status: 400 });
         }
 
-        const rows = await query('SELECT password FROM User WHERE id = ?', [session.user.id]);
-        if (!rows.length) {
-            return NextResponse.json({ success: false, error: 'Usuário não encontrado' }, { status: 404 });
-        }
-
+        const userDoc = await db.getDocument(DB_ID, COLS.users, session.user.id);
         const bcrypt = await import('bcryptjs');
-        const valid = await bcrypt.compare(password, rows[0].password || '');
+        const valid = await bcrypt.compare(password, userDoc.password || '');
         if (!valid) {
-            return NextResponse.json({ success: false, error: 'Senha inválida' }, { status: 403 });
+            return NextResponse.json({ success: false, error: 'Invalid password' }, { status: 403 });
         }
 
         const userId = session.user.id;
 
-        const safeDelete = async (sql, params = []) => {
-            try { await query(sql, params); } catch {}
+        const safeDelete = async (col, queries) => {
+            try {
+                const docs = await listAll(col, queries);
+                await Promise.all(docs.map(d => db.deleteDocument(DB_ID, col, d.$id).catch(() => {})));
+            } catch {}
         };
 
-        await safeDelete('DELETE FROM Notification WHERE userId = ?', [userId]);
-        await safeDelete('DELETE FROM Message WHERE senderId = ? OR receiverId = ?', [userId, userId]);
-        await safeDelete('DELETE FROM Follows WHERE followerId = ? OR followingId = ?', [userId, userId]);
-        await safeDelete('DELETE FROM _UserEvents WHERE B = ?', [userId]);
-        await safeDelete('DELETE FROM EventParticipantStatus WHERE userId = ?', [userId]);
-        await safeDelete('DELETE FROM Connections WHERE requesterId = ? OR receiverId = ?', [userId, userId]);
-        await safeDelete('DELETE FROM Comment WHERE authorId = ?', [userId]);
-        await safeDelete('DELETE FROM Post WHERE authorId = ?', [userId]);
-        await safeDelete('DELETE FROM User WHERE id = ?', [userId]);
+        await safeDelete(COLS.notifications, [Query.equal('userId', userId)]);
+        await safeDelete(COLS.messages, [Query.equal('senderId', userId)]);
+        await safeDelete(COLS.messages, [Query.equal('receiverId', userId)]);
+        await safeDelete(COLS.follows, [Query.equal('followerId', userId)]);
+        await safeDelete(COLS.follows, [Query.equal('followingId', userId)]);
+        await safeDelete(COLS.userEvents, [Query.equal('userId', userId)]);
+        await safeDelete(COLS.eventParticipants, [Query.equal('userId', userId)]);
+        await safeDelete(COLS.connections, [Query.equal('requesterId', userId)]);
+        await safeDelete(COLS.connections, [Query.equal('receiverId', userId)]);
+        await safeDelete(COLS.comments, [Query.equal('authorId', userId)]);
+        await safeDelete(COLS.posts, [Query.equal('authorId', userId)]);
 
-        return NextResponse.json({ success: true, message: 'Conta excluída permanentemente.' });
+        await db.deleteDocument(DB_ID, COLS.users, userId);
+
+        return NextResponse.json({ success: true, message: 'Account permanently deleted.' });
     } catch (error) {
         console.error('Profile Delete Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

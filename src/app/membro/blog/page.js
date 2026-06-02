@@ -27,7 +27,7 @@ export default function BlogListPage() {
                 const data = await res.json();
                 if (data.success) setPosts(data.posts);
             } catch (error) {
-                console.error("Erro ao carregar posts:", error);
+                console.error("Failed to load posts:", error);
             } finally {
                 setLoading(false);
             }
@@ -51,32 +51,32 @@ export default function BlogListPage() {
                             <div className="p-1.5 bg-brand-primary-light rounded-md">
                                 <BookOpen size={14} className="text-brand-primary" />
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Hub de Conhecimento</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Knowledge Hub</span>
                         </div>
-                        <h2 className="text-xl font-display font-bold text-text-primary">Artigos da Comunidade</h2>
+                        <h2 className="text-xl font-display font-bold text-text-primary">Community Articles</h2>
                         <p className="text-sm text-text-secondary mt-0.5">
-                            Acesse conteúdo exclusivo, artigos científicos e discussões de casos clínicos.
+                            Access exclusive content, scientific articles, and clinical case discussions.
                         </p>
                     </div>
                     <div className="shrink-0 text-sm font-semibold text-text-muted">
-                        <span className="text-brand-primary font-bold">{filteredPosts.length}</span> artigo{filteredPosts.length !== 1 ? "s" : ""} disponível{filteredPosts.length !== 1 ? "is" : ""}
+                        <span className="text-brand-primary font-bold">{filteredPosts.length}</span> article{filteredPosts.length !== 1 ? "s" : ""} available
                     </div>
                 </div>
             </div>
 
-            {/* Busca */}
+            {/* Search */}
             <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input
                     type="text"
-                    placeholder="Buscar artigos..."
+                    placeholder="Search articles..."
                     className="input !pl-10"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            {/* Grid de Posts */}
+            {/* Post grid */}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {[...Array(8)].map((_, i) => (
@@ -93,18 +93,18 @@ export default function BlogListPage() {
             ) : filteredPosts.length === 0 ? (
                 <EmptyState
                     icon={BookOpen}
-                    title="Nenhum artigo encontrado"
-                    description={searchTerm ? "Tente buscar com outros termos." : "Os artigos da comunidade aparecerão aqui em breve."}
+                    title="No articles found"
+                    description={searchTerm ? "Try searching with other terms." : "Community articles will appear here soon."}
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredPosts.map(post => (
                         <Link
                             key={post.id}
-                            href={`/membro/postagens/${post.id}`}
+                            href={`/member/posts/${post.id}`}
                             className="group flex flex-col bg-surface-card rounded-lg border border-border-default shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
                         >
-                            {/* Imagem de capa */}
+                            {/* Cover image */}
                             <div className="aspect-video overflow-hidden relative bg-surface-subtle">
                                 {post.image ? (
                                     <img
@@ -119,12 +119,12 @@ export default function BlogListPage() {
                                 )}
                                 <div className="absolute top-2 left-2">
                                     <span className="bg-surface-card/95 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest text-brand-primary shadow-sm">
-                                        Artigo
+                                        Article
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Conteúdo */}
+                            {/* Content */}
                             <div className="p-4 flex-1 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export default function BlogListPage() {
                                     </div>
                                     <div className="flex items-center gap-1 text-text-muted text-[10px] font-semibold uppercase">
                                         <Calendar size={9} />
-                                        {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                        {new Date(post.createdAt).toLocaleDateString("en-US")}
                                     </div>
                                 </div>
 
@@ -146,7 +146,7 @@ export default function BlogListPage() {
 
                                 <div className="flex items-center pt-3 border-t border-border-subtle">
                                     <span className="flex items-center gap-1 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
-                                        Ler artigo <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                                        Read article <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                 </div>
                             </div>

@@ -14,19 +14,20 @@ import {
 } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import { Avatar } from "@/components/ui/Avatar";
+import { useUser } from "@/contexts/UserContext";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard",    href: "/admin" },
     { icon: MessageSquare,   label: "Chat",         href: "/admin/chat" },
     { icon: BarChart3,       label: "Analytics",    href: "/admin/analytics" },
-    { icon: Users,           label: "Membros",      href: "/admin/membros" },
-    { icon: FileText,        label: "Postagens",    href: "/admin/postagens" },
-    { icon: Calendar,        label: "Eventos Agenda", href: "/admin/eventos" },
-    { icon: Calendar,        label: "Eventos Gestão",  href: "/admin/eventos/gerenciamento" },
+    { icon: Users,           label: "Members",      href: "/admin/members" },
+    { icon: FileText,        label: "Posts",        href: "/admin/posts" },
+    { icon: Calendar,        label: "Event Calendar", href: "/admin/events" },
+    { icon: Calendar,        label: "Event Management", href: "/admin/events/management" },
     { icon: PlayCircle,      label: "Webinars",     href: "/admin/webinars" },
-    { icon: BookOpen,        label: "Documentação", href: "/admin/docs" },
-    { icon: Settings,        label: "Configurações", href: "/admin/configuracoes/email" },
-    { icon: User,            label: "Meu Perfil",   href: "/admin/perfil" },
+    { icon: BookOpen,        label: "Documentation", href: "/admin/docs" },
+    { icon: Settings,        label: "Settings", href: "/admin/settings/email" },
+    { icon: User,            label: "My Profile",   href: "/admin/profile" },
 ];
 
 function forceLightTheme() {
@@ -37,6 +38,7 @@ function forceLightTheme() {
 export default function AdminLayout({ children }) {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const { user } = useUser();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [desktopCollapsed, setDesktopCollapsed] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
@@ -65,7 +67,7 @@ export default function AdminLayout({ children }) {
     }, [isDesktop, desktopCollapsed]);
 
     const userName  = session?.user?.name  || "Admin";
-    const userImage = session?.user?.image || "";
+    const userImage = user?.image || "";
     const userEmail = session?.user?.email || "";
     const isCollapsed = isDesktop && desktopCollapsed;
     const sidebarWidth = isCollapsed ? 88 : 272;
@@ -96,7 +98,7 @@ export default function AdminLayout({ children }) {
                 <button
                     onClick={() => setMobileOpen(false)}
                     className="absolute top-4 right-4 lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-subtle rounded-md transition-colors"
-                    aria-label="Fechar menu"
+                    aria-label="Close menu"
                 >
                     <X size={18} />
                 </button>
@@ -156,10 +158,10 @@ export default function AdminLayout({ children }) {
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
                         className={`btn-ghost w-full px-2 py-2 text-xs text-status-error hover:bg-status-error-bg hover:text-status-error gap-2 ${isCollapsed ? "justify-center" : "justify-start"}`}
-                        title={isCollapsed ? "Sair da conta" : undefined}
+                        title={isCollapsed ? "Sign out" : undefined}
                     >
                         <LogOut size={14} />
-                        {!isCollapsed && "Sair da conta"}
+                        {!isCollapsed && "Sign out"}
                     </button>
                 </div>
             </motion.aside>
@@ -179,7 +181,7 @@ export default function AdminLayout({ children }) {
                         <button
                             onClick={() => setDesktopCollapsed((v) => !v)}
                             className="hidden lg:flex p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
-                            aria-label={desktopCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
+                            aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         >
                             {desktopCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
                         </button>
@@ -187,7 +189,7 @@ export default function AdminLayout({ children }) {
                         <button
                             onClick={() => setMobileOpen((v) => !v)}
                             className="lg:hidden p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
-                            aria-label="Abrir menu"
+                            aria-label="Open menu"
                         >
                             <Menu size={18} />
                         </button>
@@ -195,14 +197,14 @@ export default function AdminLayout({ children }) {
 
                     <div className="hidden md:block" />
 
-                    {/* Ações direita */}
+                    {/* Actions direita */}
                     <div className="flex items-center gap-2">
                         <NotificationDropdown />
 
                         <div className="hidden sm:block w-px h-6 bg-border-default mx-1" />
 
                         <Link
-                            href="/admin/perfil"
+                            href="/admin/profile"
                             className="hidden sm:flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-subtle border border-transparent hover:border-border-default transition-all"
                         >
                             <Avatar src={userImage} name={userName} size="xs" />

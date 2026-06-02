@@ -29,6 +29,11 @@ pnpm-debug.log*
 .opencode/
 .agent/
 .claude/
+.understand-anything/
 
 # Generated
 /generated/prisma
+
+# Local file uploads (do not commit user-uploaded test files)
+public/uploads/*
+!public/uploads/.gitkeep

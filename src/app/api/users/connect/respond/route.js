@@ -1,33 +1,25 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS } from '@/lib/appwrite';
 
 export async function POST(request) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const { requesterId, action } = await request.json();
-        if (!requesterId || !["accept", "reject"].includes(action)) {
-            return NextResponse.json({ success: false, error: 'Dados inválidos' }, { status: 400 });
+        if (!requesterId || !['accept', 'reject'].includes(action)) {
+            return NextResponse.json({ success: false, error: 'Invalid data' }, { status: 400 });
         }
 
-        await query(`
-            CREATE TABLE IF NOT EXISTS Connections (
-                requesterId VARCHAR(191) NOT NULL,
-                receiverId VARCHAR(191) NOT NULL,
-                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-                createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (requesterId, receiverId)
-            )
-        `);
+        const docId = `conn_${requesterId}_${session.user.id}`;
 
         if (action === 'accept') {
-            await query('UPDATE Connections SET status = ? WHERE requesterId = ? AND receiverId = ?', ['ACCEPTED', requesterId, session.user.id]);
+            await db.updateDocument(DB_ID, COLS.connections, docId, { status: 'ACCEPTED' });
         } else {
-            await query('DELETE FROM Connections WHERE requesterId = ? AND receiverId = ?', [requesterId, session.user.id]);
+            await db.deleteDocument(DB_ID, COLS.connections, docId);
         }
 
         return NextResponse.json({ success: true });

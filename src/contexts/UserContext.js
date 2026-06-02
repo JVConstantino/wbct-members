@@ -42,7 +42,7 @@ export function UserProvider({ children }) {
         }
     }, []);
 
-    // Atualizar usuário localmente (sem fazer fetch)
+    // Update user locally without fetching again
     const updateUser = useCallback((newData) => {
         setUser(prev => prev ? { ...prev, ...newData } : newData);
     }, []);

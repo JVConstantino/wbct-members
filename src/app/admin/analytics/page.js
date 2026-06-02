@@ -31,7 +31,7 @@ const TIME_RANGES = [
 
 function fmtDate(dateStr) {
     if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    return new Date(dateStr).toLocaleDateString("en-US", { day: "2-digit", month: "short" });
 }
 
 /* ── KPI Card ── */
@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
             const result = await res.json();
             if (result.success) setData(result);
         } catch (err) {
-            console.error("Erro ao buscar métricas:", err);
+            console.error("Failed to fetch metrics:", err);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -96,19 +96,19 @@ export default function AnalyticsPage() {
     const loginData      = (trends.dailyLogins     || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
     const postsData      = (trends.dailyPosts       || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
     const newMembersData = (trends.dailyNewMembers  || []).map(d => ({ date: fmtDate(d.date), value: d.count }));
-    const monthlyData    = (trends.monthlyGrowth    || []).map(d => ({ mes: d.label || d.month, membros: d.count }));
-    const engagData      = (trends.engagement       || []).map(d => ({ date: fmtDate(d.date), curtidas: d.likes, comentários: d.comments, seguidores: d.follows }));
+    const monthlyData    = (trends.monthlyGrowth    || []).map(d => ({ month: d.label || d.month, members: d.count }));
+    const engagData      = (trends.engagement       || []).map(d => ({ date: fmtDate(d.date), likes: d.likes, comments: d.comments, followers: d.follows }));
 
     const postsStatus = [
-        { name: "Aprovados",  value: stats.approvedPosts || 0, color: C_SUCCESS },
-        { name: "Pendentes",  value: stats.pendingPosts  || 0, color: C_WARNING },
-        { name: "Rejeitados", value: stats.rejectedPosts || 0, color: C_ERROR   },
+        { name: "Approved", value: stats.approvedPosts || 0, color: C_SUCCESS },
+        { name: "Pending",  value: stats.pendingPosts  || 0, color: C_WARNING },
+        { name: "Rejected", value: stats.rejectedPosts || 0, color: C_ERROR   },
     ].filter(d => d.value > 0);
 
     const chartTabs = [
-        { id: "logins",   label: "Acessos",      icon: Activity, data: loginData,      color: C_BLUE   },
-        { id: "posts",    label: "Postagens",     icon: FileText, data: postsData,      color: C_CYAN   },
-        { id: "members",  label: "Novos Membros", icon: UserPlus, data: newMembersData, color: C_PURPLE },
+        { id: "logins",   label: "Access",      icon: Activity, data: loginData,      color: C_BLUE   },
+        { id: "posts",    label: "Posts",     icon: FileText, data: postsData,      color: C_CYAN   },
+        { id: "members",  label: "New Members", icon: UserPlus, data: newMembersData, color: C_PURPLE },
     ];
     const activeTab = chartTabs.find(t => t.id === activeChart) || chartTabs[0];
 
@@ -118,7 +118,7 @@ export default function AnalyticsPage() {
         <div className="space-y-5">
             <PageHeader
                 title="Analytics"
-                subtitle="Desempenho e engajamento da plataforma"
+                subtitle="Platform performance and engagement"
                 actions={
                     <div className="flex items-center gap-2">
                         <div className="flex bg-surface-subtle p-0.5 rounded-md">
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
                             className="btn-secondary gap-2 py-1.5 text-xs"
                         >
                             <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-                            Atualizar
+                            Refresh
                         </button>
                     </div>
                 }
@@ -150,10 +150,10 @@ export default function AnalyticsPage() {
 
             {/* KPIs */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <KpiCard icon={Users}    label="Membros"   value={stats.members}        iconBg="bg-brand-primary-light"  iconColor="text-brand-primary" />
+                <KpiCard icon={Users}    label="Members"   value={stats.members}        iconBg="bg-brand-primary-light"  iconColor="text-brand-primary" />
                 <KpiCard icon={Wifi}     label="Online"    value={stats.online}          iconBg="bg-status-success-bg"    iconColor="text-status-success" valueColor="text-status-success" />
-                <KpiCard icon={FileText} label="Postagens" value={stats.totalPosts}      iconBg="bg-status-pending-bg"    iconColor="text-status-pending" />
-                <KpiCard icon={Calendar} label="Eventos"   value={stats.upcomingEvents}  iconBg="bg-status-warning-bg"    iconColor="text-status-warning" />
+                <KpiCard icon={FileText} label="Posts" value={stats.totalPosts}      iconBg="bg-status-pending-bg"    iconColor="text-status-pending" />
+                <KpiCard icon={Calendar} label="Events"   value={stats.upcomingEvents}  iconBg="bg-status-warning-bg"    iconColor="text-status-warning" />
             </div>
 
             {/* Gráfico principal com tabs */}
@@ -161,7 +161,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
                     <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                         <BarChart3 size={15} className="text-brand-primary" />
-                        Atividade Semanal
+                        Weekly Activity
                     </h2>
                     <div className="flex bg-surface-subtle p-0.5 rounded-md">
                         {chartTabs.map(tab => (
@@ -207,7 +207,7 @@ export default function AnalyticsPage() {
                     ) : (
                         <div className="flex flex-col items-center justify-center h-60 text-text-muted gap-2">
                             <Activity size={28} className="opacity-40" />
-                            <p className="text-sm">Sem dados para este período</p>
+                            <p className="text-sm">No data for this period</p>
                         </div>
                     )}
                 </div>
@@ -220,7 +220,7 @@ export default function AnalyticsPage() {
                     <div className="px-4 py-3 border-b border-border-default">
                         <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                             <PieIcon size={14} className="text-brand-primary" />
-                            Status das Postagens
+                            Post Status
                         </h2>
                     </div>
                     <div className="p-4">
@@ -253,18 +253,18 @@ export default function AnalyticsPage() {
                             </>
                         ) : (
                             <div className="flex items-center justify-center h-48 text-text-muted text-sm">
-                                Sem postagens ainda
+                                No posts yet
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Barras — crescimento mensal */}
+                {/* Monthly growth bars */}
                 <div className="bg-surface-card border border-border-default rounded-lg shadow-card overflow-hidden">
                     <div className="px-4 py-3 border-b border-border-default">
                         <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                             <TrendingUp size={14} className="text-brand-primary" />
-                            Crescimento Mensal
+                            Monthly Growth
                         </h2>
                     </div>
                     <div className="p-4">
@@ -272,15 +272,15 @@ export default function AnalyticsPage() {
                             <ResponsiveContainer width="100%" height={200}>
                                 <BarChart data={monthlyData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                                    <XAxis dataKey="mes" tick={{ fontSize: 10 }} tickLine={false} />
+                                    <XAxis dataKey="month" tick={{ fontSize: 10 }} tickLine={false} />
                                     <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                                     <Tooltip contentStyle={tooltipStyle} />
-                                    <Bar dataKey="membros" fill={C_BLUE} radius={[4, 4, 0, 0]} name="Novos Membros" />
+                                    <Bar dataKey="members" fill={C_BLUE} radius={[4, 4, 0, 0]} name="New Members" />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="flex items-center justify-center h-48 text-text-muted text-sm">
-                                Dados insuficientes
+                                Not enough data
                             </div>
                         )}
                     </div>
@@ -293,7 +293,7 @@ export default function AnalyticsPage() {
                     <div className="px-4 py-3 border-b border-border-default">
                         <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                             <Heart size={14} className="text-brand-primary" />
-                            Engajamento da Comunidade
+                            Community Engagement
                         </h2>
                     </div>
                     <div className="p-4">
@@ -304,9 +304,9 @@ export default function AnalyticsPage() {
                                 <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                                 <Tooltip contentStyle={tooltipStyle} />
                                 <Legend wrapperStyle={{ fontSize: 10 }} />
-                                <Line type="monotone" dataKey="curtidas"    stroke={C_ERROR}   strokeWidth={2} dot={false} />
-                                <Line type="monotone" dataKey="comentários" stroke={C_BLUE}    strokeWidth={2} dot={false} />
-                                <Line type="monotone" dataKey="seguidores"  stroke={C_SUCCESS} strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="likes"       stroke={C_ERROR}   strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="comments" stroke={C_BLUE}    strokeWidth={2} dot={false} />
+                                <Line type="monotone" dataKey="followers"   stroke={C_SUCCESS} strokeWidth={2} dot={false} />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -316,9 +316,9 @@ export default function AnalyticsPage() {
             {/* Cards de totais por status */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { label: "Postagens Aprovadas", value: stats.approvedPosts, bg: "bg-status-success",    text: "text-white" },
-                    { label: "Pendentes",           value: stats.pendingPosts,  bg: "bg-status-warning",    text: "text-white" },
-                    { label: "Rejeitadas",          value: stats.rejectedPosts, bg: "bg-status-error",      text: "text-white" },
+                    { label: "Approved Posts", value: stats.approvedPosts, bg: "bg-status-success",    text: "text-white" },
+                    { label: "Pending",        value: stats.pendingPosts,  bg: "bg-status-warning",    text: "text-white" },
+                    { label: "Rejected",       value: stats.rejectedPosts, bg: "bg-status-error",      text: "text-white" },
                     { label: "Webinars",            value: stats.webinars,      bg: "bg-brand-primary",     text: "text-white" },
                 ].map(({ label, value, bg, text }) => (
                     <div key={label} className={`${bg} rounded-lg p-4 shadow-card`}>

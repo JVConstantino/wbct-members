@@ -74,7 +74,7 @@ export default function AdminDashboard() {
             const result = await res.json();
             if (result.success) setData(result);
         } catch (e) {
-            console.error("Erro ao carregar estatísticas:", e);
+            console.error("Failed to load stats:", e);
         } finally {
             setLoading(false);
         }
@@ -103,17 +103,17 @@ export default function AdminDashboard() {
     const upcomingEvt  = data?.stats?.upcomingEvents || 0;
 
     const postStatusData = [
-        { name: "Aprovados", value: data?.stats?.approvedPosts || 0, color: CHART_SUCCESS },
-        { name: "Pendentes", value: pendingPosts,                    color: CHART_WARNING },
-        { name: "Rejeitados", value: data?.stats?.rejectedPosts || 0, color: CHART_ERROR },
+        { name: "Approveds", value: data?.stats?.approvedPosts || 0, color: CHART_SUCCESS },
+        { name: "Pendings", value: pendingPosts,                    color: CHART_WARNING },
+        { name: "Rejecteds", value: data?.stats?.rejectedPosts || 0, color: CHART_ERROR },
     ];
 
     const loginHistory = (data?.trends?.dailyLogins || []).map(item => ({
-        name:   new Date(item.date).toLocaleDateString("pt-BR", { weekday: "short" }),
+        name:   new Date(item.date).toLocaleDateString("en-US", { weekday: "short" }),
         logins: item.count,
     })).concat(
         data?.trends?.dailyLogins?.length ? [] :
-        ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map((n, i) => ({ name: n, logins: [12,19,15,22,30,18,10][i] }))
+        ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((n, i) => ({ name: n, logins: [12,19,15,22,30,18,10][i] }))
     );
 
     const growthData = data?.trends?.monthlyGrowth || [
@@ -140,32 +140,32 @@ export default function AdminDashboard() {
 
             <PageHeader
                 title="Dashboard"
-                subtitle="Visão geral da plataforma"
+                subtitle="Platform overview"
                 actions={
                     <span className="flex items-center gap-1.5 px-3 py-1.5 bg-status-success-bg text-status-success rounded-md text-xs font-semibold border border-status-success/20">
                         <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
-                        {online} online agora
+                        {online} online now
                     </span>
                 }
             />
 
             {/* ── Cards de estatísticas ── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <StatCard title="Membros"      value={totalMembers} icon={Users}    loading={loading} accent />
-                <StatCard title="Online agora" value={online}       icon={Wifi}     loading={loading} live />
-                <StatCard title="Posts pendentes" value={pendingPosts} icon={Clock}    loading={loading} />
-                <StatCard title="Eventos"      value={upcomingEvt}  icon={Calendar} loading={loading} />
+                <StatCard title="Members"      value={totalMembers} icon={Users}    loading={loading} accent />
+                <StatCard title="Online Now" value={online}       icon={Wifi}     loading={loading} live />
+                <StatCard title="Posts pendings" value={pendingPosts} icon={Clock}    loading={loading} />
+                <StatCard title="Events"      value={upcomingEvt}  icon={Calendar} loading={loading} />
             </div>
 
-            {/* ── Cadastros pendentes ── */}
+            {/* ── Cadastros pendings ── */}
             <div className="card p-0 overflow-hidden space-y-0">
                 <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <UserPlus size={15} className="text-status-warning" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Cadastros pendentes de aprovação</h3>
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Pending registrations</h3>
                     </div>
                     {pendingMembers > 0 && (
-                        <Badge variant="warning" dot>{pendingMembers} pendente{pendingMembers !== 1 ? "s" : ""}</Badge>
+                        <Badge variant="warning" dot>{pendingMembers} pending{pendingMembers !== 1 ? "s" : ""}</Badge>
                     )}
                 </div>
 
@@ -176,38 +176,38 @@ export default function AdminDashboard() {
                 ) : !data?.pendingMembers?.length ? (
                     <EmptyState
                         icon={<CheckCircle size={22} />}
-                        title="Nenhum cadastro pendente"
-                        description="Todas as solicitações de acesso já foram tratadas."
+                        title="No pending registrations"
+                        description="All access requests have been handled."
                     />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[520px] text-sm">
                             <thead>
                                 <tr className="bg-surface-section">
-                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Nome</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Name</th>
                                     <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">E-mail</th>
-                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Solicitado em</th>
-                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Ações</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Requested At</th>
+                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {data.pendingMembers.map((member) => (
                                     <tr key={member.id} className="border-t border-border-subtle hover:bg-surface-subtle transition-colors">
                                         <td className="px-4 py-3">
-                                            <span className="font-medium text-text-primary truncate max-w-[220px] block">{member.name || "Sem nome"}</span>
+                                            <span className="font-medium text-text-primary truncate max-w-[220px] block">{member.name || "No name"}</span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs text-text-muted truncate max-w-[220px] block">{member.email}</span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className="text-xs text-text-muted">{new Date(member.createdAt).toLocaleDateString("pt-BR")}</span>
+                                            <span className="text-xs text-text-muted">{new Date(member.createdAt).toLocaleDateString("en-US")}</span>
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <Link
-                                                href={`/admin/membros?search=${encodeURIComponent(member.email)}`}
+                                                href={`/admin/members?search=${encodeURIComponent(member.email)}`}
                                                 className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-hover"
                                             >
-                                                Revisar
+                                                Review
                                                 <ChevronRight size={12} />
                                             </Link>
                                         </td>
@@ -243,8 +243,8 @@ export default function AdminDashboard() {
                 <div className="card lg:col-span-2 space-y-4">
                     <div className="flex items-center gap-2">
                         <Activity size={16} className="text-brand-primary" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Atividades de login</h3>
-                        <span className="ml-auto text-xs text-text-muted">Período selecionado</span>
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Login Activity</h3>
+                        <span className="ml-auto text-xs text-text-muted">Selected period</span>
                     </div>
                     <div className="h-[200px]">
                         {mounted ? (
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                                         fontSize: "12px",
                                         boxShadow: "var(--shadow-card)",
                                     }}
-                                    cursor={{ stroke: CHART_BLUE, strokeWidth: 1, strokeDasharray: "4 2" }}
+                                    courser={{ stroke: CHART_BLUE, strokeWidth: 1, strokeDasharray: "4 2" }}
                                 />
                                 <Area
                                     type="monotone" dataKey="logins"
@@ -291,7 +291,7 @@ export default function AdminDashboard() {
                 <div className="card space-y-4">
                     <div className="flex items-center gap-2">
                         <FileText size={16} className="text-brand-primary" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Status das postagens</h3>
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Post status</h3>
                     </div>
                     {loading ? (
                         <Skeleton variant="stat" />
@@ -338,18 +338,18 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* ── Crescimento + Membros recentes ── */}
+            {/* Growth and recent members */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-                {/* Crescimento mensal */}
+                {/* Monthly growth */}
                 <div className="bg-brand-strong rounded-lg p-5 space-y-4 border border-brand-strong">
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                             <BarChart3 size={16} className="text-white" />
-                            <h3 className="font-display text-sm font-semibold text-white">Crescimento</h3>
+                            <h3 className="font-display text-sm font-semibold text-white">Growth</h3>
                         </div>
                         <span className="text-[10px] px-2 py-1 rounded-full bg-white/10 text-white font-semibold uppercase tracking-wide">
-                            mensal
+                            monthly
                         </span>
                     </div>
                     <div className="h-[110px]">
@@ -374,8 +374,8 @@ export default function AdminDashboard() {
                         ) : <Skeleton variant="stat" className="h-full w-full" />}
                     </div>
                     <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide">
-                        <span className="inline-flex items-center gap-1 text-white"><span className="w-2 h-2 rounded-full bg-white" /> meses anteriores</span>
-                        <span className="inline-flex items-center gap-1 text-primary-200"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_BLUE }} /> mes atual</span>
+                        <span className="inline-flex items-center gap-1 text-white"><span className="w-2 h-2 rounded-full bg-white" /> previous months</span>
+                        <span className="inline-flex items-center gap-1 text-primary-200"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_BLUE }} /> current month</span>
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t border-white/10">
                         <div>
@@ -383,25 +383,25 @@ export default function AdminDashboard() {
                                 +{growthData[growthData.length - 1]?.count || 0}
                             </p>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
-                                novos este mês
+                                new this month
                             </p>
                         </div>
                         <TrendingUp size={20} className="text-white" />
                     </div>
                 </div>
 
-                {/* Membros recentes */}
+                {/* Members recentes */}
                 <div className="card lg:col-span-2 p-0 overflow-hidden space-y-0">
                     <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <UserPlus size={15} className="text-brand-primary" />
-                            <h3 className="font-display text-sm font-semibold text-text-primary">Membros recentes</h3>
+                            <h3 className="font-display text-sm font-semibold text-text-primary">Recent Members</h3>
                         </div>
                         <Link
-                            href="/admin/membros"
+                            href="/admin/members"
                             className="text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 transition-colors"
                         >
-                            Ver todos <ChevronRight size={13} />
+                            View all <ChevronRight size={13} />
                         </Link>
                     </div>
 
@@ -410,15 +410,15 @@ export default function AdminDashboard() {
                             {[1,2,3].map(i => <Skeleton key={i} variant="avatar" />)}
                         </div>
                     ) : !data?.recentMembers?.length ? (
-                        <EmptyState icon={<Users size={20} />} title="Nenhum membro encontrado" />
+                        <EmptyState icon={<Users size={20} />} title="No members found" />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[380px] text-sm">
                                 <thead>
                                     <tr className="bg-surface-section">
-                                        <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Membro</th>
+                                        <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Member</th>
                                         <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5 hidden sm:table-cell">E-mail</th>
-                                        <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Perfil</th>
+                                        <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Profile</th>
                                         <th className="px-4 py-2.5" />
                                     </tr>
                                 </thead>
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
-                                                    href={`/admin/membros`}
+                                                    href={`/admin/members`}
                                                     className="p-1.5 text-text-muted hover:text-text-primary rounded-md hover:bg-surface-subtle transition-colors inline-flex"
                                                 >
                                                     <MoreHorizontal size={15} />
@@ -454,15 +454,15 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* ── Moderação de postagens pendentes ── */}
+            {/* ── Moderação de postagens pendings ── */}
             <div className="card p-0 overflow-hidden space-y-0">
                 <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Clock size={15} className="text-status-warning" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Postagens pendentes</h3>
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Posts pendings</h3>
                     </div>
                     {pendingPosts > 0 && (
-                        <Badge variant="warning" dot>{pendingPosts} pendente{pendingPosts !== 1 ? "s" : ""}</Badge>
+                        <Badge variant="warning" dot>{pendingPosts} pending{pendingPosts !== 1 ? "s" : ""}</Badge>
                     )}
                 </div>
 
@@ -473,18 +473,18 @@ export default function AdminDashboard() {
                 ) : !data?.pendingPosts?.length ? (
                     <EmptyState
                         icon={<CheckCircle size={22} />}
-                        title="Nenhuma postagem pendente"
-                        description="Todas as postagens foram moderadas."
+                        title="No pending posts"
+                        description="All posts have been moderated."
                     />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[500px] text-sm">
                             <thead>
                                 <tr className="bg-surface-section">
-                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Título</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Title</th>
                                     <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Autor</th>
                                     <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Data</th>
-                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Ações</th>
+                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -498,7 +498,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs text-text-muted">
-                                                {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                                {new Date(post.createdAt).toLocaleDateString("en-US")}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
@@ -518,9 +518,9 @@ export default function AdminDashboard() {
                                                     <XCircle size={14} />
                                                 </button>
                                                 <Link
-                                                    href={`/admin/postagens`}
+                                                    href={`/admin/posts`}
                                                     className="p-1.5 bg-surface-subtle text-text-muted rounded-md hover:bg-surface-section hover:text-text-primary transition-all inline-flex"
-                                                    title="Ver postagem"
+                                                    title="View post"
                                                 >
                                                     <Eye size={14} />
                                                 </Link>

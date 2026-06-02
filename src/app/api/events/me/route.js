@@ -1,35 +1,48 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 
 export async function GET() {
     try {
         const session = await auth();
         if (!session?.user?.id) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
         const userId = session.user.id;
 
-        await query(`
-            CREATE TABLE IF NOT EXISTS EventParticipantStatus (
-                eventId VARCHAR(191) NOT NULL,
-                userId VARCHAR(191) NOT NULL,
-                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-                updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                PRIMARY KEY (eventId, userId)
-            )
-        `);
+        const userEvents = await listAll(COLS.userEvents, [Query.equal('userId', userId)]);
+        const eventIds = userEvents.map(ue => ue.eventId).filter(Boolean);
 
-        const events = await query(`
-            SELECT e.id, e.title, e.description, e.date, e.color, e.link,
-                   COALESCE(eps.status, 'PENDING') as status
-            FROM Event e
-            JOIN _UserEvents ue ON ue.A = e.id
-            LEFT JOIN EventParticipantStatus eps ON eps.eventId = e.id AND eps.userId = ue.B
-            WHERE ue.B = ?
-            ORDER BY e.date ASC
-        `, [userId]);
+        if (!eventIds.length) {
+            return NextResponse.json({ success: true, events: [] });
+        }
+
+        const events = (await Promise.all(
+            eventIds.map(async (eid) => {
+                try {
+                    const e = await db.getDocument(DB_ID, COLS.events, eid);
+                    const epsId = `eps_${eid}_${userId}`;
+                    let status = 'PENDING';
+                    try {
+                        const eps = await db.getDocument(DB_ID, COLS.eventParticipants, epsId);
+                        status = eps.status;
+                    } catch {}
+
+                    return {
+                        id: e.$id,
+                        title: e.title,
+                        description: e.description,
+                        date: e.date,
+                        color: e.color,
+                        link: e.link,
+                        status,
+                    };
+                } catch {
+                    return null;
+                }
+            })
+        )).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
 
         return NextResponse.json({ success: true, events });
     } catch (error) {

@@ -1,41 +1,28 @@
-import { query } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
+import { auth } from '@/lib/auth';
+import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
 
-async function ensureNotificationTable() {
-    await query(`
-        CREATE TABLE IF NOT EXISTS Notification (
-            id VARCHAR(191) PRIMARY KEY,
-            userId VARCHAR(191) NOT NULL,
-            type VARCHAR(50) NOT NULL,
-            content TEXT NOT NULL,
-            relatedId VARCHAR(191),
-            isRead BOOLEAN NOT NULL DEFAULT FALSE,
-            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_notification_user_created (userId, createdAt),
-            INDEX idx_notification_user_read (userId, isRead)
-        )
-    `);
-}
-
-export async function GET(request) {
+export async function GET() {
     try {
         const session = await auth();
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        await ensureNotificationTable();
+        const res = await db.listDocuments(DB_ID, COLS.notifications, [
+            Query.equal('userId', session.user.id),
+            Query.orderDesc('createdAt'),
+            Query.limit(20),
+        ]);
 
-        // Buscar notificações do usuário
-        const notifications = await query(`
-            SELECT id, type, content, relatedId, isRead, createdAt 
-            FROM Notification 
-            WHERE userId = ?
-            ORDER BY createdAt DESC
-            LIMIT 20
-        `, [session.user.id]);
+        const notifications = res.documents.map(d => ({
+            id: d.$id,
+            type: d.type,
+            content: d.content,
+            relatedId: d.relatedId,
+            isRead: d.isRead,
+            createdAt: d.createdAt,
+        }));
 
         return NextResponse.json({ success: true, notifications });
     } catch (error) {
@@ -44,21 +31,21 @@ export async function GET(request) {
     }
 }
 
-export async function PUT(request) {
+export async function PUT() {
     try {
         const session = await auth();
         if (!session?.user) {
-            return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        await ensureNotificationTable();
+        const unread = await listAll(COLS.notifications, [
+            Query.equal('userId', session.user.id),
+            Query.equal('isRead', false),
+        ]);
 
-        // Marcar todas como lidas (ao abrir dropdown)
-        await query(`
-            UPDATE Notification
-            SET isRead = TRUE
-            WHERE userId = ? AND isRead = FALSE
-        `, [session.user.id]);
+        await Promise.all(
+            unread.map(d => db.updateDocument(DB_ID, COLS.notifications, d.$id, { isRead: true }))
+        );
 
         return NextResponse.json({ success: true });
     } catch (error) {

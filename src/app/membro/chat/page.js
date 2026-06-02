@@ -50,7 +50,7 @@ export default function ChatPage() {
                 const data = await res.json();
                 if (data.success) setContacts(data.contacts);
             } catch (error) {
-                console.error("Erro ao carregar contatos:", error);
+                console.error("Failed to load contacts:", error);
             } finally {
                 setLoadingContacts(false);
             }
@@ -71,7 +71,7 @@ export default function ChatPage() {
                     loadedContactRef.current = selectedContact.id;
                 }
             } catch (error) {
-                console.error("Erro ao carregar mensagens:", error);
+                console.error("Failed to load messages:", error);
             } finally {
                 if (showLoader) setLoadingMessages(false);
             }
@@ -139,15 +139,15 @@ export default function ChatPage() {
             if (!res.ok || !data.success) {
                 setMessages((prev) => prev.filter((m) => m.id !== tempId));
                 setNewMessage(content);
-                setSendError(data.error || "Falha ao enviar mensagem.");
+                setSendError(data.error || "Failed to send message.");
                 return;
             }
             setMessages((prev) => prev.map((m) => m.id === tempId ? { ...m, id: data.messageId || tempId } : m));
         } catch (error) {
-            console.error("Erro ao enviar:", error);
+            console.error("Failed to send:", error);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
             setNewMessage(content);
-            setSendError("Erro de conexão ao enviar mensagem.");
+            setSendError("Connection error while sending message.");
         } finally {
             setSending(false);
         }
@@ -173,7 +173,7 @@ export default function ChatPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                         <input
                             type="text"
-                            placeholder="Buscar contato..."
+                            placeholder="Search contact..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="input !pl-10 text-xs"
@@ -186,15 +186,15 @@ export default function ChatPage() {
                         <div className="flex justify-center p-8"><Spinner size="sm" /></div>
                     ) : filteredContacts.length === 0 ? (
                         <div className="p-6 text-center text-text-muted text-xs">
-                            <p>Nenhum contato encontrado.</p>
-                            <p className="mt-1">Siga outros médicos no Diretório para iniciar conversas.</p>
+                            <p>No contacts found.</p>
+                            <p className="mt-1">Follow other doctors in the Directory to start conversations.</p>
                         </div>
                     ) : (
                         filteredContacts.map(contact => (
                             <div
                                 key={contact.id}
                                 onClick={() => setSelectedContact(contact)}
-                                className={`flex items-center gap-3 p-3.5 cursor-pointer transition-colors border-b border-border-subtle ${selectedContact?.id === contact.id
+                                className={`flex items-center gap-3 p-3.5 courser-pointer transition-colors border-b border-border-subtle ${selectedContact?.id === contact.id
                                     ? "bg-brand-primary-light border-l-2 border-l-brand-primary"
                                     : "hover:bg-surface-active border-l-2 border-l-transparent"}`}
                             >
@@ -202,7 +202,7 @@ export default function ChatPage() {
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-text-primary text-sm truncate">{contact.name}</h3>
                                     <p className="text-[11px] text-text-muted truncate">
-                                        {contact.stack || contact.specialty || "Médico"}
+                                        {contact.stack || contact.specialty || "Doctor"}
                                     </p>
                                 </div>
                             </div>
@@ -231,14 +231,14 @@ export default function ChatPage() {
                         </div>
                         <div className="flex items-center gap-2">
                             {(followState[selectedContact.id] ?? !!selectedContact.isFollowing)
-                                ? <span className="text-[10px] px-2 py-1 rounded bg-status-success-bg text-status-success font-semibold">Seguindo</span>
+                                ? <span className="text-[10px] px-2 py-1 rounded bg-status-success-bg text-status-success font-semibold">Following</span>
                                 : <button
                                     type="button"
                                     onClick={handleFollow}
                                     disabled={followLoading}
                                     className="text-[10px] px-2 py-1 rounded bg-brand-primary text-white font-semibold disabled:opacity-60"
                                 >
-                                    {followLoading ? "..." : "Seguir"}
+                                    {followLoading ? "..." : "Follow"}
                                 </button>}
                             <button className="text-text-muted hover:text-brand-primary transition-colors"><MoreVertical size={17} /></button>
                         </div>
@@ -254,7 +254,7 @@ export default function ChatPage() {
                                     <MessageSquare size={32} className="text-brand-primary" />
                                 </div>
                                 <p className="text-sm bg-surface-card px-4 py-2 rounded-md shadow-sm">
-                                    Início da conversa com {selectedContact.name}.
+                                    Start of conversation with {selectedContact.name}.
                                 </p>
                             </div>
                         ) : (
@@ -288,7 +288,7 @@ export default function ChatPage() {
                             <div className="flex-1 bg-surface-subtle rounded-lg border border-transparent focus-within:border-brand-primary/40 focus-within:bg-surface-card focus-within:ring-2 focus-within:ring-brand-primary/10 transition-all flex items-end">
                                 <textarea
                                     className="w-full bg-transparent border-none focus:ring-0 p-2.5 max-h-28 min-h-[42px] resize-none text-text-primary placeholder-text-muted text-sm"
-                                    placeholder="Digite uma mensagem..."
+                                    placeholder="Type a message..."
                                     value={newMessage}
                                     onChange={e => setNewMessage(e.target.value)}
                                     onKeyDown={e => {
@@ -302,7 +302,7 @@ export default function ChatPage() {
                             <button
                                 type="submit"
                                 disabled={!newMessage.trim() || sending}
-                                className="p-2.5 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed shadow-button-primary transition-all active:scale-95"
+                                className="p-2.5 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:courser-not-allowed shadow-button-primary transition-all active:scale-95"
                             >
                                 {sending ? <Spinner size="sm" /> : <Send size={16} />}
                             </button>
@@ -314,9 +314,9 @@ export default function ChatPage() {
                     <div className="w-20 h-20 bg-brand-primary-light rounded-full flex items-center justify-center mb-5">
                         <MessageSquare size={40} className="text-brand-primary" />
                     </div>
-                    <h2 className="text-lg font-bold text-text-primary mb-1.5">Mensagens Privadas</h2>
+                    <h2 className="text-lg font-bold text-text-primary mb-1.5">Private Messages</h2>
                     <p className="text-text-muted text-sm max-w-xs leading-relaxed">
-                        Selecione um contato para iniciar uma conversa privada e segura.
+                        Select a contact to start a private and secure conversation.
                     </p>
                 </div>
             )}

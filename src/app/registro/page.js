@@ -197,7 +197,7 @@ export default function RegisterPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {/* CRM e Especialidade */}
+                                    {/* CRM and Specialty */}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="relative">
                                             <Stethoscope className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />

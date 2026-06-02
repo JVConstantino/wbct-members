@@ -34,12 +34,12 @@ export default function EmailConfigPage() {
         });
         const data = await res.json();
         setSaving(false);
-        setMessage(data.success ? "Configuração salva com sucesso." : (data.error || "Erro ao salvar."));
+        setMessage(data.success ? "Settings saved successfully." : (data.error || "Could not save."));
     };
 
     return (
         <div className="space-y-5">
-            <PageHeader title="Configurações de E-mail" subtitle="Configure credenciais do Resend para notificações" />
+            <PageHeader title="Email Settings" subtitle="Configure Resend credentials for notifications" />
 
             <form onSubmit={onSave} className="card max-w-2xl space-y-4">
                 <div>
@@ -77,7 +77,7 @@ export default function EmailConfigPage() {
                 {message && <p className="text-xs text-text-secondary">{message}</p>}
 
                 <button disabled={saving || loading} className="btn-primary gap-2">
-                    <Save size={14} /> {saving ? "Salvando..." : "Salvar credenciais"}
+                    <Save size={14} /> {saving ? "Saving..." : "Save credenciais"}
                 </button>
             </form>
         </div>

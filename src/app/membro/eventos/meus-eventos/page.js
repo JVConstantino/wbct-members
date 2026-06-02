@@ -33,13 +33,13 @@ export default function MemberMyEventsPage() {
 
     return (
         <div className="space-y-5">
-            <PageHeader title="Meus Eventos" subtitle="Eventos que você está participando" />
+            <PageHeader title="My Events" subtitle="Events you are attending" />
 
             {events.length === 0 ? (
                 <EmptyState
                     icon={<Calendar size={20} />}
-                    title="Nenhum evento ainda"
-                    description="Quando você clicar em participar na agenda, os eventos aparecerão aqui."
+                    title="No events yet"
+                    description="When you click to attend in the calendar, events will appear here."
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -54,17 +54,17 @@ export default function MemberMyEventsPage() {
                                             ? "bg-status-error-bg text-status-error"
                                             : "bg-status-warning-bg text-status-warning"
                                 }`}>
-                                    {event.status === "CONFIRMED" ? "Confirmado" : event.status === "REJECTED" ? "Recusado" : "Pendente"}
+                                    {event.status === "CONFIRMED" ? "Confirmed" : event.status === "REJECTED" ? "Rejected" : "Pending"}
                                 </span>
                             </div>
-                            <p className="text-xs text-text-secondary line-clamp-2">{event.description || "Sem descrição"}</p>
+                            <p className="text-xs text-text-secondary line-clamp-2">{event.description || "No description"}</p>
                             <div className="text-xs text-text-muted flex items-center gap-1.5">
                                 <Clock size={12} />
                                 {new Date(event.date).toLocaleString("pt-BR")}
                             </div>
                             {event.link && (
                                 <a href={event.link} target="_blank" rel="noreferrer" className="text-xs text-brand-primary font-semibold inline-flex items-center gap-1 hover:underline">
-                                    <ExternalLink size={12} /> Acessar link do evento
+                                    <ExternalLink size={12} /> Open event link
                                 </a>
                             )}
                         </div>

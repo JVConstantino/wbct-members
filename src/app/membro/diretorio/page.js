@@ -21,7 +21,7 @@ export default function DiretorioPage() {
                 const data = await res.json();
                 if (data.success) setDoctors(data.users);
             } catch (err) {
-                console.error("Erro ao carregar diretório:", err);
+                console.error("Failed to load directory:", err);
             } finally {
                 setLoading(false);
             }
@@ -44,8 +44,8 @@ export default function DiretorioPage() {
     return (
         <div className="space-y-6 pb-8">
             <PageHeader
-                title="Diretório Médico"
-                subtitle="Conecte-se com outros profissionais da comunidade WBCT"
+                title="Doctor Directory"
+                subtitle="Connect with other professionals in the WBCT community"
             />
 
             {/* Busca + filtro */}
@@ -54,7 +54,7 @@ export default function DiretorioPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                     <input
                         type="text"
-                        placeholder="Buscar por nome, especialidade..."
+                        placeholder="Search by name or specialty..."
                         className="input !pl-10"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -64,11 +64,11 @@ export default function DiretorioPage() {
                     <div className="relative">
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={13} />
                         <select
-                            className="input pl-8 pr-8 appearance-none cursor-pointer"
+                            className="input pl-8 pr-8 appearance-none courser-pointer"
                             value={filterSpec}
                             onChange={e => setFilterSpec(e.target.value)}
                         >
-                            <option value="">Todas especialidades</option>
+                            <option value="">All especialidades</option>
                             {specialties.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
@@ -78,10 +78,10 @@ export default function DiretorioPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { label: "Médicos Cadastrados", value: doctors.length },
-                    { label: "Especialidades",       value: specialties.length },
-                    { label: "Resultados",           value: filtered.length },
-                    { label: "Comunidade Ativa",     value: "Online", highlight: true },
+                    { label: "Registered Doctors", value: doctors.length },
+                    { label: "Specialties",        value: specialties.length },
+                    { label: "Results",            value: filtered.length },
+                    { label: "Active Community",   value: "Online", highlight: true },
                 ].map(({ label, value, highlight }) => (
                     <div key={label} className="card text-center py-4">
                         <p className={`text-2xl font-bold ${highlight ? "text-status-success" : "text-brand-primary"}`}>
@@ -92,7 +92,7 @@ export default function DiretorioPage() {
                 ))}
             </div>
 
-            {/* Grid de médicos */}
+            {/* Doctors grid */}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {[...Array(6)].map((_, i) => (
@@ -111,7 +111,7 @@ export default function DiretorioPage() {
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={Users}
-                    title="Nenhum médico encontrado"
+                    title="No doctors found"
                     description="Tente ajustar sua busca ou filtro de especialidade."
                 />
             ) : (
@@ -119,14 +119,14 @@ export default function DiretorioPage() {
                     {filtered.map(doctor => (
                         <Link
                             key={doctor.id}
-                            href={`/membro/medico/${doctor.id}`}
+                            href={`/member/doctor/${doctor.id}`}
                             className="group card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
                         >
                             <div className="flex items-start gap-4">
                                 <Avatar src={doctor.image} name={doctor.name} size="lg" online />
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-brand-primary transition-colors">
-                                        {doctor.name || "Médico"}
+                                        {doctor.name || "Doctor"}
                                     </h3>
                                     {doctor.stack && (
                                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -146,10 +146,10 @@ export default function DiretorioPage() {
                             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border-subtle">
                                 <span className="flex items-center gap-1 text-xs text-text-muted">
                                     <FileText size={12} />
-                                    {doctor._count?.posts || 0} postagem{(doctor._count?.posts || 0) !== 1 ? "s" : ""}
+                                    {doctor._count?.posts || 0} post{(doctor._count?.posts || 0) !== 1 ? "s" : ""}
                                 </span>
                                 <span className="flex items-center gap-1 text-xs font-semibold text-brand-primary uppercase tracking-wide group-hover:gap-1.5 transition-all">
-                                    Ver perfil <ChevronRight size={12} />
+                                    View profile <ChevronRight size={12} />
                                 </span>
                             </div>
                         </Link>

@@ -14,18 +14,19 @@ import {
 } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import { Avatar } from "@/components/ui/Avatar";
+import { useUser } from "@/contexts/UserContext";
 
 const menuItems = [
-    { icon: Home,          label: "Feed Principal",   href: "/membro" },
-    { icon: BookOpen,      label: "Articles HUB",     href: "/membro/blog" },
-    { icon: User,          label: "Diretorio Medico", href: "/membro/diretorio" },
-    { icon: MessageSquare, label: "Mensagens",        href: "/membro/chat" },
-    { icon: Calendar,      label: "Agenda",           href: "/membro/eventos" },
-    { icon: Calendar,      label: "Meus Eventos",     href: "/membro/eventos/meus-eventos" },
-    { icon: PlayCircle,    label: "Webinars",         href: "/membro/webinars" },
-    { icon: FileText,      label: "Minhas Postagens", href: "/membro/minhas-postagens" },
-    { icon: PlusSquare,    label: "Novo Conteudo",    href: "/membro/criar" },
-    { icon: User,          label: "Meu Perfil",       href: "/membro/perfil" },
+    { icon: Home,          label: "Main Feed",        href: "/member" },
+    { icon: BookOpen,      label: "Articles HUB",     href: "/member/articles" },
+    { icon: User,          label: "Doctor Directory", href: "/member/directory" },
+    { icon: MessageSquare, label: "Messages",         href: "/member/chat" },
+    { icon: Calendar,      label: "Calendar",         href: "/member/events" },
+    { icon: Calendar,      label: "My Events",        href: "/member/events/my-events" },
+    { icon: PlayCircle,    label: "Webinars",         href: "/member/webinars" },
+    { icon: FileText,      label: "My Posts",         href: "/member/my-posts" },
+    { icon: PlusSquare,    label: "New Content",      href: "/member/create" },
+    { icon: User,          label: "My Profile",       href: "/member/profile" },
 ];
 
 function forceLightTheme() {
@@ -36,6 +37,7 @@ function forceLightTheme() {
 export default function MemberLayout({ children }) {
     const pathname = usePathname();
     const { data: session } = useSession();
+    const { user } = useUser();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [desktopCollapsed, setDesktopCollapsed] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
@@ -72,8 +74,8 @@ export default function MemberLayout({ children }) {
         return () => document.documentElement.style.setProperty("--shell-offset", "0px");
     }, [isDesktop, desktopCollapsed]);
 
-    const userName = session?.user?.name || "Membro";
-    const userImage = session?.user?.image || "";
+    const userName = session?.user?.name || "Member";
+    const userImage = user?.image || "";
     const userEmail = session?.user?.email || "";
     const isCollapsed = isDesktop && desktopCollapsed;
     const sidebarWidth = isCollapsed ? 88 : 272;
@@ -101,7 +103,7 @@ export default function MemberLayout({ children }) {
                 <button
                     onClick={() => setMobileOpen(false)}
                     className="absolute top-4 right-4 lg:hidden p-1.5 text-text-muted hover:text-text-primary hover:bg-surface-subtle rounded-md transition-colors"
-                    aria-label="Fechar menu"
+                    aria-label="Close menu"
                 >
                     <X size={18} />
                 </button>
@@ -113,7 +115,7 @@ export default function MemberLayout({ children }) {
                         </div>
                         {!isCollapsed && (
                             <div>
-                                <p className="font-display text-base font-bold text-text-primary leading-none tracking-wide">WBCT MEMBRO</p>
+                                <p className="font-display text-base font-bold text-text-primary leading-none tracking-wide">WBCT MEMBER</p>
                             </div>
                         )}
                     </div>
@@ -159,10 +161,10 @@ export default function MemberLayout({ children }) {
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
                         className={`btn-ghost w-full px-2 py-2 text-xs text-status-error hover:bg-status-error-bg hover:text-status-error gap-2 ${isCollapsed ? "justify-center" : "justify-start"}`}
-                        title={isCollapsed ? "Sair da conta" : undefined}
+                        title={isCollapsed ? "Sign out" : undefined}
                     >
                         <LogOut size={14} />
-                        {!isCollapsed && "Sair da conta"}
+                        {!isCollapsed && "Sign out"}
                     </button>
                 </div>
             </motion.aside>
@@ -178,7 +180,7 @@ export default function MemberLayout({ children }) {
                         <button
                             onClick={() => setDesktopCollapsed((v) => !v)}
                             className="hidden lg:flex p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
-                            aria-label={desktopCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
+                            aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                         >
                             {desktopCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
                         </button>
@@ -186,7 +188,7 @@ export default function MemberLayout({ children }) {
                         <button
                             onClick={() => setMobileOpen((v) => !v)}
                             className="lg:hidden p-2 text-text-secondary hover:bg-surface-subtle rounded-md transition-colors border border-border-default"
-                            aria-label="Abrir menu"
+                            aria-label="Open menu"
                         >
                             <Menu size={18} />
                         </button>
@@ -198,7 +200,7 @@ export default function MemberLayout({ children }) {
                         <NotificationDropdown />
                         <div className="hidden sm:block w-px h-6 bg-border-default mx-1" />
                         <Link
-                            href="/membro/perfil"
+                            href="/member/profile"
                             className="hidden sm:flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-subtle border border-transparent hover:border-border-default transition-all"
                         >
                             <Avatar src={userImage} name={userName} size="xs" />

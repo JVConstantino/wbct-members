@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 
-export default function EventosGerenciamentoPage() {
+export default function EventsGerenciamentoPage() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -38,7 +38,7 @@ export default function EventosGerenciamentoPage() {
 
     const deleteBulk = async () => {
         if (!selectedIds.length) return;
-        if (!confirm(`Excluir ${selectedIds.length} evento(s)?`)) return;
+        if (!confirm(`Delete ${selectedIds.length} event(s)?`)) return;
         for (const id of selectedIds) {
             await fetch(`/api/events?id=${id}`, { method: "DELETE" });
         }
@@ -94,12 +94,12 @@ export default function EventosGerenciamentoPage() {
 
     return (
         <div className="space-y-5 min-w-0">
-            <PageHeader title="Eventos - Gerenciamento" subtitle="Visualize e remova eventos cadastrados" />
+            <PageHeader title="Event Management" subtitle="View and remove registered events" />
 
             {selectedIds.length > 0 && (
                 <div className="bg-status-warning-bg border border-status-warning/20 rounded-md p-3 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-status-warning">{selectedIds.length} selecionado(s)</span>
-                    <button onClick={deleteBulk} className="btn-danger text-xs">Excluir selecionados</button>
+                    <span className="text-xs font-semibold text-status-warning">{selectedIds.length} selected</span>
+                    <button onClick={deleteBulk} className="btn-danger text-xs">Delete selected</button>
                 </div>
             )}
 
@@ -108,7 +108,7 @@ export default function EventosGerenciamentoPage() {
                     <div className="py-16 flex justify-center"><Spinner size="lg" /></div>
                 ) : events.length === 0 ? (
                     <div className="p-8">
-                        <EmptyState icon={<Calendar size={20} />} title="Sem eventos" description="Cadastre eventos em Agenda." />
+                        <EmptyState icon={<Calendar size={20} />} title="No events" description="Create events in Calendar." />
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -116,10 +116,10 @@ export default function EventosGerenciamentoPage() {
                             <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
                                     <th className="px-4 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} /></th>
-                                    <th className="px-4 py-3 text-left text-[10px] uppercase tracking-wider text-text-muted">Título</th>
+                                    <th className="px-4 py-3 text-left text-[10px] uppercase tracking-wider text-text-muted">Title</th>
                                     <th className="px-4 py-3 text-left text-[10px] uppercase tracking-wider text-text-muted">Data</th>
                                     <th className="px-4 py-3 text-left text-[10px] uppercase tracking-wider text-text-muted">Cor</th>
-                                    <th className="px-4 py-3 text-right text-[10px] uppercase tracking-wider text-text-muted">Ações</th>
+                                    <th className="px-4 py-3 text-right text-[10px] uppercase tracking-wider text-text-muted">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-subtle">
@@ -134,8 +134,8 @@ export default function EventosGerenciamentoPage() {
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button onClick={() => openParticipants(event)} className="p-1.5 rounded-md text-text-muted hover:bg-surface-subtle" title="Ver participantes"><Users size={13} /></button>
-                                                <button onClick={() => openEdit(event)} className="p-1.5 rounded-md text-brand-primary hover:bg-brand-primary-light" title="Editar evento"><Pencil size={13} /></button>
-                                                <button onClick={() => deleteOne(event.id)} className="p-1.5 rounded-md text-status-error hover:bg-status-error-bg" title="Excluir evento"><Trash2 size={13} /></button>
+                                                <button onClick={() => openEdit(event)} className="p-1.5 rounded-md text-brand-primary hover:bg-brand-primary-light" title="Edit event"><Pencil size={13} /></button>
+                                                <button onClick={() => deleteOne(event.id)} className="p-1.5 rounded-md text-status-error hover:bg-status-error-bg" title="Delete event"><Trash2 size={13} /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -150,7 +150,7 @@ export default function EventosGerenciamentoPage() {
                 <p className="text-xs text-text-muted mb-3">{participantsTitle}</p>
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                     {participants.length === 0 ? (
-                        <p className="text-xs text-text-muted">Nenhum participante confirmado/interessado ainda.</p>
+                        <p className="text-xs text-text-muted">No confirmed/interested participants yet.</p>
                     ) : participants.map((p) => (
                         <div key={p.id} className="p-2.5 rounded border border-border-subtle bg-surface-subtle flex items-center justify-between gap-2">
                             <div>
@@ -160,24 +160,24 @@ export default function EventosGerenciamentoPage() {
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
                                 p.status === "CONFIRMED" ? "bg-status-success-bg text-status-success" : p.status === "REJECTED" ? "bg-status-error-bg text-status-error" : "bg-status-warning-bg text-status-warning"
                             }`}>
-                                {p.status === "CONFIRMED" ? "Confirmado" : p.status === "REJECTED" ? "Recusado" : "Pendente"}
+                                {p.status === "CONFIRMED" ? "Confirmed" : p.status === "REJECTED" ? "Rejected" : "Pending"}
                             </span>
                         </div>
                     ))}
                 </div>
             </Modal>
 
-            <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Editar evento" size="md">
+            <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit event" size="md">
                 {editing && (
                     <form onSubmit={saveEdit} className="space-y-3">
-                        <input className="input" value={editing.title} onChange={(e) => setEditing((p) => ({ ...p, title: e.target.value }))} placeholder="Título" required />
-                        <textarea className="input min-h-[80px]" value={editing.description} onChange={(e) => setEditing((p) => ({ ...p, description: e.target.value }))} placeholder="Descrição" />
+                        <input className="input" value={editing.title} onChange={(e) => setEditing((p) => ({ ...p, title: e.target.value }))} placeholder="Title" required />
+                        <textarea className="input min-h-[80px]" value={editing.description} onChange={(e) => setEditing((p) => ({ ...p, description: e.target.value }))} placeholder="Description" />
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="datetime-local" className="input" value={editing.date} onChange={(e) => setEditing((p) => ({ ...p, date: e.target.value }))} required />
                             <input type="color" className="input h-10 p-1" value={editing.color} onChange={(e) => setEditing((p) => ({ ...p, color: e.target.value }))} />
                         </div>
                         <input className="input" value={editing.link} onChange={(e) => setEditing((p) => ({ ...p, link: e.target.value }))} placeholder="https://..." />
-                        <button className="btn-primary" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</button>
+                        <button className="btn-primary" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
                     </form>
                 )}
             </Modal>

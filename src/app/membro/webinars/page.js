@@ -19,7 +19,7 @@ export default function WebinarsPage() {
                 const data = await res.json();
                 if (data.success) setCourses(data.courses);
             } catch (err) {
-                console.error("Erro ao carregar cursos:", err);
+                console.error("Failed to load courses:", err);
             } finally {
                 setLoading(false);
             }
@@ -45,11 +45,11 @@ export default function WebinarsPage() {
                         </div>
                         <h2 className="text-xl font-display font-bold text-text-primary">Cursos e Webinars</h2>
                         <p className="text-sm text-text-secondary mt-0.5">
-                            Aprimore sua prática médica com conteúdo exclusivo para profissionais da saúde.
+                            Improve your medical practice with exclusive content for healthcare professionals.
                         </p>
                     </div>
                     <div className="shrink-0 text-sm font-semibold text-text-muted">
-                        <span className="text-brand-primary font-bold">{filtered.length}</span> curso{filtered.length !== 1 ? "s" : ""} disponível{filtered.length !== 1 ? "is" : ""}
+                        <span className="text-brand-primary font-bold">{filtered.length}</span> course{filtered.length !== 1 ? "s" : ""} available{filtered.length !== 1 ? "is" : ""}
                     </div>
                 </div>
             </div>
@@ -59,14 +59,14 @@ export default function WebinarsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                 <input
                     type="text"
-                    placeholder="Buscar por curso ou tema..."
+                    placeholder="Search by course or topic..."
                     className="input !pl-10"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
             </div>
 
-            {/* Grid de cursos */}
+            {/* Grid de courses */}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {[...Array(8)].map((_, i) => (
@@ -83,15 +83,15 @@ export default function WebinarsPage() {
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={Video}
-                    title="Nenhum curso encontrado"
-                    description={search ? "Tente buscar com outros termos." : "Os cursos aparecerão aqui em breve."}
+                    title="No courses found"
+                    description={search ? "Try searching with other terms." : "Courses will appear here soon."}
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filtered.map(course => (
                         <Link
                             key={course.id}
-                            href={`/membro/webinars/${course.id}`}
+                            href={`/member/webinars/${course.id}`}
                             className="group bg-surface-card border border-border-default shadow-card hover:shadow-card-hover transition-all duration-200 flex flex-col overflow-hidden"
                         >
                             {/* Thumbnail */}
@@ -116,22 +116,22 @@ export default function WebinarsPage() {
                                 <div className="absolute bottom-2.5 left-3 flex items-center gap-1 text-white/90">
                                     <Clock size={10} className="text-white/90" />
                                     <span className="text-[9px] font-bold uppercase tracking-wide">
-                                        {course.lessonCount || 0} aula{(course.lessonCount || 0) !== 1 ? "s" : ""}
+                                        {course.lessonCount || 0} lesson{(course.lessonCount || 0) !== 1 ? "s" : ""}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Conteúdo */}
+                            {/* Content */}
                             <div className="p-4 flex-1 flex flex-col gap-2">
                                 <h3 className="text-sm font-semibold text-text-primary leading-snug group-hover:text-brand-primary transition-colors line-clamp-2">
                                     {course.title}
                                 </h3>
                                 <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed flex-1">
-                                    {course.description || "Inicie esta trilha de conhecimento e domine as melhores práticas médicas."}
+                                    {course.description || "Start this learning path and master medical best practices."}
                                 </p>
                                 <div className="flex items-center justify-between pt-3 border-t border-border-subtle">
                                     <span className="flex items-center gap-1 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
-                                        Acessar curso <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                                        Acessar course <ChevronRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                                     </span>
                                     <div className="p-1.5 bg-surface-subtle text-text-muted group-hover:text-brand-primary transition-colors">
                                         <BookOpen size={13} />
