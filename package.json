@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "NODE_OPTIONS=--max-http-header-size=262144 next dev",
     "build": "next build",
-    "start": "NODE_OPTIONS=--max-http-header-size=262144 next start",
+    "start:next": "NODE_OPTIONS=--max-http-header-size=262144 next start",
+    "start": "node scripts/check-node.js && cd .next/standalone && NODE_OPTIONS=--max-http-header-size=262144 node server.js",
     "lint": "next lint"
   },
   "keywords": [],
@@ -13,7 +14,7 @@
   "license": "ISC",
   "description": "",
   "engines": {
-    "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0",
+    "node": ">=20.0.0 <21 || >=22.0.0 <23 || >=24.0.0",
     "npm": ">=10.0.0"
   },
   "devDependencies": {

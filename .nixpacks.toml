@@ -1,5 +1,7 @@
 [variables]
+NIXPACKS_NODE_VERSION = "20"
 NODE_VERSION = "20"
+NPM_VERSION = "10"
 
 [phases.setup]
 nixPkgs = ["nodejs_20", "npm-10_x", "openssl"]
@@ -11,4 +13,4 @@ cmds = ["npm ci --no-audit --no-fund"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npm run start"
+cmd = "cd .next/standalone && NODE_OPTIONS=--max-http-header-size=262144 node server.js"
