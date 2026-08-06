@@ -3,16 +3,13 @@
 import { useState, useEffect } from "react";
 import {
     Clock,
-    MessageSquare,
     ChevronLeft,
-    Send,
     Calendar,
-    Share2
+    Share2,
+    FolderKanban
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { enUS } from "date-fns/locale";
 import { Avatar } from "@/components/ui/Avatar";
 import { Spinner } from "@/components/ui/Skeleton";
 
@@ -20,10 +17,8 @@ export default function PostDetailPage() {
     const routeParams = useParams();
     const id = routeParams?.id;
     const [post, setPost] = useState(null);
+    const [categoryName, setCategoryName] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [comment, setComment] = useState("");
-    const [replyByComment, setReplyByComment] = useState({});
-    const [submitting, setSubmitting] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -33,8 +28,23 @@ export default function PostDetailPage() {
                 setLoading(true);
                 const res = await fetch(`/api/posts/${id}`);
                 const data = await res.json();
-                if (data.success) setPost(data.post);
-                else router.push("/member");
+                if (data.success) {
+                    setPost(data.post);
+                    if (data.post.categoryId) {
+                        try {
+                            const catRes = await fetch("/api/admin/post-categories");
+                            const catData = await catRes.json();
+                            if (catData.success) {
+                                const match = (catData.categories || []).find((c) => c.id === data.post.categoryId);
+                                if (match) setCategoryName(match.name);
+                            }
+                        } catch {
+                            // category name is a nice-to-have, don't block
+                        }
+                    }
+                } else {
+                    router.push("/member");
+                }
             } catch (error) {
                 console.error("Failed to load post:", error);
                 router.push("/member");
@@ -44,32 +54,6 @@ export default function PostDetailPage() {
         };
         fetchPost();
     }, [id, router]);
-
-    const handleComment = async (e, parentId = null, value = null) => {
-        e.preventDefault();
-        const content = (value ?? comment).trim();
-        if (!content) return;
-        setSubmitting(true);
-        try {
-            const res = await fetch(`/api/posts/${id}/comments`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content, parentId })
-            });
-            const data = await res.json();
-            if (data.success) {
-                const postRes = await fetch(`/api/posts/${id}`);
-                const postData = await postRes.json();
-                setPost(postData.post);
-                setComment("");
-                if (parentId) setReplyByComment((prev) => ({ ...prev, [parentId]: "" }));
-            }
-        } catch (error) {
-            console.error("Failed to comment:", error);
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -81,14 +65,6 @@ export default function PostDetailPage() {
     }
 
     if (!post) return null;
-
-    const topLevelComments = (post.comments || []).filter((c) => !c.parentId);
-    const repliesByParent = (post.comments || []).reduce((acc, c) => {
-        if (!c.parentId) return acc;
-        if (!acc[c.parentId]) acc[c.parentId] = [];
-        acc[c.parentId].push(c);
-        return acc;
-    }, {});
 
     return (
         <div className="max-w-3xl mx-auto space-y-8 pb-16 px-4 md:px-0">
@@ -109,6 +85,12 @@ export default function PostDetailPage() {
             <article className="space-y-6">
                 {/* Cabeçalho */}
                 <header className="space-y-4">
+                    {categoryName && (
+                        <span className="inline-flex items-center gap-1.5 bg-brand-primary-light text-brand-primary-active text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">
+                            <FolderKanban size={11} />
+                            {categoryName}
+                        </span>
+                    )}
                     <h1 className="text-3xl md:text-4xl font-display font-bold text-text-primary leading-tight">
                         {post.title}
                     </h1>
@@ -149,98 +131,6 @@ export default function PostDetailPage() {
                     dangerouslySetInnerHTML={{ __html: post.content }}
                 />
             </article>
-
-            <hr className="border-border-default" />
-
-            {/* Comments */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-text-primary">Comments</h2>
-                    <span className="bg-surface-subtle text-text-muted px-2 py-0.5 rounded text-xs font-semibold">
-                        {post.comments?.length || 0}
-                    </span>
-                </div>
-
-                {/* Input de comentário */}
-                <div className="bg-surface-subtle rounded-md p-4 border border-border-subtle">
-                    <form onSubmit={handleComment} className="flex flex-col gap-3">
-                        <textarea
-                            className="input min-h-[80px] resize-none"
-                            placeholder="Join the discussion..."
-                            value={comment}
-                            onChange={e => setComment(e.target.value)}
-                            disabled={submitting}
-                        />
-                        <div className="flex justify-between items-center">
-                            <span className="text-[11px] text-text-muted">Respect the community guidelines.</span>
-                            <button
-                                type="submit"
-                                disabled={submitting || !comment.trim()}
-                                className="btn-primary text-xs flex items-center gap-1.5 disabled:opacity-50"
-                            >
-                                {submitting ? <Spinner size="sm" /> : <><Send size={13} /> Send</>}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {/* Lista de comments */}
-                <div className="space-y-4">
-                    {post.comments?.length === 0 ? (
-                        <p className="text-text-muted text-sm text-center italic">No comments yet.</p>
-                    ) : (
-                        topLevelComments.map(c => (
-                            <div key={c.id} className="space-y-2 p-3 rounded-md hover:bg-surface-subtle transition-colors">
-                                <div className="flex gap-3">
-                                <Avatar name={c.authorName} size="sm" className="shrink-0" />
-                                <div className="space-y-0.5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-text-primary text-sm">{c.authorName}</span>
-                                        <span className="text-[11px] text-text-muted">• {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: enUS })}</span>
-                                    </div>
-                                    <p className="text-text-secondary text-sm leading-relaxed">{c.content}</p>
-                                    <button
-                                        type="button"
-                                        className="text-[11px] font-semibold text-brand-primary hover:underline"
-                                        onClick={() => setReplyByComment((prev) => ({ ...prev, [c.id]: prev[c.id] ? "" : "@" }))}
-                                    >
-                                        Responder
-                                    </button>
-                                </div>
-                                </div>
-
-                                {replyByComment[c.id] !== undefined && (
-                                    <form
-                                        onSubmit={(e) => handleComment(e, c.id, replyByComment[c.id])}
-                                        className="ml-12 flex gap-2"
-                                    >
-                                        <input
-                                            className="input text-xs"
-                                            placeholder="Escreva uma resposta..."
-                                            value={replyByComment[c.id]}
-                                            onChange={(e) => setReplyByComment((prev) => ({ ...prev, [c.id]: e.target.value }))}
-                                        />
-                                        <button className="btn-primary text-xs" disabled={submitting}>Send</button>
-                                    </form>
-                                )}
-
-                                {(repliesByParent[c.id] || []).map((r) => (
-                                    <div key={r.id} className="ml-12 flex gap-2 p-2 rounded border border-border-subtle bg-surface-subtle/40">
-                                        <Avatar name={r.authorName} size="xs" className="shrink-0" />
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-text-primary text-xs">{r.authorName}</span>
-                                                <span className="text-[10px] text-text-muted">{formatDistanceToNow(new Date(r.createdAt))}</span>
-                                            </div>
-                                            <p className="text-xs text-text-secondary">{r.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ))
-                    )}
-                </div>
-            </section>
         </div>
     );
 }

@@ -30,6 +30,7 @@ pnpm-debug.log*
 .agent/
 .claude/
 .understand-anything/
+graphify-out/
 
 # Local file uploads (do not commit user-uploaded test files)
 public/uploads/*

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -22,10 +22,14 @@ import {
     Eraser,
     Image as ImageIcon,
     Undo,
-    Redo
+    Redo,
+    Loader2
 } from 'lucide-react';
 
 const MenuBar = ({ editor }) => {
+    const fileInputRef = useRef(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+
     if (!editor) return null;
 
     const setLink = () => {
@@ -39,10 +43,28 @@ const MenuBar = ({ editor }) => {
         editor.chain().focus().setLink({ href: url }).run();
     };
 
-    const addImage = () => {
-        const url = window.prompt('Image URL', 'https://');
-        if (!url) return;
-        editor.chain().focus().setImage({ src: url }).run();
+    const triggerImageUpload = () => fileInputRef.current?.click();
+
+    const handleImageFile = async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        setUploadingImage(true);
+        try {
+            const uploadData = new FormData();
+            uploadData.append('file', file);
+            const res = await fetch('/api/upload', { method: 'POST', body: uploadData });
+            const data = await res.json();
+            if (data.success) {
+                editor.chain().focus().setImage({ src: data.url }).run();
+            } else {
+                alert(data.error || 'Could not upload image.');
+            }
+        } catch {
+            alert('Could not upload image.');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     return (
@@ -132,12 +154,21 @@ const MenuBar = ({ editor }) => {
                 <LinkIcon size={18} />
             </button>
             <button
-                onClick={addImage}
-                className="p-2 rounded-md hover:bg-surface-card text-text-secondary"
+                onClick={triggerImageUpload}
+                disabled={uploadingImage}
+                className="p-2 rounded-md hover:bg-surface-card text-text-secondary disabled:opacity-50"
                 type="button"
+                title="Upload image"
             >
-                <ImageIcon size={18} />
+                {uploadingImage ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
             </button>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFile}
+            />
             <button
                 onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
                 className="p-2 rounded-md hover:bg-surface-card text-text-secondary"

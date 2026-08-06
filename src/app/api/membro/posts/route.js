@@ -31,6 +31,7 @@ export async function GET() {
                     image: p.image,
                     status: p.status,
                     views: p.views || 0,
+                    categoryId: p.categoryId || null,
                     commentCount: commentsRes.total,
                     createdAt: p.createdAt,
                 };

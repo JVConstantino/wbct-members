@@ -785,3 +785,15 @@ Goal: get a clean, reproducible production deploy on Contabo + Easy Panel, with 
 - [ ] Add a persistent volume at `/app/.next/standalone/public/uploads` in Easy Panel so user uploads survive redeploys
 - [ ] (Optional) Upgrade Easy Panel's Nixpacks to 2.x to fully honor `.nixpacks.toml` and eliminate the `SecretsUsedInArgOrEnv` warnings
 - [ ] (Optional) Migrate legacy `src/app/membro/*` folders to English slugs to drop the redirects/rewrites indirection in `next.config.js`
+
+---
+
+## 19. TEMPORARY local workarounds (2026-07-07) — `database.wbctmember.org` DNS outage
+
+**Not a permanent decision.** The domain `database.wbctmember.org` (production Appwrite endpoint) stopped resolving in DNS from the local dev machine, which broke every local flow that depends on the database (login, register, members, etc.). Two workarounds were applied locally to keep developing while the domain issue is investigated/fixed:
+
+1. **`.env` → `APPWRITE_ENDPOINT`** temporarily changed from `https://database.wbctmember.org/v1` to the EasyPanel internal hostname `https://wbct-appwrite.r0x1ut.easypanel.host/v1` (same Appwrite instance, reached through EasyPanel's own routing instead of the custom domain). **Revert to `database.wbctmember.org` once the domain/DNS is fixed** — the EasyPanel hostname is not meant to be the long-term endpoint.
+2. **Local dev now runs on Node 22** (`brew install node@22`, invoked via `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm run dev`), not the machine's default Node 26. Node 26 broke `node-appwrite` v16's fetch wrapper (`node-fetch-native-with-agent`) with `InvalidArgumentError: invalid onError method`, causing every DB call (including login, via NextAuth `authorize()`) to fail with 500. This is unrelated to the DNS issue but was discovered while debugging it. Global Node was left untouched; only this project's dev server is pinned to Node 22 for now. Longer-term fix would be pinning Node 22 in `package.json` engines / `.nvmrc`, or upgrading `node-appwrite` to a version compatible with newer Node.
+3. Created a local-only admin user directly in the `users` collection (bypassing the pending-approval registration flow) for testing: `admin@wbctmember.org` / role `ADMIN` / status `APPROVED`. Password was shared with the user out-of-band; rotate or delete this account before/at production handoff if it's not meant to persist.
+
+*Added 2026-07-07 — do not treat as the final Appwrite endpoint or Node version for this project.*

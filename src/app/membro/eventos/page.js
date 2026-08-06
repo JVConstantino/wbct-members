@@ -23,15 +23,18 @@ import {
     endOfWeek,
     isSameMonth,
     isSameDay,
-    eachDayOfInterval,
-    parseISO
+    eachDayOfInterval
 } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Spinner } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { formatEventDate, formatEventTime, getSaoPauloDateKey } from "@/lib/date-utils";
+import { readableTextColor } from "@/lib/color-utils";
 
 function EventModal({ event, onClose, onFollow }) {
+    const [eventConsent, setEventConsent] = useState(false);
+
     if (!event) return null;
 
     return (
@@ -56,7 +59,7 @@ function EventModal({ event, onClose, onFollow }) {
                             </span>
                             <span className="flex items-center gap-1 text-text-muted text-xs">
                                 <Clock size={12} className="text-brand-primary" />
-                                {new Date(event.date).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" })} at {new Date(event.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                                {formatEventDate(event.date, { day: "2-digit", month: "long", year: "numeric" })} at {formatEventTime(event.date, { hour: "2-digit", minute: "2-digit" })}
                             </span>
                         </div>
                         <h2 className="text-2xl font-display font-bold text-text-primary leading-tight">
@@ -83,9 +86,23 @@ function EventModal({ event, onClose, onFollow }) {
                         </div>
                     )}
 
+                    {!event.isFollowing && (
+                        <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={eventConsent}
+                                onChange={e => setEventConsent(e.target.checked)}
+                                className="mt-0.5 accent-brand-primary shrink-0"
+                            />
+                            <span className="text-xs text-text-secondary leading-relaxed">
+                                I agree to receive communications about this event and similar future WBCT events — optional
+                            </span>
+                        </label>
+                    )}
+
                     <div className="flex flex-col sm:flex-row gap-3">
                         <button
-                            onClick={() => onFollow(event.id)}
+                            onClick={() => onFollow(event.id, eventConsent)}
                             className={`flex-1 py-3 rounded-md flex items-center justify-center gap-2 text-sm font-semibold transition-all
                                 ${event.isFollowing
                                     ? "bg-status-success-bg text-status-success border border-status-success/20"
@@ -140,7 +157,8 @@ export default function MemberEvents() {
     const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
     const getEventsForDay = (day) => {
-        return events.filter(e => isSameDay(parseISO(e.date), day));
+        const dayKey = getSaoPauloDateKey(day);
+        return events.filter(e => getSaoPauloDateKey(e.date) === dayKey);
     };
 
     const handleDayClick = (day) => {
@@ -179,10 +197,13 @@ export default function MemberEvents() {
                         {dayEvents.map(event => (
                             <div
                                 key={event.id}
-                                className="text-[10px] px-1.5 py-0.5 rounded text-white truncate"
-                                style={{ backgroundColor: event.color || "#2563eb" }}
+                                className="text-[10px] px-1.5 py-0.5 rounded truncate"
+                                style={{
+                                    backgroundColor: event.color || "#2563eb",
+                                    color: readableTextColor(event.color || "#2563eb"),
+                                }}
                             >
-                                {format(parseISO(event.date), "HH:mm")} — {event.title}
+                                {formatEventTime(event.date, { hour: "2-digit", minute: "2-digit", hour12: false })} — {event.title}
                             </div>
                         ))}
                     </div>
@@ -206,9 +227,13 @@ export default function MemberEvents() {
 
     const filteredEvents = events.filter(e => e.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const handleFollow = async (eventId) => {
+    const handleFollow = async (eventId, eventEmailConsent = false) => {
         try {
-            const res = await fetch(`/api/events/${eventId}/follow`, { method: "POST" });
+            const res = await fetch(`/api/events/${eventId}/follow`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventEmailConsent }),
+            });
             const data = await res.json();
             if (data.success) {
                 setEvents(events.map(e => e.id === eventId ? { ...e, isFollowing: data.following } : e));
@@ -310,12 +335,12 @@ export default function MemberEvents() {
                             <div className="p-5 space-y-3">
                                 <div className="flex items-start justify-between">
                                     <div
-                                        className="w-12 h-12 rounded-md flex flex-col items-center justify-center text-white shrink-0 shadow-sm"
-                                        style={{ backgroundColor: event.color }}
+                                        className="w-12 h-12 rounded-md flex flex-col items-center justify-center shrink-0 shadow-sm"
+                                        style={{ backgroundColor: event.color, color: readableTextColor(event.color) }}
                                     >
-                                        <span className="text-base font-bold leading-none">{new Date(event.date).getDate()}</span>
+                                        <span className="text-base font-bold leading-none">{formatEventDate(event.date, { day: "numeric" })}</span>
                                         <span className="text-[9px] font-bold uppercase opacity-90">
-                                            {new Date(event.date).toLocaleDateString("en-US", { month: "short" })}
+                                            {formatEventDate(event.date, { month: "short" })}
                                         </span>
                                     </div>
                                     {event.isFollowing && (
@@ -336,12 +361,12 @@ export default function MemberEvents() {
 
                                 <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                                     <Clock size={11} />
-                                    {new Date(event.date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                                    {formatEventTime(event.date, { hour: "2-digit", minute: "2-digit" })}
                                 </div>
 
                                 <div className="flex gap-2 pt-1">
                                     <button
-                                        onClick={() => handleFollow(event.id)}
+                                        onClick={() => event.isFollowing ? handleFollow(event.id) : setSelectedEvent(event)}
                                         className={`flex-1 py-2 rounded text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${event.isFollowing
                                             ? "bg-brand-primary text-white"
                                             : "bg-surface-subtle text-text-secondary hover:bg-brand-primary-light hover:text-brand-primary"}`}

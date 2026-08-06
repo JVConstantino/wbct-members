@@ -13,6 +13,11 @@ export async function GET(request, { params }) {
 
         const doc = await db.getDocument(DB_ID, COLS.users, id);
 
+        let applicationDocuments = null;
+        if (doc.applicationDocuments) {
+            try { applicationDocuments = JSON.parse(doc.applicationDocuments); } catch { applicationDocuments = null; }
+        }
+
         return NextResponse.json({
             success: true,
             user: {
@@ -25,6 +30,10 @@ export async function GET(request, { params }) {
                 specialty: doc.specialty,
                 role: doc.role,
                 allowMessagesFrom: doc.allowMessagesFrom || 'followers',
+                applicationType: doc.applicationType || 'MEMBER',
+                status: doc.status,
+                rejectionReason: doc.rejectionReason || '',
+                applicationDocuments,
             },
         });
     } catch (error) {

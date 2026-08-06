@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db, DB_ID, COLS, Query, listAll } from '@/lib/appwrite';
+import { createAuditLog } from '@/lib/audit-log';
+
+const DEFAULT_REJECTION_REASON = 'Your application did not meet the current membership criteria. Please contact us for details.';
 
 export async function GET(request) {
     try {
@@ -32,18 +35,27 @@ export async function GET(request) {
 
         return NextResponse.json({
             success: true,
-            members: docs.map(m => ({
-                id: m.$id,
-                name: m.name || 'Unnamed',
-                email: m.email,
-                image: m.image,
-                role: m.role,
-                status: m.status || 'PENDING',
-                crm: m.crm,
-                specialty: m.specialty,
-                bio: m.bio,
-                createdAt: m.createdAt,
-            })),
+            members: docs.map(m => {
+                let parsedDocs = null;
+                if (m.applicationDocuments) {
+                    try { parsedDocs = JSON.parse(m.applicationDocuments); } catch { parsedDocs = null; }
+                }
+                return {
+                    id: m.$id,
+                    name: m.name || 'Unnamed',
+                    email: m.email,
+                    image: m.image,
+                    role: m.role,
+                    status: m.status || 'PENDING',
+                    crm: m.crm,
+                    specialty: m.specialty,
+                    bio: m.bio,
+                    applicationType: m.applicationType || 'MEMBER',
+                    applicationDocuments: parsedDocs,
+                    rejectionReason: m.rejectionReason || '',
+                    createdAt: m.createdAt,
+                };
+            }),
         });
     } catch (error) {
         console.error('Error fetching members:', error);
@@ -59,7 +71,7 @@ export async function PUT(request) {
         }
 
         const body = await request.json();
-        const { id, ids, password, ...otherFields } = body;
+        const { id, ids, password, rejectionReason, ...otherFields } = body;
         const targetIds = Array.isArray(ids) && ids.length ? ids : (id ? [id] : []);
 
         if (!targetIds.length) {
@@ -77,10 +89,26 @@ export async function PUT(request) {
             updates.password = await bcrypt.hash(password, 10);
         }
 
+        let persistedRejectionReason = null;
+        if (updates.status === 'REJECTED') {
+            const trimmed = typeof rejectionReason === 'string' ? rejectionReason.trim() : '';
+            persistedRejectionReason = trimmed || DEFAULT_REJECTION_REASON;
+            updates.rejectionReason = persistedRejectionReason;
+        }
+
         if (Object.keys(updates).length > 0) {
             updates.updatedAt = new Date().toISOString();
             await Promise.all(targetIds.map(uid => db.updateDocument(DB_ID, COLS.users, uid, updates)));
         }
+
+        const action = updates.status === 'APPROVED' ? 'user_approved'
+            : updates.status === 'REJECTED' ? 'user_rejected'
+            : 'user_updated';
+        const auditDetails = { fields: Object.keys(updates) };
+        if (persistedRejectionReason) {
+            auditDetails.rejectionReason = persistedRejectionReason;
+        }
+        await createAuditLog(session.user.id, action, 'user', targetIds.join(','), auditDetails);
 
         return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {
@@ -111,6 +139,8 @@ export async function POST(request) {
             createdAt: now, updatedAt: now,
         });
 
+        await createAuditLog(session.user.id, 'user_created', 'user', id, { name, email, role: role || 'MEMBER' });
+
         return NextResponse.json({ success: true, id });
     } catch (error) {
         console.error('Error creating member:', error);
@@ -137,6 +167,8 @@ export async function DELETE(request) {
 
         // Delete users and their Appwrite documents
         await Promise.all(targetIds.map(uid => db.deleteDocument(DB_ID, COLS.users, uid).catch(() => {})));
+
+        await createAuditLog(session.user.id, 'user_deleted', 'user', targetIds.join(','), { count: targetIds.length });
 
         return NextResponse.json({ success: true, affected: targetIds.length });
     } catch (error) {

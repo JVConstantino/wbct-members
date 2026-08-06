@@ -5,6 +5,7 @@ import { Calendar, Clock, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatEventDateTime } from "@/lib/date-utils";
 
 export default function MemberMyEventsPage() {
     const [events, setEvents] = useState([]);
@@ -60,7 +61,7 @@ export default function MemberMyEventsPage() {
                             <p className="text-xs text-text-secondary line-clamp-2">{event.description || "No description"}</p>
                             <div className="text-xs text-text-muted flex items-center gap-1.5">
                                 <Clock size={12} />
-                                {new Date(event.date).toLocaleString("pt-BR")}
+                                {formatEventDateTime(event.date)}
                             </div>
                             {event.link && (
                                 <a href={event.link} target="_blank" rel="noreferrer" className="text-xs text-brand-primary font-semibold inline-flex items-center gap-1 hover:underline">

@@ -36,7 +36,7 @@ export async function GET(request, { params }) {
         });
     } catch (error) {
         if (error?.code === 404) {
-            return NextResponse.json({ success: false, error: 'Doctor not found' }, { status: 404 });
+            return NextResponse.json({ success: false, error: 'Member not found' }, { status: 404 });
         }
         console.error('Public Profile Fetch Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

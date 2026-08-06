@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import {
     ArrowLeft,
+    ArrowRight,
+    Bookmark,
     Image as ImageIcon,
     AlertCircle,
     CheckCircle2,
@@ -39,32 +41,31 @@ export default function EditPost() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [category, setCategory] = useState("OUTROS");
+    const [categoryId, setCategoryId] = useState("");
+    const [categories, setCategories] = useState([]);
     const [tagsInput, setTagsInput] = useState("");
-
-    const categories = [
-        "CARDIOLOGIA",
-        "CLINICA_MEDICA",
-        "ENDOCRINOLOGIA",
-        "INFECTOLOGIA",
-        "NEUROLOGIA",
-        "PEDIATRIA",
-        "URG_EMERGENCIA",
-        "OUTROS",
-    ];
+    const [isDraft, setIsDraft] = useState(false);
+    const [savingDraft, setSavingDraft] = useState(false);
 
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const res = await fetch(`/api/posts/${id}`);
-                const data = await res.json();
+                const [postRes, catRes] = await Promise.all([
+                    fetch(`/api/posts/${id}`),
+                    fetch("/api/admin/post-categories"),
+                ]);
+                const data = await postRes.json();
                 if (data.success) {
                     setTitle(data.post.title);
                     setContent(data.post.content);
                     setImage(data.post.image || "");
+                    setCategoryId(data.post.categoryId || "");
+                    setIsDraft(data.post.status === "DRAFT");
                 } else {
                     setError("Could not load the post.");
                 }
+                const catData = await catRes.json();
+                if (catData.success) setCategories(catData.categories);
             } catch {
                 setError("Connection error.");
             } finally {
@@ -85,33 +86,43 @@ export default function EditPost() {
             const data = await res.json();
             if (data.success) setImage(data.url);
         } catch (error) {
-            console.error("Upload falhou:", error);
+            console.error("Upload failed:", error);
             setError("Could not upload image.");
         } finally {
             setUploading(false);
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, { asDraft = false } = {}) => {
         e.preventDefault();
-        setLoading(true);
+        if (!title.trim()) {
+            setError("Please add a title before continuing.");
+            return;
+        }
         setError("");
+        if (asDraft) setSavingDraft(true); else setLoading(true);
         try {
             const tags = tagsInput
                 .split(",")
                 .map((t) => t.trim())
                 .filter(Boolean)
                 .slice(0, 8);
-            const metadataBlock = `\n<hr><p><strong>Category:</strong> ${category}</p>${tags.length ? `<p><strong>Tags:</strong> ${tags.join(", ")}</p>` : ""}`;
             const res = await fetch(`/api/posts/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, content: `${content}${metadataBlock}`, image, category, tags }),
+                body: JSON.stringify({
+                    title, content, image, categoryId, tags,
+                    ...(asDraft ? { status: "DRAFT" } : {}),
+                }),
             });
             const data = await res.json();
             if (data.success) {
-                setSuccess(true);
-                setTimeout(() => router.push("/member/my-posts"), 2000);
+                if (asDraft) {
+                    router.push("/member/my-posts");
+                } else {
+                    setSuccess(true);
+                    setTimeout(() => router.push("/member/my-posts"), 2000);
+                }
             } else {
                 setError(data.error || "Could not update post.");
             }
@@ -119,6 +130,7 @@ export default function EditPost() {
             setError("Server connection failed.");
         } finally {
             setLoading(false);
+            setSavingDraft(false);
         }
     };
 
@@ -191,8 +203,17 @@ export default function EditPost() {
                                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
                                     <FolderKanban size={13} /> Category
                                 </label>
-                                <select value={category} onChange={(e) => setCategory(e.target.value)} className="input">
-                                    {categories.map((c) => <option key={c} value={c}>{c.replaceAll("_", " ")}</option>)}
+                                <select
+                                    value={categoryId}
+                                    onChange={(e) => setCategoryId(e.target.value)}
+                                    className="input"
+                                    disabled={categories.length === 0}
+                                >
+                                    {categories.length === 0 ? (
+                                        <option value="">No categories available</option>
+                                    ) : categories.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="space-y-1.5">
@@ -202,7 +223,7 @@ export default function EditPost() {
                                 <input
                                     type="text"
                                     className="input"
-                                    placeholder="Ex: revisao, caso-clinico"
+                                    placeholder="Ex: review, case-report"
                                     value={tagsInput}
                                     onChange={(e) => setTagsInput(e.target.value)}
                                 />
@@ -212,20 +233,20 @@ export default function EditPost() {
                         <div className="space-y-1.5">
                             <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Cover Image</label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <label className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-md courser-pointer transition-all ${image ? "border-brand-primary/30 bg-brand-primary-light/20" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
+                                <label className={`flex flex-col items-center justify-center h-36 border-2 border-dashed rounded-md cursor-pointer transition-all ${image ? "border-brand-primary/30 bg-brand-primary-light/20" : "border-border-default hover:border-brand-primary hover:bg-surface-subtle"}`}>
                                     {uploading ? (
                                         <Spinner size="md" />
                                     ) : (
                                         <>
                                             <ImageIcon className="text-text-muted mb-1.5" size={28} />
-                                            <span className="text-xs font-semibold text-text-muted">Alterar Imagem</span>
+                                            <span className="text-xs font-semibold text-text-muted">Change Image</span>
                                         </>
                                     )}
                                     <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                                 </label>
                                 {image && (
                                     <div className="relative h-36 rounded-md overflow-hidden group">
-                                        <img src={image} className="w-full h-full object-cover" alt="Capa" />
+                                        <img src={image} className="w-full h-full object-cover" alt="Cover" />
                                         <button
                                             type="button"
                                             onClick={() => setImage("")}
@@ -239,17 +260,40 @@ export default function EditPost() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Content da Publication</label>
+                            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Post Content</label>
                             <TextEditor initialContent={content} onChange={setContent} />
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {loading ? <Spinner size="sm" /> : <><Save size={15} /> Save Changes</>}
-                        </button>
+                        <div className="flex flex-col-reverse sm:flex-row items-center gap-3 sm:justify-between">
+                            {isDraft ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleSubmit(e, { asDraft: true })}
+                                        disabled={loading || savingDraft}
+                                        className="btn-secondary w-full sm:w-auto justify-center flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {savingDraft ? <Spinner size="sm" /> : <><Bookmark size={15} /> Save draft</>}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleSubmit(e, { asDraft: false })}
+                                        disabled={loading || savingDraft}
+                                        className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {loading ? <Spinner size="sm" /> : <>Submit for review <ArrowRight size={15} /></>}
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {loading ? <Spinner size="sm" /> : <><Save size={15} /> Save Changes</>}
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
 

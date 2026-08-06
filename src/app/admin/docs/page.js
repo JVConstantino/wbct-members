@@ -27,8 +27,8 @@ const routeGroups = [
         routes: [
             ["Main feed", "/member"],
             ["Articles", "/member/articles"],
-            ["Doctor directory", "/member/directory"],
-            ["Doctor profile", "/member/doctor/[id]"],
+            ["Member directory", "/member/directory"],
+            ["Member profile", "/member/doctor/[id]"],
             ["Chat", "/member/chat"],
             ["Events", "/member/events"],
             ["My events", "/member/events/my-events"],
@@ -77,7 +77,7 @@ const sections = [
         content: (
             <div className="space-y-6">
                 <p className="text-text-secondary leading-relaxed">
-                    WBCT is a private medical community platform with two protected areas: the admin panel and the member portal. Administrators approve users, moderate content, manage events, publish webinars, monitor analytics, and configure operational settings. Members access the community feed, publish articles, attend events, watch webinars, connect with doctors, and manage their profile.
+                    WBCT is a private medical community platform with two protected areas: the admin panel and the member portal. Administrators approve users, moderate content, manage events, publish webinars, monitor analytics, and configure operational settings.                     Members access the community feed, publish articles, attend events, watch webinars, connect with members, and manage their profile.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-5 bg-surface-subtle rounded-xl border border-border-default">
@@ -140,7 +140,7 @@ const sections = [
                 <Guide title="Main Feed" icon={FileText}>Members read approved posts, open articles, and access quick links for events and webinars.</Guide>
                 <Guide title="Articles" icon={Book}>Browse community articles and search by topic or title.</Guide>
                 <Guide title="Create and Edit Posts" icon={FileText}>Members submit articles with a title, image, and rich text content. New and edited posts enter the review queue before publication.</Guide>
-                <Guide title="Doctor Directory" icon={Users}>Find doctors, open public profiles, follow professionals, request connections, and start conversations when permitted.</Guide>
+                <Guide title="Member Directory" icon={Users}>Find members, open public profiles, follow professionals, request connections, and start conversations when permitted.</Guide>
                 <Guide title="Events" icon={Calendar}>Browse the community calendar, confirm attendance, and track personal event participation.</Guide>
                 <Guide title="Webinars" icon={PlayCircle}>Open courses, watch lessons, and mark lessons as completed.</Guide>
                 <Guide title="Chat" icon={MessageSquare}>Send direct messages according to each member's privacy preferences.</Guide>

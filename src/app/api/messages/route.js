@@ -83,7 +83,7 @@ export async function POST(request) {
                 type: 'MESSAGE',
                 content: `New message from ${senderName}`,
                 relatedId: session.user.id,
-                isRead: false,
+                isRead: 0,
                 createdAt: now,
             });
         } catch (e) {

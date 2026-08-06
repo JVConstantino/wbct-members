@@ -40,11 +40,11 @@ export async function PUT() {
 
         const unread = await listAll(COLS.notifications, [
             Query.equal('userId', session.user.id),
-            Query.equal('isRead', false),
+            Query.equal('isRead', 0),
         ]);
 
         await Promise.all(
-            unread.map(d => db.updateDocument(DB_ID, COLS.notifications, d.$id, { isRead: true }))
+            unread.map(d => db.updateDocument(DB_ID, COLS.notifications, d.$id, { isRead: 1 }))
         );
 
         return NextResponse.json({ success: true });

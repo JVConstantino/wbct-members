@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const STORAGE_KEY = "wbct-cookie-consent-v1";
 
@@ -41,7 +42,10 @@ export default function CookieConsent() {
             <div className="max-w-5xl mx-auto bg-surface-card border border-border-default rounded-lg shadow-modal p-4">
                 <p className="text-sm font-semibold text-text-primary">Cookie Preferences</p>
                 <p className="text-xs text-text-secondary mt-1">
-                    We use cookies for security and platform functionality. You can accept, reject, or customize data sharing.
+                    We use cookies for security and platform functionality. You can accept, reject, or customize data sharing.{" "}
+                    <Link href="/politica-de-cookies" className="underline hover:text-brand-primary transition-colors">
+                        Cookie Policy
+                    </Link>
                 </p>
 
                 {customize && (

@@ -132,7 +132,7 @@ export default function AdminProfile() {
                             <h2 className="text-base font-bold text-text-primary mt-3">{profile.name}</h2>
                             <div className="mt-1">
                                 <Badge variant={profile.role === "ADMIN" ? "brand" : "info"}>
-                                    {profile.role === "ADMIN" ? "Administrator" : "Doctor"}
+                                    {profile.role === "ADMIN" ? "Administrator" : "Member"}
                                 </Badge>
                             </div>
 
@@ -143,7 +143,7 @@ export default function AdminProfile() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-text-secondary p-2.5 bg-surface-subtle rounded-md">
                                     <Briefcase size={13} />
-                                    <span className="truncate">{profile.crm || "CRM not provided"}</span>
+                                    <span className="truncate">{profile.crm || "Registration not provided"}</span>
                                 </div>
                             </div>
                         </div>
@@ -183,7 +183,7 @@ export default function AdminProfile() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-semibold text-text-secondary mb-1.5 block flex items-center gap-1">
-                                        <Briefcase size={11} /> CRM
+                                        <Briefcase size={11} /> Registration
                                     </label>
                                     <input
                                         type="text"

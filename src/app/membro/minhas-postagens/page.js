@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
     FileText,
     Eye,
-    MessageSquare,
     Clock,
     Edit3,
     Trash2,
@@ -24,6 +23,7 @@ const STATUS_MAP = {
     APPROVED: { label: "Approved", icon: CheckCircle2, classes: "bg-status-success-bg text-status-success border-status-success/20" },
     PENDING:  { label: "In Review", icon: Clock, classes: "bg-status-warning-bg text-status-warning border-status-warning/20" },
     REJECTED: { label: "Rejected", icon: XCircle, classes: "bg-status-error-bg text-status-error border-status-error/20" },
+    DRAFT:    { label: "Draft", icon: FileText, classes: "bg-surface-subtle text-text-muted border-border-default" },
 };
 
 function StatusBadge({ status }) {
@@ -44,8 +44,25 @@ export default function MyPosts() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [error, setError] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
+    const [categoryMap, setCategoryMap] = useState({});
 
-    useEffect(() => { fetchMyPosts(); }, []);
+    useEffect(() => {
+        fetchMyPosts();
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch("/api/admin/post-categories");
+                const data = await res.json();
+                if (data.success) {
+                    const map = {};
+                    for (const c of data.categories) map[c.id] = c.name;
+                    setCategoryMap(map);
+                }
+            } catch {
+                // category labels are optional
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const fetchMyPosts = async () => {
         try {
@@ -95,6 +112,7 @@ export default function MyPosts() {
 
     const FILTERS = [
         { key: "all", label: "All" },
+        { key: "draft", label: "Drafts" },
         { key: "approved", label: "Approved" },
         { key: "pending", label: "In Review" },
     ];
@@ -143,7 +161,7 @@ export default function MyPosts() {
                         <p className="text-xs opacity-80">{error}</p>
                     </div>
                     <button onClick={fetchMyPosts} className="btn-danger text-xs">
-                        Tentar Novamente
+                        Try Again
                     </button>
                 </div>
             )}
@@ -154,7 +172,7 @@ export default function MyPosts() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={14} />
                     <input
                         type="text"
-                        placeholder="Pesquisar em seus posts..."
+                        placeholder="Search your posts..."
                         className="input !pl-10"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -165,7 +183,7 @@ export default function MyPosts() {
                         <button
                             key={f.key}
                             onClick={() => setStatusFilter(f.key)}
-                            className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${statusFilter === f.key
+                            className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${statusFilter === f.key
                                 ? "bg-surface-card text-brand-primary shadow-sm"
                                 : "text-text-muted hover:text-text-secondary"}`}
                         >
@@ -178,8 +196,8 @@ export default function MyPosts() {
             {/* Lista de Posts */}
             {selectedIds.length > 0 && (
                 <div className="bg-status-warning-bg border border-status-warning/20 rounded-md p-3 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-status-warning">{selectedIds.length} selecionada(s)</span>
-                    <button onClick={handleBulkDelete} className="btn-danger text-xs">Delete selecionadas</button>
+                    <span className="text-xs font-semibold text-status-warning">{selectedIds.length} selected</span>
+                    <button onClick={handleBulkDelete} className="btn-danger text-xs">Delete selected</button>
                 </div>
             )}
 
@@ -225,6 +243,11 @@ export default function MyPosts() {
                             <div className="flex-1 space-y-2 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <StatusBadge status={post.status} />
+                                    {post.categoryId && categoryMap[post.categoryId] && (
+                                        <span className="bg-brand-primary-light text-brand-primary-active px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                            {categoryMap[post.categoryId]}
+                                        </span>
+                                    )}
                                     <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide flex items-center gap-1">
                                         <Clock size={10} /> {new Date(post.createdAt).toLocaleDateString("en-US")}
                                     </span>
@@ -236,12 +259,7 @@ export default function MyPosts() {
                                     <div className="flex items-center gap-1.5 text-text-muted text-xs">
                                         <Eye size={12} className="text-brand-primary" />
                                         <span className="font-semibold text-text-secondary">{post.views || 0}</span>
-                                        <span>visitas</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-text-muted text-xs">
-                                        <MessageSquare size={12} className="text-brand-primary" />
-                                        <span className="font-semibold text-text-secondary">{post.commentCount || 0}</span>
-                                        <span>comments</span>
+                                        <span>views</span>
                                     </div>
                                 </div>
                             </div>
@@ -253,19 +271,19 @@ export default function MyPosts() {
                                         href={`/member/posts/${post.id}`}
                                         className="flex-1 md:flex-none btn-secondary text-xs flex items-center justify-center gap-1.5"
                                     >
-                                        <Eye size={13} /> Ver
+                                        <Eye size={13} /> View
                                     </Link>
                                 )}
                                 <Link
                                     href={`/member/edit/post/${post.id}`}
-                                    className="flex-1 md:flex-none px-3 py-2 rounded bg-status-warning-bg text-status-warning hover:bg-status-warning hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
+                                    className="flex-1 md:flex-none px-3 py-2 rounded-md bg-status-warning-bg text-status-warning hover:bg-status-warning hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
                                     title="Edit"
                                 >
                                     <Edit3 size={13} /> Edit
                                 </Link>
                                 <button
                                     onClick={() => handleDelete(post.id)}
-                                    className="flex-1 md:flex-none px-3 py-2 rounded bg-status-error-bg text-status-error hover:bg-status-error hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
+                                    className="flex-1 md:flex-none px-3 py-2 rounded-md bg-status-error-bg text-status-error hover:bg-status-error hover:text-white transition-all text-xs font-semibold flex items-center justify-center gap-1.5"
                                     title="Delete"
                                 >
                                     <Trash2 size={13} /> Delete

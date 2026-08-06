@@ -159,7 +159,7 @@ export default function DoctorProfilePage({ params }) {
             <div className="text-center py-20">
                 <EmptyState
                     icon={User}
-                    title="Doctor not found"
+                    title="Member not found"
                     description="This profile is not available."
                     action={<Link href="/member/directory" className="btn-secondary text-sm">← Back to Directory</Link>}
                 />
@@ -190,7 +190,7 @@ export default function DoctorProfilePage({ params }) {
 
                     <div className="flex-1 text-center sm:text-left">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
-                            <h1 className="text-2xl font-display font-bold text-white">{doctor.name || "Doctor"}</h1>
+                            <h1 className="text-2xl font-display font-bold text-white">{doctor.name || "Member"}</h1>
                             <div className="flex items-center gap-2 justify-center">
                                 <button
                                     onClick={() => isFollowing && setShowChat(true)}
@@ -221,7 +221,7 @@ export default function DoctorProfilePage({ params }) {
 
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
                             <span className="flex items-center gap-1 bg-brand-primary/20 text-brand-primary px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider">
-                                <Stethoscope size={12} /> Doctor
+                                <Stethoscope size={12} /> Member
                             </span>
                             {doctor.stack && (
                                 <span className="flex items-center gap-1 bg-white/10 text-white/80 px-2.5 py-1 rounded text-xs font-semibold">
@@ -241,7 +241,7 @@ export default function DoctorProfilePage({ params }) {
                 {[
                     { icon: FileText, value: posts.length, label: "Articles" },
                     { icon: Stethoscope, value: doctor.stack || "—", label: "Specialty" },
-                    { icon: Award, value: doctor.crm || "—", label: "CRM" },
+                    { icon: Award, value: doctor.crm || "—", label: "Registration" },
                     { icon: Calendar, value: new Date(doctor.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }), label: "Member since" },
                 ].map(({ icon: Icon, value, label }) => (
                     <div key={label} className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 text-center">
@@ -260,7 +260,7 @@ export default function DoctorProfilePage({ params }) {
                 </div>
 
                 {posts.length === 0 ? (
-                    <EmptyState icon={FileText} title="No posts yet" description="This doctor has not published articles yet." />
+                    <EmptyState icon={FileText} title="No posts yet" description="This member has not published articles yet." />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {posts.map(post => (
@@ -308,7 +308,7 @@ export default function DoctorProfilePage({ params }) {
                                 <Avatar src={doctor.image} name={doctor.name} size="sm" />
                                 <div>
                                     <h3 className="font-semibold text-text-primary text-sm">{doctor.name}</h3>
-                                    <p className="text-[11px] text-text-muted">Doctor · {doctor.stack || doctor.specialty || "General"}</p>
+                                    <p className="text-[11px] text-text-muted">Member · {doctor.stack || doctor.specialty || "General"}</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowChat(false)} className="text-text-muted hover:text-text-primary transition-colors">

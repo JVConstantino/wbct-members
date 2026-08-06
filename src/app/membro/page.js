@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
-    Clock, MessageSquare, ArrowRight, Image as ImageIcon,
+    Clock, ArrowRight, Image as ImageIcon,
     Calendar, TrendingUp, PlayCircle, Sparkles, PlusSquare,
     Users, BookOpen
 } from "lucide-react";
@@ -16,20 +16,24 @@ export default function MemberHome() {
     const { data: session } = useSession();
     const [posts, setPosts] = useState([]);
     const [events, setEvents] = useState([]);
+    const [latestWebinar, setLatestWebinar] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [postsRes, eventsRes] = await Promise.all([
+                const [postsRes, eventsRes, coursesRes] = await Promise.all([
                     fetch("/api/posts?status=APPROVED"),
                     fetch("/api/events"),
+                    fetch("/api/courses"),
                 ]);
-                const postsData  = await postsRes.json();
-                const eventsData = await eventsRes.json();
+                const postsData   = await postsRes.json();
+                const eventsData  = await eventsRes.json();
+                const coursesData = await coursesRes.json();
                 if (postsData.success)  setPosts(postsData.posts);
                 if (eventsData.success) setEvents(eventsData.events.slice(0, 3));
+                if (coursesData.success) setLatestWebinar(coursesData.courses[0] || null);
             } catch (err) {
                 console.error("Failed to load data:", err);
             } finally {
@@ -42,7 +46,7 @@ export default function MemberHome() {
     const formatTime = (date) =>
         new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-    const firstName = session?.user?.name?.split(" ")[0] || "Doctor";
+    const firstName = session?.user?.name?.split(" ")[0] || "Member";
 
     return (
         <div className="space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
@@ -164,10 +168,6 @@ export default function MemberHome() {
                                             <span className="flex items-center gap-1 text-brand-primary text-[10px] font-semibold uppercase tracking-wide">
                                                 Read article <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                                             </span>
-                                            <div className="flex items-center gap-1.5 text-text-muted">
-                                                <MessageSquare size={13} />
-                                                <span className="text-[10px]">Comentar</span>
-                                            </div>
                                         </div>
                                     </div>
                                 </Link>
@@ -233,23 +233,33 @@ export default function MemberHome() {
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-2">
                                 <PlayCircle size={16} className="text-brand-primary-light" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Em destaque</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Em destaque</span>
                             </div>
-                            <h4 className="text-sm sm:text-base font-display font-bold leading-snug">
-                                Webinars — Cursos e Webinars Doctors
+                            <h4 className="text-sm sm:text-base font-display font-bold leading-snug line-clamp-2">
+                                {latestWebinar ? latestWebinar.title : "Recordings"}
                             </h4>
-                            <div className="aspect-video bg-surface-subtle rounded-md overflow-hidden relative group courser-pointer">
-                                <div className="absolute inset-0 flex items-center justify-center">
+                            <Link
+                                href={latestWebinar ? `/member/webinars/${latestWebinar.id}` : "/member/webinars"}
+                                className="aspect-video bg-surface-subtle rounded-md overflow-hidden relative group block"
+                            >
+                                {latestWebinar?.image ? (
+                                    <img
+                                        src={latestWebinar.image}
+                                        alt={latestWebinar.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                ) : null}
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
                                     <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
                                         <PlayCircle size={22} className="text-white" />
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                             <Link
                                 href="/member/webinars"
                                 className="flex items-center justify-between text-xs font-semibold text-brand-primary-light hover:text-white transition-colors group"
                             >
-                                <span>View all os courses</span>
+                                <span>View all recordings</span>
                                 <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
@@ -263,7 +273,7 @@ export default function MemberHome() {
                         <div className="relative z-10 space-y-3">
                             <h4 className="text-sm sm:text-base font-display font-bold">Invite a colleague</h4>
                             <p className="text-xs text-blue-100 leading-relaxed">
-                                The strength of the medical community is collaboration. Invite other doctors to the platform.
+                                The strength of the medical community is collaboration. Invite other members to the platform.
                             </p>
                             <button className="w-full py-2.5 bg-white text-brand-primary rounded-md font-semibold text-xs shadow-sm hover:bg-blue-50 transition-colors uppercase tracking-wide">
                                 Generate Invite Link

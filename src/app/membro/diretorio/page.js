@@ -44,7 +44,7 @@ export default function DiretorioPage() {
     return (
         <div className="space-y-6 pb-8">
             <PageHeader
-                title="Doctor Directory"
+                title="Member Directory"
                 subtitle="Connect with other professionals in the WBCT community"
             />
 
@@ -78,7 +78,7 @@ export default function DiretorioPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { label: "Registered Doctors", value: doctors.length },
+                    { label: "Registered Members", value: doctors.length },
                     { label: "Specialties",        value: specialties.length },
                     { label: "Results",            value: filtered.length },
                     { label: "Active Community",   value: "Online", highlight: true },
@@ -111,7 +111,7 @@ export default function DiretorioPage() {
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={Users}
-                    title="No doctors found"
+                    title="No members found"
                     description="Tente ajustar sua busca ou filtro de especialidade."
                 />
             ) : (
@@ -126,7 +126,7 @@ export default function DiretorioPage() {
                                 <Avatar src={doctor.image} name={doctor.name} size="lg" online />
                                 <div className="flex-1 min-w-0">
                                     <h3 className="text-sm font-semibold text-text-primary truncate group-hover:text-brand-primary transition-colors">
-                                        {doctor.name || "Doctor"}
+                                        {doctor.name || "Member"}
                                     </h3>
                                     {doctor.stack && (
                                         <div className="flex items-center gap-1.5 mt-0.5">

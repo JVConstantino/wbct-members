@@ -3,34 +3,22 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-    Users, FileText, Calendar, TrendingUp, Clock,
-    UserPlus, CheckCircle, BarChart3, Activity,
-    Wifi, ChevronRight, MoreHorizontal, XCircle, Eye
+    Users, Calendar, Clock,
+    UserPlus, CheckCircle, Activity,
+    Wifi, ChevronRight, MoreHorizontal, XCircle, Eye,
+    CalendarCheck
 } from "lucide-react";
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie
+    AreaChart, Area, Tooltip, ResponsiveContainer
 } from "recharts";
 import { Avatar }          from "@/components/ui/Avatar";
-import { Badge, PostStatusBadge, RoleBadge } from "@/components/ui/Badge";
+import { Badge, RoleBadge } from "@/components/ui/Badge";
 import { Skeleton }        from "@/components/ui/Skeleton";
 import { EmptyState }      from "@/components/ui/EmptyState";
 import { PageHeader }      from "@/components/ui/PageHeader";
 
-const TIME_RANGES = [
-    { key: "24h",  label: "24h" },
-    { key: "48h",  label: "48h" },
-    { key: "7d",   label: "7d" },
-    { key: "30d",  label: "30d" },
-    { key: "90d",  label: "90d" },
-];
-
 // ── Cores dos gráficos (tokens fixos para recharts) ──
-const CHART_BLUE    = "#2563eb";
-const CHART_BLUE_DIM = "rgba(37,99,235,0.12)";
-const CHART_SUCCESS = "#059669";
-const CHART_WARNING = "#d97706";
-const CHART_ERROR   = "#dc2626";
+const CHART_BLUE = "#2563eb";
 
 // ── Card de estatística ──
 function StatCard({ title, value, icon: Icon, accent = false, live = false, loading = false }) {
@@ -64,13 +52,11 @@ function StatCard({ title, value, icon: Icon, accent = false, live = false, load
 export default function AdminDashboard() {
     const [data, setData]       = useState(null);
     const [loading, setLoading] = useState(true);
-    const [timeRange, setTimeRange] = useState("7d");
     const [mounted, setMounted] = useState(false);
 
-    const fetchStats = async (range) => {
+    const fetchStats = async () => {
         try {
-            const r = range || timeRange;
-            const res    = await fetch(`/api/admin/stats?range=${r}`);
+            const res    = await fetch(`/api/admin/stats?range=7d`);
             const result = await res.json();
             if (result.success) setData(result);
         } catch (e) {
@@ -90,38 +76,17 @@ export default function AdminDashboard() {
         setMounted(true);
     }, []);
 
-    const handleRangeChange = (range) => {
-        setTimeRange(range);
-        setLoading(true);
-        fetchStats(range);
-    };
-
     const online       = data?.stats?.online       || 0;
     const totalMembers = data?.stats?.members       || 0;
     const pendingPosts = data?.stats?.pendingPosts  || 0;
     const pendingMembers = data?.stats?.pendingMembers || 0;
     const upcomingEvt  = data?.stats?.upcomingEvents || 0;
-
-    const postStatusData = [
-        { name: "Approveds", value: data?.stats?.approvedPosts || 0, color: CHART_SUCCESS },
-        { name: "Pendings", value: pendingPosts,                    color: CHART_WARNING },
-        { name: "Rejecteds", value: data?.stats?.rejectedPosts || 0, color: CHART_ERROR },
-    ];
+    const pendingEventConfirmations = data?.stats?.pendingEventConfirmations || 0;
 
     const loginHistory = (data?.trends?.dailyLogins || []).map(item => ({
         name:   new Date(item.date).toLocaleDateString("en-US", { weekday: "short" }),
         logins: item.count,
-    })).concat(
-        data?.trends?.dailyLogins?.length ? [] :
-        ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((n, i) => ({ name: n, logins: [12,19,15,22,30,18,10][i] }))
-    );
-
-    const growthData = data?.trends?.monthlyGrowth || [
-        { month: "Jan", count: 5 },
-        { month: "Fev", count: 8 },
-        { month: "Mar", count: 12 },
-        { month: "Abr", count: 15 },
-    ];
+    }));
 
     const handlePostAction = async (postId, status) => {
         await fetch("/api/posts", {
@@ -130,7 +95,7 @@ export default function AdminDashboard() {
             body:    JSON.stringify({ id: postId, status }),
         });
         // Recarrega dados
-        const res = await fetch("/api/admin/stats");
+        const res = await fetch("/api/admin/stats?range=7d");
         const result = await res.json();
         if (result.success) setData(result);
     };
@@ -219,50 +184,97 @@ export default function AdminDashboard() {
                 )}
             </div>
 
-            {/* ── Filtro de período ── */}
-            <div className="flex flex-wrap items-center gap-1 bg-surface-subtle p-1 rounded-md w-fit max-w-full">
-                {TIME_RANGES.map(r => (
-                    <button
-                        key={r.key}
-                        onClick={() => handleRangeChange(r.key)}
-                        className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
-                            timeRange === r.key
-                                ? "bg-surface-card text-brand-primary shadow-sm"
-                                : "text-text-muted hover:text-text-secondary"
-                        }`}
-                    >
-                        {r.label}
-                    </button>
-                ))}
+            {/* ── Confirmações de evento pendentes ── */}
+            <div className="card p-0 overflow-hidden space-y-0">
+                <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <CalendarCheck size={15} className="text-status-warning" />
+                        <h3 className="font-display text-sm font-semibold text-text-primary">Pending Event Confirmations</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {pendingEventConfirmations > 0 && (
+                            <Badge variant="warning" dot>{pendingEventConfirmations} pending{pendingEventConfirmations !== 1 ? "s" : ""}</Badge>
+                        )}
+                        <Link
+                            href="/admin/events"
+                            className="text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 transition-colors"
+                        >
+                            View all <ChevronRight size={13} />
+                        </Link>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="p-4">
+                        <Skeleton variant="table" lines={2} />
+                    </div>
+                ) : !data?.pendingEventConfirmations?.length ? (
+                    <EmptyState
+                        icon={<CheckCircle size={22} />}
+                        title="No pending confirmations"
+                        description="All event follow requests have been reviewed."
+                    />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[480px] text-sm">
+                            <thead>
+                                <tr className="bg-surface-section">
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Event</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Member</th>
+                                    <th className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Requested At</th>
+                                    <th className="text-right text-[10px] font-bold text-text-muted uppercase tracking-wide px-4 py-2.5">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.pendingEventConfirmations.map((p) => (
+                                    <tr key={`${p.eventId}_${p.userId}`} className="border-t border-border-subtle hover:bg-surface-subtle transition-colors">
+                                        <td className="px-4 py-3">
+                                            <span className="font-medium text-text-primary truncate max-w-[220px] block">{p.eventTitle}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-xs text-text-muted truncate max-w-[220px] block">{p.memberName}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-xs text-text-muted">{new Date(p.updatedAt).toLocaleDateString("en-US")}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <Link
+                                                href="/admin/events"
+                                                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-primary-hover"
+                                            >
+                                                Review
+                                                <ChevronRight size={12} />
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
-            {/* ── Gráficos ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                {/* Atividade semanal */}
-                <div className="card lg:col-span-2 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <Activity size={16} className="text-brand-primary" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Login Activity</h3>
-                        <span className="ml-auto text-xs text-text-muted">Selected period</span>
+            {/* ── Atividade de login (últimos 7 dias) ── */}
+            <div className="card flex items-center gap-4 py-4">
+                <div className="flex items-center gap-2 shrink-0">
+                    <div className="p-2 rounded-md bg-brand-primary-light">
+                        <Activity size={15} className="text-brand-primary" />
                     </div>
-                    <div className="h-[200px]">
-                        {mounted ? (
-                        <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={200}>
+                    <div>
+                        <p className="text-sm font-semibold text-text-primary">Login Activity</p>
+                        <p className="text-[10px] text-text-muted uppercase tracking-wide">Last 7 days</p>
+                    </div>
+                </div>
+                <div className="flex-1 h-12 min-w-0">
+                    {mounted && loginHistory.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={120} minHeight={40}>
                             <AreaChart data={loginHistory}>
                                 <defs>
-                                    <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%"  stopColor={CHART_BLUE} stopOpacity={0.2} />
+                                    <linearGradient id="blueGradSpark" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%"  stopColor={CHART_BLUE} stopOpacity={0.25} />
                                         <stop offset="95%" stopColor={CHART_BLUE} stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false} tickLine={false}
-                                    tick={{ fontSize: 11, fontWeight: 600, fill: "var(--text-muted)" }}
-                                />
-                                <YAxis hide />
                                 <Tooltip
                                     contentStyle={{
                                         borderRadius: "8px",
@@ -272,126 +284,32 @@ export default function AdminDashboard() {
                                         fontSize: "12px",
                                         boxShadow: "var(--shadow-card)",
                                     }}
-                                    courser={{ stroke: CHART_BLUE, strokeWidth: 1, strokeDasharray: "4 2" }}
+                                    labelFormatter={() => ""}
                                 />
                                 <Area
                                     type="monotone" dataKey="logins"
                                     stroke={CHART_BLUE} strokeWidth={2}
-                                    fill="url(#blueGrad)"
-                                    dot={{ fill: CHART_BLUE, r: 3, strokeWidth: 0 }}
-                                    activeDot={{ r: 5, fill: CHART_BLUE }}
+                                    fill="url(#blueGradSpark)"
+                                    dot={false}
+                                    activeDot={{ r: 3, fill: CHART_BLUE }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
-                        ) : <Skeleton variant="stat" className="h-full w-full" />}
-                    </div>
-                </div>
-
-                {/* Status de posts */}
-                <div className="card space-y-4">
-                    <div className="flex items-center gap-2">
-                        <FileText size={16} className="text-brand-primary" />
-                        <h3 className="font-display text-sm font-semibold text-text-primary">Post status</h3>
-                    </div>
-                    {loading ? (
-                        <Skeleton variant="stat" />
                     ) : (
-                        <>
-                            <div className="h-[160px]">
-                                {mounted ? (
-                                <ResponsiveContainer width="100%" height="100%" minWidth={220} minHeight={160}>
-                                    <PieChart>
-                                        <Pie
-                                            data={postStatusData} cx="50%" cy="50%"
-                                            innerRadius={45} outerRadius={65}
-                                            paddingAngle={4} dataKey="value"
-                                        >
-                                            {postStatusData.map((e, i) => (
-                                                <Cell key={i} fill={e.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{
-                                                borderRadius: "8px",
-                                                border: "1px solid var(--border-default)",
-                                                background: "var(--surface-card)",
-                                                fontSize: "12px",
-                                            }}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                ) : <Skeleton variant="stat" className="h-full w-full" />}
-                            </div>
-                            <div className="space-y-1.5">
-                                {postStatusData.map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                                            <span className="text-text-secondary">{item.name}</span>
-                                        </div>
-                                        <span className="font-bold text-text-primary">{item.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </>
+                        <div className="h-full flex items-center text-xs text-text-muted">No logins in this period yet.</div>
                     )}
                 </div>
+                <Link
+                    href="/admin/analytics"
+                    className="text-xs font-semibold text-brand-primary hover:text-brand-primary-hover flex items-center gap-1 transition-colors shrink-0"
+                >
+                    Full analytics <ChevronRight size={13} />
+                </Link>
             </div>
 
-            {/* Growth and recent members */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                {/* Monthly growth */}
-                <div className="bg-brand-strong rounded-lg p-5 space-y-4 border border-brand-strong">
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                            <BarChart3 size={16} className="text-white" />
-                            <h3 className="font-display text-sm font-semibold text-white">Growth</h3>
-                        </div>
-                        <span className="text-[10px] px-2 py-1 rounded-full bg-white/10 text-white font-semibold uppercase tracking-wide">
-                            monthly
-                        </span>
-                    </div>
-                    <div className="h-[110px]">
-                        {mounted ? (
-                        <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={110}>
-                            <BarChart data={growthData} barSize={14}>
-                                <Bar dataKey="count" radius={[3, 3, 0, 0]}>
-                                    {growthData.map((_, i) => (
-                                        <Cell
-                                            key={i}
-                                            fill={i === growthData.length - 1 ? CHART_BLUE : "rgba(255,255,255,0.72)"}
-                                        />
-                                    ))}
-                                </Bar>
-                                <XAxis
-                                    dataKey="month"
-                                    tick={{ fontSize: 10, fill: "rgba(255,255,255,0.78)", fontWeight: 600 }}
-                                    axisLine={false} tickLine={false}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                        ) : <Skeleton variant="stat" className="h-full w-full" />}
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide">
-                        <span className="inline-flex items-center gap-1 text-white"><span className="w-2 h-2 rounded-full bg-white" /> previous months</span>
-                        <span className="inline-flex items-center gap-1 text-primary-200"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_BLUE }} /> current month</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                        <div>
-                            <p className="text-2xl font-display font-bold text-white">
-                                +{growthData[growthData.length - 1]?.count || 0}
-                            </p>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
-                                new this month
-                            </p>
-                        </div>
-                        <TrendingUp size={20} className="text-white" />
-                    </div>
-                </div>
-
-                {/* Members recentes */}
-                <div className="card lg:col-span-2 p-0 overflow-hidden space-y-0">
+            {/* Members recentes */}
+            <div className="grid grid-cols-1 gap-4">
+                <div className="card p-0 overflow-hidden space-y-0">
                     <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <UserPlus size={15} className="text-brand-primary" />

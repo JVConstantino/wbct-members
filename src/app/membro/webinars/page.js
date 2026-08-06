@@ -43,7 +43,7 @@ export default function WebinarsPage() {
                             </div>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-brand-primary">Webinars</span>
                         </div>
-                        <h2 className="text-xl font-display font-bold text-text-primary">Cursos e Webinars</h2>
+                        <h2 className="text-xl font-display font-bold text-text-primary">Recordings</h2>
                         <p className="text-sm text-text-secondary mt-0.5">
                             Improve your medical practice with exclusive content for healthcare professionals.
                         </p>

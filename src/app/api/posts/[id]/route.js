@@ -59,6 +59,7 @@ export async function GET(request, { params }) {
             post: {
                 ...post,
                 id: post.$id,
+                categoryId: post.categoryId || null,
                 author,
                 comments,
             },
@@ -77,7 +78,7 @@ export async function PATCH(request, { params }) {
         }
 
         const id = (await params).id;
-        const { title, content, image } = await request.json();
+        const { title, content, image, categoryId, status: requestedStatus } = await request.json();
 
         const post = await db.getDocument(DB_ID, COLS.posts, id);
 
@@ -85,13 +86,20 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
         }
 
-        const status = session.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING';
+        // A member may explicitly keep saving as a draft; any other requested
+        // status is ignored so a member can't self-approve by forging the field.
+        const status = requestedStatus === 'DRAFT'
+            ? 'DRAFT'
+            : (session.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING');
 
-        await db.updateDocument(DB_ID, COLS.posts, id, {
+        const updates = {
             title, content, image,
             status,
             updatedAt: new Date().toISOString(),
-        });
+        };
+        if (categoryId !== undefined) updates.categoryId = categoryId || null;
+
+        await db.updateDocument(DB_ID, COLS.posts, id, updates);
 
         return NextResponse.json({ success: true });
     } catch (error) {

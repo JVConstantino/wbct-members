@@ -11,25 +11,37 @@ import {
     Save,
     Camera,
     Bell,
-    FileText
+    FileText,
+    GraduationCap,
+    UserPlus2,
+    Upload,
+    RefreshCw,
+    Users,
+    ShieldCheck
 } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar } from "@/components/ui/Avatar";
 import { Spinner } from "@/components/ui/Skeleton";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, statusToVariant } from "@/components/ui/Badge";
+import { DocumentsList } from "@/components/ui/DocumentsList";
 
 const TABS = [
     { id: "dados", icon: User, label: "Personal Details" },
+    { id: "aplicacao", icon: FileText, label: "My Application" },
     { id: "seguranca", icon: Lock, label: "Security & Password" },
     { id: "notificacoes", icon: Bell, label: "Notifications" },
-    { id: "especialidades", icon: Stethoscope, label: "Specialties" },
+    { id: "rede", icon: Users, label: "Network" },
+    { id: "privacidade", icon: ShieldCheck, label: "Privacy & Data" },
 ];
 
-const ESPECIALIDADES = [
-    "Cardiologia", "Pediatria", "Dermatologia", "Ortopedia",
-    "Ginecologia", "Neurologia", "Oftalmologia", "Psiquiatria",
-    "Oncologia", "Endocrinologia", "Geriatria", "Urologia"
-];
+const STATUS_LABELS = { PENDING: "Pending", APPROVED: "Active", REJECTED: "Rejected" };
+
+function applicationTypeBadge(type) {
+    if (type === "ACADEMIC_AFFILIATE") {
+        return <Badge variant="brand" className="gap-1"><GraduationCap size={9} />Academic Affiliate</Badge>;
+    }
+    return <Badge variant="info" className="gap-1"><UserPlus2 size={9} />Member</Badge>;
+}
 
 export default function MemberProfile() {
     const { updateUser } = useUser();
@@ -45,6 +57,8 @@ export default function MemberProfile() {
     const [connectionRequests, setConnectionRequests] = useState([]);
     const [connections, setConnections] = useState([]);
     const [deletePassword, setDeletePassword] = useState("");
+    const [applicationDocuments, setApplicationDocuments] = useState(null);
+    const [docUploading, setDocUploading] = useState({});
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -56,6 +70,7 @@ export default function MemberProfile() {
                     const userData = await userRes.json();
                     if (userData.success) {
                         setUser(userData.user);
+                        setApplicationDocuments(userData.user.applicationDocuments || null);
                         setFormData({
                             name: userData.user.name || "",
                             email: userData.user.email || "",
@@ -107,6 +122,39 @@ export default function MemberProfile() {
             console.error("Upload failed:", error);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleReplaceDocument = async (docKey, file, currentUrl) => {
+        if (!file) return;
+        setDocUploading((prev) => ({ ...prev, [docKey]: true }));
+        try {
+            const isPicture = docKey === "picture";
+            const folderMatch = typeof currentUrl === "string" ? currentUrl.match(/\/uploads\/applications\/([^/]+)\//) : null;
+
+            const uploadData = new FormData();
+            uploadData.append("file", file);
+            uploadData.append("kind", isPicture ? "image" : "doc");
+            if (folderMatch) uploadData.append("applicationId", folderMatch[1]);
+
+            const uploadRes = await fetch("/api/upload?context=application", { method: "POST", body: uploadData });
+            const uploadResult = await uploadRes.json();
+            if (!uploadResult.success) throw new Error(uploadResult.error || "Upload failed.");
+
+            const patchRes = await fetch("/api/users/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ docKey, url: uploadResult.url }),
+            });
+            const patchResult = await patchRes.json();
+            if (!patchResult.success) throw new Error(patchResult.error || "Could not update the document.");
+
+            setApplicationDocuments(patchResult.applicationDocuments);
+        } catch (err) {
+            console.error("Failed to replace document:", err);
+            alert(err.message || "Could not update the document.");
+        } finally {
+            setDocUploading((prev) => ({ ...prev, [docKey]: false }));
         }
     };
 
@@ -187,7 +235,7 @@ export default function MemberProfile() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 pb-8 px-3 sm:px-0">
             {/* Header / Capa */}
             <div className="relative rounded-lg bg-brand-strong overflow-hidden shadow-card-hover">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,#2563eb33,transparent_60%)]" />
@@ -212,7 +260,7 @@ export default function MemberProfile() {
                                 </div>
                             )}
                         </div>
-                        <label className="absolute -bottom-1 -right-1 p-2 bg-brand-primary text-white rounded-md shadow-sm hover:scale-105 transition-transform courser-pointer">
+                        <label className="absolute -bottom-1 -right-1 p-2 bg-brand-primary text-white rounded-md shadow-sm hover:scale-105 transition-transform cursor-pointer">
                             <Camera size={14} />
                             <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                         </label>
@@ -223,7 +271,7 @@ export default function MemberProfile() {
                         <h1 className="text-xl sm:text-2xl font-display font-bold !text-white break-words">{formData.name || "Your Name"}</h1>
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1">
                             <span className="flex items-center gap-1 bg-brand-primary/20 text-white px-2.5 py-1 rounded text-xs font-bold uppercase">
-                                <Stethoscope size={11} /> Doctor
+                                <Stethoscope size={11} /> Member
                             </span>
                             {formData.specialty && (
                                 <span className="!text-white text-xs">{formData.specialty}</span>
@@ -233,15 +281,15 @@ export default function MemberProfile() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-5">
                 {/* Sidebar de Navegação */}
-                <div className="space-y-3">
-                    <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-2 space-y-1 overflow-x-auto lg:overflow-visible">
+                <div className="lg:w-64 shrink-0 space-y-3">
+                    <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-2 space-y-1 overflow-x-auto lg:overflow-visible flex lg:block gap-1 lg:gap-0">
                         {TABS.map(item => (
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full min-w-[220px] lg:min-w-0 flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md font-semibold text-sm transition-all ${activeTab === item.id
+                                className={`w-full min-w-[200px] lg:min-w-0 flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-md font-semibold text-sm transition-all shrink-0 ${activeTab === item.id
                                     ? "bg-brand-primary text-white shadow-button-primary"
                                     : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"}`}
                             >
@@ -260,7 +308,7 @@ export default function MemberProfile() {
                 </div>
 
                 {/* Área de Content */}
-                <div className="lg:col-span-2">
+                <div className="flex-1 min-w-0">
                     {/* Tab: Dados Pessoais */}
                     {activeTab === "dados" && (
                         <form onSubmit={handleSave} className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
@@ -281,7 +329,7 @@ export default function MemberProfile() {
                                     <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Contact Email</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
-                                        <input name="email" className="input !pl-10 opacity-60 courser-not-allowed" value={formData.email} readOnly />
+                                        <input name="email" className="input !pl-10 opacity-60 cursor-not-allowed" value={formData.email} readOnly />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -292,10 +340,10 @@ export default function MemberProfile() {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">CRM / Registration</label>
+                                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Registration</label>
                                     <div className="relative">
                                         <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={15} />
-                                        <input name="crm" className="input !pl-10" placeholder="Ex: CRM/SP 123456" value={formData.crm} onChange={handleChange} />
+                                        <input name="crm" className="input !pl-10" placeholder="Ex: Registration/SP 123456" value={formData.crm} onChange={handleChange} />
                                     </div>
                                 </div>
                             </div>
@@ -312,6 +360,77 @@ export default function MemberProfile() {
                                 {saving ? <Spinner size="sm" /> : <><Save size={15} /> Save Changes</>}
                             </button>
                         </form>
+                    )}
+
+                    {/* Tab: My Application */}
+                    {activeTab === "aplicacao" && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+                            <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-4">
+                                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                    <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
+                                    Application Status
+                                </h3>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {user?.status && (
+                                        <Badge variant={statusToVariant[user.status] || "neutral"}>
+                                            {STATUS_LABELS[user.status] || user.status}
+                                        </Badge>
+                                    )}
+                                    {applicationTypeBadge(user?.applicationType)}
+                                </div>
+
+                                {user?.status === "PENDING" && (
+                                    <p className="text-xs text-text-secondary leading-relaxed">
+                                        Your application is under review by the WBCT team. You will be notified as soon as it is validated.
+                                    </p>
+                                )}
+
+                                {user?.status === "REJECTED" && (
+                                    <div className="p-3 rounded-md bg-status-error-bg border border-status-error/20 space-y-1">
+                                        <p className="text-xs font-semibold text-status-error">Application rejected</p>
+                                        <p className="text-xs text-text-secondary leading-relaxed">
+                                            {user.rejectionReason || "No reason was provided. Please contact support for details."}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {user?.status === "APPROVED" && (
+                                    <p className="text-xs text-text-secondary leading-relaxed">
+                                        Your application has been approved. Below are the documents you submitted during registration.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-4">
+                                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                    <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
+                                    Submitted Documents
+                                </h3>
+
+                                <DocumentsList
+                                    docs={applicationDocuments}
+                                    applicationType={user?.applicationType}
+                                    renderExtra={(entry) => (
+                                        <label className={`inline-flex items-center gap-1 text-[11px] font-semibold shrink-0 cursor-pointer ${docUploading[entry.key] ? "text-text-muted" : "text-brand-primary hover:underline"}`}>
+                                            {docUploading[entry.key] ? (
+                                                <RefreshCw size={11} className="animate-spin" />
+                                            ) : (
+                                                <Upload size={11} />
+                                            )}
+                                            Replace
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                disabled={docUploading[entry.key]}
+                                                accept={entry.key === "picture" ? "image/*" : ".pdf,.doc,.docx"}
+                                                onChange={(e) => handleReplaceDocument(entry.key, e.target.files?.[0], entry.url)}
+                                            />
+                                        </label>
+                                    )}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Tab: Segurança */}
@@ -358,7 +477,7 @@ export default function MemberProfile() {
                                 Notification Preferences
                             </h3>
 
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                                 {[
                                     { key: "emailPosts", label: "New Posts", desc: "Receive email when new posts are published" },
                                     { key: "emailEvents", label: "Events & Webinars", desc: "Notifications about events and live classes" },
@@ -395,7 +514,21 @@ export default function MemberProfile() {
                                 </select>
                             </div>
 
-                            <div className="space-y-2 pt-2 border-t border-border-subtle">
+                            <button onClick={handleSave} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2" type="button">
+                                <Save size={15} /> Save Preferences
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Tab: Network */}
+                    {activeTab === "rede" && (
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
+                                Network
+                            </h3>
+
+                            <div className="space-y-2">
                                 <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Connection requests</p>
                                 {connectionRequests.length === 0 ? (
                                     <p className="text-xs text-text-muted">No pending requests.</p>
@@ -413,7 +546,7 @@ export default function MemberProfile() {
                                 ))}
                             </div>
 
-                            <div className="space-y-2 pt-2 border-t border-border-subtle">
+                            <div className="space-y-2 pt-3 border-t border-border-subtle">
                                 <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">My connections</p>
                                 {connections.length === 0 ? (
                                     <p className="text-xs text-text-muted">You do not have connections yet.</p>
@@ -428,16 +561,30 @@ export default function MemberProfile() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    )}
 
-                            <button onClick={handleSave} className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2" type="button">
-                                <Save size={15} /> Save Preferences
-                            </button>
+                    {/* Tab: Privacy & Data */}
+                    {activeTab === "privacidade" && (
+                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
+                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
+                                Privacy & Data (LGPD / GDPR)
+                            </h3>
 
-                            <div className="pt-3 border-t border-border-subtle space-y-3">
-                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">LGPD / GDPR</p>
-                                <div className="flex flex-wrap gap-2">
-                                    <button type="button" onClick={handleExportData} className="btn-secondary text-xs">Download my data (JSON)</button>
-                                </div>
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Your data</p>
+                                <p className="text-xs text-text-secondary leading-relaxed">
+                                    Download a copy of all personal data associated with your account.
+                                </p>
+                                <button type="button" onClick={handleExportData} className="btn-secondary text-xs">Download my data (JSON)</button>
+                            </div>
+
+                            <div className="space-y-2 pt-3 border-t border-border-subtle">
+                                <p className="text-xs font-semibold text-status-error uppercase tracking-wider">Danger zone</p>
+                                <p className="text-xs text-text-secondary leading-relaxed">
+                                    Permanently delete your account and all associated data. This action cannot be undone.
+                                </p>
                                 <div className="space-y-2 w-full sm:max-w-sm">
                                     <input
                                         type="password"
@@ -449,34 +596,6 @@ export default function MemberProfile() {
                                     <button type="button" onClick={handleDeleteAccount} className="btn-danger text-xs">Delete my account (Hard Delete)</button>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Tab: Specialties */}
-                    {activeTab === "especialidades" && (
-                        <div className="bg-surface-card rounded-lg border border-border-default shadow-card p-4 sm:p-6 space-y-5">
-                            <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                                <div className="w-0.5 h-5 bg-brand-primary rounded-full" />
-                                My Specialties
-                            </h3>
-
-                            <p className="text-xs text-text-secondary">Select the specialty areas you practice or are interested in:</p>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                                {ESPECIALIDADES.map(spec => (
-                                    <button
-                                        key={spec}
-                                        type="button"
-                                        className="px-3 py-2.5 rounded-md border border-border-default text-xs font-semibold text-text-secondary hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary-light transition-all"
-                                    >
-                                        {spec}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <button className="btn-primary w-full sm:w-auto justify-center flex items-center gap-2">
-                                <Save size={15} /> Save Specialties
-                            </button>
                         </div>
                     )}
                 </div>

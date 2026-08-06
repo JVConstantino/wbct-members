@@ -236,11 +236,11 @@ export default function CoursesManagement() {
         return (
             <div className="space-y-5">
                 <PageHeader
-                    title="Cursos e Webinars"
+                    title="Recordings Management"
                     subtitle="Manage webinar content"
                     actions={
                         <Button variant="primary" size="sm" icon={<Plus size={14} />} onClick={() => openCourseModal()}>
-                            New Course
+                            New Recording
                         </Button>
                     }
                 />
@@ -295,10 +295,10 @@ export default function CoursesManagement() {
                                         </div>
                                     )}
                                     <div className="absolute top-2 right-2 flex gap-1.5">
-                                        <button onClick={() => openCourseModal(course)} className="p-1.5 bg-surface-card/90 rounded text-text-secondary hover:text-brand-primary shadow-sm transition-colors">
+                                        <button onClick={() => openCourseModal(course)} className="p-1.5 bg-surface-card/90 rounded-md text-text-secondary hover:text-brand-primary shadow-sm transition-colors">
                                             <Edit size={14} />
                                         </button>
-                                        <button onClick={() => handleDeleteCourse(course.id)} className="p-1.5 bg-surface-card/90 rounded text-status-error hover:bg-status-error-bg shadow-sm transition-colors">
+                                        <button onClick={() => handleDeleteCourse(course.id)} className="p-1.5 bg-surface-card/90 rounded-md text-status-error hover:bg-status-error-bg shadow-sm transition-colors">
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -427,10 +427,10 @@ export default function CoursesManagement() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openLessonModal(lesson)} className="p-1.5 rounded text-text-secondary hover:text-brand-primary hover:bg-brand-primary-light transition-colors" title="Edit">
+                                    <button onClick={() => openLessonModal(lesson)} className="p-1.5 rounded-md text-text-secondary hover:text-brand-primary hover:bg-brand-primary-light transition-colors" title="Edit">
                                         <Edit size={15} />
                                     </button>
-                                    <button onClick={() => handleDeleteLesson(lesson.id)} className="p-1.5 rounded text-status-error hover:bg-status-error-bg transition-colors" title="Delete">
+                                    <button onClick={() => handleDeleteLesson(lesson.id)} className="p-1.5 rounded-md text-status-error hover:bg-status-error-bg transition-colors" title="Delete">
                                         <Trash2 size={15} />
                                     </button>
                                 </div>
@@ -455,7 +455,7 @@ export default function CoursesManagement() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">Video URL (YouTube)</label>
+                        <label className="block text-xs font-semibold text-text-secondary mb-1.5">YouTube Video URL</label>
                         <div className="relative">
                             <Video className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                             <input type="url" className="input !pl-10" placeholder="https://www.youtube.com/watch?v=..." value={lessonForm.videoUrl} onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })} required />

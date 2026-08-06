@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, CheckCircle, XCircle, Trash2, Eye, Clock, Search } from "lucide-react";
+import Link from "next/link";
+import { FileText, CheckCircle, XCircle, Trash2, Eye, Clock, Search, FolderKanban } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -36,6 +37,21 @@ export default function PostsPage() {
     const [previewLoading, setPreviewLoading] = useState(false);
     const [previewPost, setPreviewPost] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [categoryMap, setCategoryMap] = useState({});
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/admin/post-categories");
+            const data = await res.json();
+            if (data.success) {
+                const map = {};
+                for (const c of data.categories) map[c.id] = c.name;
+                setCategoryMap(map);
+            }
+        } catch {
+            // optional
+        }
+    };
 
     const fetchPosts = async () => {
         try {
@@ -54,6 +70,7 @@ export default function PostsPage() {
 
     useEffect(() => { fetchPosts(); }, [filter]);
     useEffect(() => { setSelectedIds([]); }, [filter, search]);
+    useEffect(() => { fetchCategories(); }, []);
 
     const updateStatus = async (id, status) => {
         const res = await fetch("/api/posts", {
@@ -112,17 +129,6 @@ export default function PostsPage() {
         }
     };
 
-    const handleDeleteComment = async (commentId) => {
-        if (!confirm("Delete this comment?")) return;
-        const res = await fetch(`/api/comments/${commentId}`, { method: "DELETE" });
-        const data = await res.json();
-        if (data.success && previewPost) {
-            const refreshed = await fetch(`/api/posts/${previewPost.id}`);
-            const postData = await refreshed.json();
-            if (postData.success) setPreviewPost(postData.post);
-        }
-    };
-
     const filtered = posts.filter(p =>
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.author?.name.toLowerCase().includes(search.toLowerCase())
@@ -175,6 +181,15 @@ export default function PostsPage() {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
+
+                <Link
+                    href="/admin/posts/categories"
+                    className="btn-secondary text-xs flex items-center gap-1.5 whitespace-nowrap"
+                    title="Manage post categories"
+                >
+                    <FolderKanban size={13} />
+                    Categories
+                </Link>
             </div>
 
             {error && (
@@ -219,7 +234,7 @@ export default function PostsPage() {
                         <table className="w-full min-w-[600px]">
                             <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
-                                    {["select", "Title", "Autor", "Data", "Status", ""].map((h, i) => (
+                                    {["select", "Title", "Category", "Autor", "Data", "Status", ""].map((h, i) => (
                                         <th key={i} className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wider px-4 py-3">
                                             {h === "select" ? (
                                                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
@@ -256,6 +271,16 @@ export default function PostsPage() {
                                                     {post.title}
                                                 </p>
                                             </div>
+                                        </td>
+                                        {/* Category */}
+                                        <td className="px-4 py-3 hidden lg:table-cell">
+                                            {post.categoryId && categoryMap[post.categoryId] ? (
+                                                <span className="bg-brand-primary-light text-brand-primary-active px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                                    {categoryMap[post.categoryId]}
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] text-text-muted">—</span>
+                                            )}
                                         </td>
                                         {/* Autor */}
                                         <td className="px-4 py-3 hidden md:table-cell">
@@ -342,6 +367,11 @@ export default function PostsPage() {
                 ) : (
                     <div className="space-y-4">
                         <div>
+                            {previewPost.categoryId && categoryMap[previewPost.categoryId] && (
+                                <span className="inline-block mb-2 bg-brand-primary-light text-brand-primary-active px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
+                                    {categoryMap[previewPost.categoryId]}
+                                </span>
+                            )}
                             <h3 className="font-display text-xl font-bold text-text-primary">{previewPost.title}</h3>
                             <p className="text-xs text-text-muted mt-1">
                                 {previewPost.author?.name} - {fmtDate(previewPost.createdAt)}
@@ -359,30 +389,6 @@ export default function PostsPage() {
 
                         <div className="flex items-center gap-2 text-xs text-text-muted border-t border-border-default pt-3">
                             <PostStatusBadge status={previewPost.status} />
-                            <span>{previewPost.comments?.length || 0} comentarios</span>
-                        </div>
-
-                        <div className="space-y-2 border-t border-border-default pt-3">
-                            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Comment moderation</p>
-                            {(previewPost.comments || []).length === 0 ? (
-                                <p className="text-xs text-text-muted">No comments on this post.</p>
-                            ) : (
-                                (previewPost.comments || []).map((c) => (
-                                    <div key={c.id} className="flex items-start justify-between gap-3 p-2 rounded border border-border-subtle bg-surface-subtle">
-                                        <div className="min-w-0">
-                                            <p className="text-xs font-semibold text-text-primary">{c.authorName}</p>
-                                            <p className="text-xs text-text-secondary line-clamp-2">{c.content}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteComment(c.id)}
-                                            className="p-1.5 rounded text-status-error hover:bg-status-error-bg"
-                                            title="Delete comment"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </div>
-                                ))
-                            )}
                         </div>
                     </div>
                 )}

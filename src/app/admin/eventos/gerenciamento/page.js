@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
+import { formatEventDateTime, utcToSaoPauloInputValue, saoPauloInputToUtcIso } from "@/lib/date-utils";
 
 export default function EventsGerenciamentoPage() {
     const [events, setEvents] = useState([]);
@@ -64,7 +65,7 @@ export default function EventsGerenciamentoPage() {
             id: event.id,
             title: event.title || "",
             description: event.description || "",
-            date: new Date(event.date).toISOString().slice(0, 16),
+            date: utcToSaoPauloInputValue(event.date),
             color: event.color || "#2563eb",
             link: event.link || "",
         });
@@ -80,7 +81,7 @@ export default function EventsGerenciamentoPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 ...editing,
-                date: editing.date ? new Date(editing.date).toISOString() : null,
+                date: editing.date ? saoPauloInputToUtcIso(editing.date) : null,
             })
         });
         const data = await res.json();
@@ -127,7 +128,7 @@ export default function EventsGerenciamentoPage() {
                                     <tr key={event.id}>
                                         <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(event.id)} onChange={() => toggleSelect(event.id)} /></td>
                                         <td className="px-4 py-3 text-sm font-medium text-text-primary">{event.title}</td>
-                                        <td className="px-4 py-3 text-xs text-text-muted">{new Date(event.date).toLocaleString("pt-BR")}</td>
+                                        <td className="px-4 py-3 text-xs text-text-muted">{formatEventDateTime(event.date)}</td>
                                         <td className="px-4 py-3">
                                             <span className="inline-flex items-center gap-1 text-xs text-text-muted"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: event.color || "#2563eb" }} />{event.color || "#2563eb"}</span>
                                         </td>

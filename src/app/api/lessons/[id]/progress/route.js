@@ -15,17 +15,19 @@ export async function POST(request, { params }) {
         const docId = `prog_${userId}_${lessonId}`;
         const now = new Date().toISOString();
 
+        const completedInt = completed ? 1 : 0;
+
         try {
             await db.updateDocument(DB_ID, COLS.lessonProgress, docId, {
-                completed,
+                completed: completedInt,
                 completedAt: completed ? now : null,
                 updatedAt: now,
             });
         } catch {
             await db.createDocument(DB_ID, COLS.lessonProgress, docId, {
-                userId, lessonId, completed,
+                userId, lessonId, completed: completedInt,
                 completedAt: completed ? now : null,
-                createdAt: now, updatedAt: now,
+                updatedAt: now,
             });
         }
 

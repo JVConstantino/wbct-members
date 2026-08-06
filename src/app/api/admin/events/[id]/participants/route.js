@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await params;
 
         const userEvents = await listAll(COLS.userEvents, [Query.equal('eventId', id)]);
         const userIds = userEvents.map(ue => ue.userId).filter(Boolean);
@@ -45,7 +45,7 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await params;
         const { userId, status } = await request.json();
 
         if (!userId || !status) {

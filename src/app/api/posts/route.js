@@ -7,9 +7,17 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
+        const authorId = searchParams.get('authorId');
 
         const queries = [Query.orderDesc('createdAt'), Query.limit(100)];
-        if (status) queries.push(Query.equal('status', status));
+        if (status) {
+            queries.push(Query.equal('status', status));
+        } else {
+            // Drafts are private scratch work — never leak into an unfiltered listing
+            // (feed, admin "All" tab). Fetch them explicitly via ?status=DRAFT instead.
+            queries.push(Query.notEqual('status', 'DRAFT'));
+        }
+        if (authorId) queries.push(Query.equal('authorId', authorId));
 
         const res = await db.listDocuments(DB_ID, COLS.posts, queries);
 
@@ -20,7 +28,7 @@ export async function GET(request) {
             authorIds.map(async (aid) => {
                 try {
                     const u = await db.getDocument(DB_ID, COLS.users, aid);
-                    authorMap[aid] = { name: u.name, email: u.email };
+                    authorMap[aid] = { id: u.$id, name: u.name, email: u.email, image: u.image };
                 } catch {}
             })
         );
@@ -32,7 +40,8 @@ export async function GET(request) {
             image: p.image,
             status: p.status,
             views: p.views || 0,
-            author: authorMap[p.authorId] || { name: 'Desconhecido', email: '' },
+            categoryId: p.categoryId || null,
+            author: authorMap[p.authorId] || { name: 'Desconhecido', email: '', image: null },
             createdAt: p.createdAt,
         }));
 
@@ -129,14 +138,18 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { title, content, image } = await request.json();
+        const { title, content, image, categoryId, status: requestedStatus } = await request.json();
         if (!title || !content) {
             return NextResponse.json({ success: false, error: 'Title and content are required' }, { status: 400 });
         }
 
         const id = 'post_' + Date.now().toString(36);
         const now = new Date().toISOString();
-        const status = session.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING';
+        // A member may explicitly opt into saving as a draft; any other requested
+        // status is ignored so a member can't self-approve by forging the field.
+        const status = requestedStatus === 'DRAFT'
+            ? 'DRAFT'
+            : (session.user.role === 'ADMIN' ? 'APPROVED' : 'PENDING');
 
         await db.createDocument(DB_ID, COLS.posts, id, {
             title, content,
@@ -144,6 +157,7 @@ export async function POST(request) {
             status,
             authorId: session.user.id,
             views: 0,
+            categoryId: categoryId || null,
             createdAt: now, updatedAt: now,
         });
 

@@ -19,11 +19,11 @@ import { useUser } from "@/contexts/UserContext";
 const menuItems = [
     { icon: Home,          label: "Main Feed",        href: "/member" },
     { icon: BookOpen,      label: "Articles HUB",     href: "/member/articles" },
-    { icon: User,          label: "Doctor Directory", href: "/member/directory" },
+    { icon: User,          label: "Member Directory", href: "/member/directory" },
     { icon: MessageSquare, label: "Messages",         href: "/member/chat" },
     { icon: Calendar,      label: "Calendar",         href: "/member/events" },
     { icon: Calendar,      label: "My Events",        href: "/member/events/my-events" },
-    { icon: PlayCircle,    label: "Webinars",         href: "/member/webinars" },
+    { icon: PlayCircle,    label: "Recordings",       href: "/member/webinars" },
     { icon: FileText,      label: "My Posts",         href: "/member/my-posts" },
     { icon: PlusSquare,    label: "New Content",      href: "/member/create" },
     { icon: User,          label: "My Profile",       href: "/member/profile" },

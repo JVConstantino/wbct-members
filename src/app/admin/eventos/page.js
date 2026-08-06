@@ -20,14 +20,15 @@ import {
     endOfWeek,
     isSameMonth,
     isSameDay,
-    eachDayOfInterval,
-    parseISO
+    eachDayOfInterval
 } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Skeleton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Modal } from "@/components/ui/Modal";
+import { formatEventTime, getSaoPauloDateKey, saoPauloInputToUtcIso } from "@/lib/date-utils";
+import { readableTextColor } from "@/lib/color-utils";
 
 export default function EventsManagement() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -108,7 +109,7 @@ export default function EventsManagement() {
         e.preventDefault();
         setCreating(true);
         try {
-            const eventDateTime = `${newEvent.date}T${newEvent.time}:00`;
+            const eventDateTime = saoPauloInputToUtcIso(`${newEvent.date}T${newEvent.time}`);
             const payload = {
                 title: newEvent.title,
                 description: newEvent.description,
@@ -158,7 +159,8 @@ export default function EventsManagement() {
         let days = [];
 
         allDays.forEach((day, i) => {
-            const dayEvents = events.filter(e => isSameDay(parseISO(e.date), day));
+            const dayKey = getSaoPauloDateKey(day);
+            const dayEvents = events.filter(e => getSaoPauloDateKey(e.date) === dayKey);
             const isToday = isSameDay(day, new Date());
             const isCurrentMonth = isSameMonth(day, monthStart);
 
@@ -177,16 +179,16 @@ export default function EventsManagement() {
                         {dayEvents.map(event => (
                             <div
                                 key={event.id}
-                                className="text-[10px] px-1.5 py-0.5 rounded text-white truncate group relative"
-                                style={{ backgroundColor: event.color }}
+                                className="text-[10px] px-1.5 py-0.5 rounded truncate group relative"
+                                style={{ backgroundColor: event.color, color: readableTextColor(event.color) }}
                                 onClick={e => e.stopPropagation()}
                             >
                                 <div className="flex justify-between items-center gap-1">
-                                    <span className="truncate">{format(parseISO(event.date), "HH:mm")} — {event.title}</span>
+                                    <span className="truncate">{formatEventTime(event.date, { hour: "2-digit", minute: "2-digit", hour12: false })} — {event.title}</span>
                                     <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={e => { e.stopPropagation(); setViewingParticipants(event); fetchParticipants(event.id); }}
-                                            className="hover:text-white/70"
+                                            className="hover:opacity-70"
                                             title="Ver inscritos"
                                         >
                                             <Users size={10} />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TextEditor from "@/components/TextEditor";
 import { Save, Send, Image as ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export default function CreatePostPage() {
     const [title, setTitle] = useState("");
@@ -23,17 +24,12 @@ export default function CreatePostPage() {
                     <p className="text-slate-500">Create amazing content for the community.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                        <Save size={18} />
+                    <Button variant="secondary" icon={<Save size={18} />}>
                         Draft
-                    </button>
-                    <button
-                        onClick={handlePublish}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        <Send size={18} />
+                    </Button>
+                    <Button variant="primary" icon={<Send size={18} />} onClick={handlePublish}>
                         Publish
-                    </button>
+                    </Button>
                 </div>
             </div>
 

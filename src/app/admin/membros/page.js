@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import {
     Search, UserCheck, UserX, Eye, UserPlus,
     X, Check, ShieldAlert, FileText, Stethoscope,
-    Briefcase, Mail, Save, Edit2, Lock, Upload
+    Briefcase, Mail, Save, Edit2, Lock, Upload,
+    GraduationCap, UserPlus2
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Skeleton";
+import { DocumentsList } from "@/components/ui/DocumentsList";
 
 function statusBadge(status) {
     if (status === "PENDING")  return <Badge variant="warning"  className="gap-1"><ShieldAlert size={9} />Pending</Badge>;
@@ -24,6 +26,13 @@ function roleBadge(role) {
     return role === "ADMIN"
         ? <Badge variant="info">Admin</Badge>
         : <Badge variant="neutral">Member</Badge>;
+}
+
+function applicationTypeBadge(type) {
+    if (type === "ACADEMIC_AFFILIATE") {
+        return <Badge variant="brand" className="gap-1"><GraduationCap size={9} />Academic Affiliate</Badge>;
+    }
+    return <Badge variant="info" className="gap-1"><UserPlus2 size={9} />Member</Badge>;
 }
 
 function fmtDate(date) {
@@ -47,6 +56,8 @@ export default function MembersPage() {
     const [creating, setCreating]           = useState(false);
     const [newMember, setNewMember]         = useState({ name: "", email: "", password: "", role: "MEMBER" });
     const [selectedIds, setSelectedIds]     = useState([]);
+    const [rejectModal, setRejectModal]     = useState(null);
+    const [rejectReason, setRejectReason]   = useState("");
 
     const fetchMembers = async (q = "") => {
         try {
@@ -79,11 +90,13 @@ export default function MembersPage() {
         if (selected) { setEditForm({ ...selected, password: "" }); setEditImage(selected.image); setIsEditing(false); }
     }, [selected]);
 
-    const updateStatus = async (id, status) => {
+    const updateStatus = async (id, status, rejectionReason = "") => {
+        const payload = { id, status };
+        if (status === "REJECTED") payload.rejectionReason = rejectionReason;
         const res = await fetch("/api/members", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, status }),
+            body: JSON.stringify(payload),
         });
         if (res.ok) {
             setMembers(prev => prev.map(m => m.id === id ? { ...m, status } : m));
@@ -91,16 +104,49 @@ export default function MembersPage() {
         }
     };
 
-    const updateStatusBulk = async (status) => {
+    const updateStatusBulk = async (status, rejectionReason = "") => {
         if (!selectedIds.length) return;
+        const payload = { ids: selectedIds, status };
+        if (status === "REJECTED") payload.rejectionReason = rejectionReason;
         const res = await fetch("/api/members", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids: selectedIds, status }),
+            body: JSON.stringify(payload),
         });
         if (res.ok) {
             setSelectedIds([]);
             fetchMembers(search);
+        }
+    };
+
+    const openSingleRejectModal = (member) => {
+        if (!member) return;
+        setRejectReason("");
+        setRejectModal({ ids: [member.id], label: member.name || member.email || member.id, isBulk: false });
+    };
+
+    const openBulkRejectModal = () => {
+        if (!selectedIds.length) return;
+        setRejectReason("");
+        setRejectModal({ ids: [...selectedIds], label: `${selectedIds.length} member(s)`, isBulk: true });
+    };
+
+    const closeRejectModal = () => {
+        setRejectModal(null);
+        setRejectReason("");
+    };
+
+    const confirmReject = async () => {
+        if (!rejectModal) return;
+        const reason = rejectReason;
+        const targetIds = rejectModal.ids;
+        const isBulk = rejectModal.isBulk;
+        closeRejectModal();
+        if (isBulk) {
+            setSelectedIds([]);
+            await updateStatusBulk("REJECTED", reason);
+        } else {
+            await updateStatus(targetIds[0], "REJECTED", reason);
         }
     };
 
@@ -240,7 +286,7 @@ export default function MembersPage() {
                 <div className="bg-brand-primary-light border border-brand-primary/20 text-brand-primary px-3 py-2 rounded-md flex flex-wrap items-center gap-2">
                     <span className="text-xs font-semibold mr-1">{selectedIds.length} selected</span>
                     <button onClick={() => updateStatusBulk("APPROVED")} className="btn-primary text-xs py-1.5 px-3">Activate</button>
-                    <button onClick={() => updateStatusBulk("REJECTED")} className="btn-danger text-xs py-1.5 px-3">Block</button>
+                    <button onClick={openBulkRejectModal} className="btn-danger text-xs py-1.5 px-3">Block</button>
                     <button onClick={() => updateRoleBulk("MEMBER")} className="btn-secondary text-xs py-1.5 px-3">Make Member</button>
                     <button onClick={() => updateRoleBulk("ADMIN")} className="btn-secondary text-xs py-1.5 px-3">Make Admin</button>
                     <button onClick={handleBulkDelete} className="btn-secondary text-xs py-1.5 px-3">Delete</button>
@@ -280,7 +326,7 @@ export default function MembersPage() {
                         <table className="w-full min-w-[640px]">
                             <thead className="bg-surface-subtle border-b border-border-default">
                                 <tr>
-                                    {["select", "Member", "Email", "Role", "Status", "Joined", ""].map((h, i) => (
+                                    {["select", "Member", "Email", "Application", "Role", "Status", "Joined", ""].map((h, i) => (
                                         <th key={i} className="text-left text-[10px] font-bold text-text-muted uppercase tracking-wider px-4 py-3">
                                             {h === "select" ? (
                                                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
@@ -307,6 +353,9 @@ export default function MembersPage() {
                                         </td>
                                         <td className="px-4 py-3 hidden md:table-cell">
                                             <span className="text-xs text-text-secondary">{m.email}</span>
+                                        </td>
+                                        <td className="px-4 py-3 hidden lg:table-cell">
+                                            {applicationTypeBadge(m.applicationType)}
                                         </td>
                                         <td className="px-4 py-3">{roleBadge(m.role)}</td>
                                         <td className="px-4 py-3">{statusBadge(m.status)}</td>
@@ -346,13 +395,13 @@ export default function MembersPage() {
                         <div className="relative h-24 bg-gradient-to-r from-brand-primary to-accent rounded-t-xl shrink-0">
                             <button
                                 onClick={() => setSelected(null)}
-                                className="absolute top-3 right-3 p-1.5 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
+                                className="absolute top-3 right-3 p-1.5 bg-black/20 hover:bg-black/40 text-white rounded-md transition-colors"
                             >
                                 <X size={16} />
                             </button>
                             <button
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`absolute top-3 right-12 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                                className={`absolute top-3 right-12 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                                     isEditing ? "bg-white text-brand-primary" : "bg-black/20 text-white hover:bg-black/40"
                                 }`}
                             >
@@ -396,7 +445,7 @@ export default function MembersPage() {
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div className="bg-surface-subtle rounded-md p-3">
                                             <p className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-1 mb-1">
-                                                <Briefcase size={11} /> CRM
+                                                <Briefcase size={11} /> Registration
                                             </p>
                                             <p className="text-sm text-text-primary">{selected.crm || "Not provided"}</p>
                                         </div>
@@ -406,6 +455,22 @@ export default function MembersPage() {
                                             </p>
                                             <p className="text-sm text-text-primary">{selected.specialty || "Not provided"}</p>
                                         </div>
+                                    </div>
+
+                                    <div className="bg-surface-subtle rounded-md p-3 mb-4">
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <p className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-1">
+                                                <UserPlus size={11} /> Application
+                                            </p>
+                                            {applicationTypeBadge(selected.applicationType || "MEMBER")}
+                                        </div>
+                                        <p className="text-[10px] font-bold text-text-muted uppercase mb-1.5 flex items-center gap-1">
+                                            <FileText size={11} /> Submitted Documents
+                                        </p>
+                                        <DocumentsList
+                                            docs={selected.applicationDocuments}
+                                            applicationType={selected.applicationType || "MEMBER"}
+                                        />
                                     </div>
 
                                     <div className="bg-surface-subtle rounded-md p-3 mb-5">
@@ -421,7 +486,7 @@ export default function MembersPage() {
                                         {selected.status === "PENDING" && (
                                             <div className="flex gap-2 w-full">
                                                 <button
-                                                    onClick={() => updateStatus(selected.id, "REJECTED")}
+                                                    onClick={() => openSingleRejectModal(selected)}
                                                     className="btn-danger flex-1 py-2"
                                                 >
                                                     <X size={14} /> Reject
@@ -436,7 +501,7 @@ export default function MembersPage() {
                                         )}
                                         {selected.status === "APPROVED" && (
                                             <button
-                                                onClick={() => updateStatus(selected.id, "REJECTED")}
+                                                onClick={() => openSingleRejectModal(selected)}
                                                 className="text-xs text-status-error hover:text-red-700 font-medium flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-status-error-bg transition-colors"
                                             >
                                                 <UserX size={13} /> Deactivate member
@@ -464,7 +529,7 @@ export default function MembersPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-semibold text-text-secondary mb-1">CRM</label>
+                                            <label className="block text-xs font-semibold text-text-secondary mb-1">Registration</label>
                                             <input className="input" value={editForm.crm || ""} onChange={e => setEditForm(f => ({ ...f, crm: e.target.value }))} />
                                         </div>
                                         <div>
@@ -544,6 +609,55 @@ export default function MembersPage() {
                                 {creating ? "Creating..." : "Create Member"}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {rejectModal && (
+                <div className="fixed inset-0 bg-brand-strong/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-surface-card rounded-xl shadow-modal w-full max-w-md border border-border-default animate-scale-in">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
+                            <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                                <UserX size={15} className="text-status-error" />
+                                {rejectModal.isBulk ? "Block selected members" : "Reject member"}
+                            </h3>
+                            <button onClick={closeRejectModal} className="p-1.5 hover:bg-surface-subtle rounded-md transition-colors">
+                                <X size={15} className="text-text-muted" />
+                            </button>
+                        </div>
+                        <div className="px-5 py-4 space-y-3">
+                            <div className="bg-status-error-bg border border-status-error/20 rounded-md px-3 py-2">
+                                <p className="text-xs text-status-error">
+                                    {rejectModal.isBulk
+                                        ? `This will block ${rejectModal.ids.length} selected member(s) and set their status to Blocked.`
+                                        : `This will block "${rejectModal.label}" and set their status to Blocked.`}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                                    Rejection reason (optional — a standard message will be used if left blank)
+                                </label>
+                                <textarea
+                                    className="input h-24 resize-none"
+                                    placeholder="e.g. CV does not meet the publication requirements, or missing proof of professional activity."
+                                    value={rejectReason}
+                                    onChange={e => setRejectReason(e.target.value)}
+                                    maxLength={2000}
+                                />
+                                <p className="text-[10px] text-text-muted mt-1">
+                                    {rejectReason.length}/2000 characters
+                                </p>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                                <button onClick={closeRejectModal} className="btn-secondary text-xs py-2 px-4">
+                                    Cancel
+                                </button>
+                                <button onClick={confirmReject} className="btn-danger text-xs py-2 px-4 gap-1.5">
+                                    <UserX size={13} />
+                                    {rejectModal.isBulk ? `Block ${rejectModal.ids.length}` : "Confirm Rejection"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

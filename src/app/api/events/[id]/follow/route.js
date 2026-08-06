@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { db, DB_ID, COLS } from '@/lib/appwrite';
+import { db, DB_ID, COLS, ID } from '@/lib/appwrite';
 
 export async function POST(request, { params }) {
     try {
@@ -14,6 +14,12 @@ export async function POST(request, { params }) {
         const userId = session.user.id;
         const ueId = `ue_${id}_${userId}`;
         const epsId = `eps_${id}_${userId}`;
+
+        let eventEmailConsent = false;
+        try {
+            const body = await request.json();
+            eventEmailConsent = body.eventEmailConsent || false;
+        } catch {}
 
         try {
             await db.getDocument(DB_ID, COLS.userEvents, ueId);
@@ -29,6 +35,18 @@ export async function POST(request, { params }) {
                 userId,
                 createdAt: now,
             });
+
+            // Log event communication consent
+            try {
+                await db.createDocument(DB_ID, COLS.consentLog, ID.unique(), {
+                    userId,
+                    mode: 'event_communications',
+                    preferencesJson: JSON.stringify({ eventId: id, eventEmailConsent }),
+                    ip: '',
+                    createdAt: now,
+                });
+            } catch {}
+
 
             try {
                 await db.updateDocument(DB_ID, COLS.eventParticipants, epsId, { status: 'PENDING' });

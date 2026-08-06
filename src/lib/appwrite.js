@@ -12,6 +12,7 @@ export { ID, Query };
 export const COLS = {
   users: "users",
   posts: "posts",
+  postCategories: "post_categories",
   comments: "comments",
   events: "events",
   webinars: "webinars",
@@ -28,6 +29,9 @@ export const COLS = {
   consentLog: "consent_log",
   appSettings: "app_settings",
   eventParticipants: "event_participant_status",
+  // Requires collection "admin_audit_log" created in Appwrite console with fields:
+  // adminId (string), action (string), targetType (string), targetId (string), details (string), createdAt (string)
+  adminAuditLog: "admin_audit_log",
 };
 
 // Fetch all pages of a collection (Appwrite caps at 25 per page by default)

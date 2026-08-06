@@ -139,7 +139,7 @@ export default function CoursePlayer() {
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium transition-colors"
                 >
                     <ArrowLeft size={20} />
-                    Back to Courses
+                    Back to Recordings
                 </button>
 
                 {currentLesson ? (
@@ -170,7 +170,7 @@ export default function CoursePlayer() {
                                 <button
                                     onClick={() => handleMarkAsWatched(currentLesson.id, currentLesson.completed)}
                                     disabled={markingProgress}
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${currentLesson.completed
+                                    className={`flex items-center gap-2 px-6 py-3 rounded-md font-bold transition-all ${currentLesson.completed
                                         ? "bg-green-100 text-green-700 border border-green-200"
                                         : "bg-primary-600 text-white shadow-lg shadow-primary-600/20 hover:-translate-y-1"
                                         }`}

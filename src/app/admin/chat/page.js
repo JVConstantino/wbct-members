@@ -200,7 +200,7 @@ export default function AdminChatPage() {
                     </div>
                     <button
                         onClick={() => setShowNewChatModal(true)}
-                        className="p-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-hover transition-colors"
+                        className="p-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover transition-colors"
                         title="New Chat"
                     >
                         <Plus size={20} />
@@ -271,7 +271,7 @@ export default function AdminChatPage() {
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setSelectedContact(null)}
-                                className="md:hidden p-2 -ml-2 text-text-muted hover:bg-surface-subtle rounded-full"
+                                className="md:hidden p-2 -ml-2 text-text-muted hover:bg-surface-subtle rounded-md"
                             >
                                 <ArrowLeft size={20} />
                             </button>
@@ -336,7 +336,7 @@ export default function AdminChatPage() {
                     <div className="p-4 bg-surface-card border-t border-border-default">
                         {sendError && <p className="mb-2 text-xs text-status-error">{sendError}</p>}
                         <form onSubmit={handleSendMessage} className="flex items-end gap-3 max-w-4xl mx-auto">
-                            <button type="button" className="p-3 text-text-muted hover:text-brand-primary hover:bg-surface-subtle rounded-xl transition-colors">
+                            <button type="button" className="p-3 text-text-muted hover:text-brand-primary hover:bg-surface-subtle rounded-md transition-colors">
                                 <Paperclip size={20} />
                             </button>
                             <div className="flex-1 bg-surface-subtle rounded-2xl border border-transparent focus-within:border-brand-primary/50 focus-within:bg-surface-card focus-within:ring-4 focus-within:ring-brand-primary/10 transition-all flex items-end">
@@ -359,7 +359,7 @@ export default function AdminChatPage() {
                             <button
                                 type="submit"
                                 disabled={!newMessage.trim() || sending}
-                                className="p-3 bg-brand-primary text-white rounded-xl hover:bg-brand-primary-hover disabled:opacity-50 disabled:courser-not-allowed shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-95"
+                                className="p-3 bg-brand-primary text-white rounded-md hover:bg-brand-primary-hover disabled:opacity-50 disabled:courser-not-allowed shadow-lg hover:shadow-brand-primary/30 transition-all active:scale-95"
                             >
                                 {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                             </button>
@@ -389,7 +389,7 @@ export default function AdminChatPage() {
                                 <UserPlus size={20} className="text-brand-primary" />
                                 New Chat
                             </h3>
-                            <button onClick={() => setShowNewChatModal(false)} className="p-1 hover:bg-surface-subtle rounded-full text-text-muted">
+                            <button onClick={() => setShowNewChatModal(false)} className="p-1 hover:bg-surface-subtle rounded-md text-text-muted">
                                 <X size={20} />
                             </button>
                         </div>

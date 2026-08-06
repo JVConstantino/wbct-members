@@ -187,7 +187,7 @@ export default function ChatPage() {
                     ) : filteredContacts.length === 0 ? (
                         <div className="p-6 text-center text-text-muted text-xs">
                             <p>No contacts found.</p>
-                            <p className="mt-1">Follow other doctors in the Directory to start conversations.</p>
+                            <p className="mt-1">Follow other members in the Directory to start conversations.</p>
                         </div>
                     ) : (
                         filteredContacts.map(contact => (
@@ -202,7 +202,7 @@ export default function ChatPage() {
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-semibold text-text-primary text-sm truncate">{contact.name}</h3>
                                     <p className="text-[11px] text-text-muted truncate">
-                                        {contact.stack || contact.specialty || "Doctor"}
+                                        {contact.stack || contact.specialty || "Member"}
                                     </p>
                                 </div>
                             </div>
